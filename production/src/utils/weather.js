@@ -58,65 +58,168 @@ const WEATHER_GEOGRAPHY = {
 };
 
 /**
- * Generate realistic weather location based on geographic preferences
+ * Generate realistic weather location with global distribution and minimum spacing
  */
-function generateRealisticWeatherLocation(weatherType, weatherData, servers, minLat, maxLat, minLon, maxLon) {
+function generateRealisticWeatherLocation(weatherType, weatherData, servers, activeWeatherEvents) {
   const geoPrefs = WEATHER_GEOGRAPHY[weatherType];
   const now = new Date();
   const month = now.getMonth() + 1; // 1-12
   
-  // Start with all inhabited areas
-  let potentialLocs = [];
+  // Define global regions for better distribution
+  const globalRegions = [
+    { name: 'North America', latRange: [25, 70], lonRange: [-170, -50] },
+    { name: 'South America', latRange: [-60, 15], lonRange: [-85, -30] },
+    { name: 'Europe', latRange: [35, 75], lonRange: [-15, 45] },
+    { name: 'Africa', latRange: [-35, 40], lonRange: [-20, 55] },
+    { name: 'Asia', latRange: [5, 75], lonRange: [25, 180] },
+    { name: 'Oceania', latRange: [-50, 20], lonRange: [110, 180] },
+    { name: 'Arctic', latRange: [60, 90], lonRange: [-180, 180] },
+    { name: 'Antarctic', latRange: [-90, -60], lonRange: [-180, 180] },
+    { name: 'Pacific Ocean', latRange: [-60, 60], lonRange: [120, -120] },
+    { name: 'Atlantic Ocean', latRange: [-60, 70], lonRange: [-70, 20] },
+    { name: 'Indian Ocean', latRange: [-60, 30], lonRange: [20, 120] }
+  ];
   
-  // Filter servers by geographic preferences
-  if (geoPrefs) {
-    const filteredServers = servers.filter(server => {
-      // Latitude range filter
-      if (geoPrefs.latRange) {
-        const [minLat, maxLat] = geoPrefs.latRange;
-        if (server.lat < minLat || server.lat > maxLat) return false;
-      }
-      
-      // Polar avoidance
-      if (geoPrefs.avoidPolar && Math.abs(server.lat) > 60) return false;
-      
-      // Coastal preference
-      if (geoPrefs.coastalPreference) {
-        // Add coastal bias (simplified)
-        return Math.random() < 0.7; // 70% chance for coastal areas
-      }
-      
-      return true;
-    });
+  // Minimum distance between weather events (in km)
+  const minDistance = weatherData.severity >= 4 ? 1500 : weatherData.severity >= 3 ? 1000 : 800;
+  
+  let attempts = 0;
+  const maxAttempts = 50;
+  
+  while (attempts < maxAttempts) {
+    attempts++;
     
-    if (filteredServers.length > 0) {
-      // Choose area near suitable servers
-      const chosenServer = filteredServers[Math.floor(Math.random() * filteredServers.length)];
+    let potentialLocation;
+    
+    // Use geographic preferences if available
+    if (geoPrefs) {
+      // Filter regions based on weather preferences
+      const suitableRegions = globalRegions.filter(region => {
+        // Check latitude range
+        if (geoPrefs.latRange) {
+          const [prefMinLat, prefMaxLat] = geoPrefs.latRange;
+          return !(region.latRange[1] < prefMinLat || region.latRange[0] > prefMaxLat);
+        }
+        
+        // Polar preferences
+        if (geoPrefs.avoidPolar && (region.latRange[1] > 60 || region.latRange[0] < -60)) {
+          return false;
+        }
+        
+        return true;
+      });
       
-      // Add some randomness around the chosen server (±2 degrees)
-      const centerLat = chosenServer.lat + (Math.random() - 0.5) * 4;
-      const centerLon = chosenServer.lon + (Math.random() - 0.5) * 4;
+      if (suitableRegions.length === 0) {
+        // Fallback to any region
+        potentialLocation = generateRandomGlobalLocation();
+      } else {
+        // Choose a suitable region
+        const chosenRegion = suitableRegions[Math.floor(Math.random() * suitableRegions.length)];
+        potentialLocation = generateLocationInRegion(chosenRegion);
+      }
+    } else {
+      // No preferences, use global distribution
+      potentialLocation = generateRandomGlobalLocation();
+    }
+    
+    // Check minimum distance from existing weather events
+    let tooClose = false;
+    for (const existingWeather of activeWeatherEvents) {
+      const distance = calculateDistance(
+        potentialLocation.centerLat, potentialLocation.centerLon,
+        existingWeather.centerLat, existingWeather.centerLon
+      );
       
+      if (distance < minDistance) {
+        tooClose = true;
+        break;
+      }
+    }
+    
+    if (!tooClose) {
       // Apply seasonal bonus
       let rarityMultiplier = 1;
-      if (geoPrefs.seasonalBonus && geoPrefs.seasonalBonus.includes(month)) {
-        rarityMultiplier = 2; // 2x more likely in appropriate season
+      if (geoPrefs && geoPrefs.seasonalBonus && geoPrefs.seasonalBonus.includes(month)) {
+        rarityMultiplier = 2;
       }
       
       return {
-        centerLat: Math.max(minLat, Math.min(maxLat, centerLat)),
-        centerLon: Math.max(minLon, Math.min(maxLon, centerLon)),
+        centerLat: potentialLocation.centerLat,
+        centerLon: potentialLocation.centerLon,
         rarityMultiplier
       };
     }
   }
   
-  // Fallback to random location if no geographic preferences or suitable areas
+  // If we couldn't find a good spot after max attempts, use random location
+  console.warn(`[weather] Could not find well-spaced location for ${weatherType} after ${maxAttempts} attempts`);
+  const fallback = generateRandomGlobalLocation();
   return {
-    centerLat: minLat + Math.random() * (maxLat - minLat),
-    centerLon: minLon + Math.random() * (maxLon - minLon),
+    centerLat: fallback.centerLat,
+    centerLon: fallback.centerLon,
     rarityMultiplier: 1
   };
+}
+
+/**
+ * Generate a random location within a specific region
+ */
+function generateLocationInRegion(region) {
+  const lat = region.latRange[0] + Math.random() * (region.latRange[1] - region.latRange[0]);
+  let lon;
+  
+  // Handle longitude wraparound for Pacific regions
+  if (region.lonRange[0] > region.lonRange[1]) {
+    // Crosses the 180° meridian
+    const range1 = 180 - region.lonRange[0];
+    const range2 = region.lonRange[1] - (-180);
+    const totalRange = range1 + range2;
+    
+    if (Math.random() < range1 / totalRange) {
+      lon = region.lonRange[0] + Math.random() * range1;
+    } else {
+      lon = -180 + Math.random() * range2;
+    }
+  } else {
+    lon = region.lonRange[0] + Math.random() * (region.lonRange[1] - region.lonRange[0]);
+  }
+  
+  return { centerLat: lat, centerLon: lon };
+}
+
+/**
+ * Generate a completely random global location
+ */
+function generateRandomGlobalLocation() {
+  // Favor populated areas but allow oceanic weather
+  const isOceanic = Math.random() < 0.3; // 30% chance for oceanic weather
+  
+  if (isOceanic) {
+    // Generate oceanic location
+    return {
+      centerLat: -60 + Math.random() * 120, // -60 to +60
+      centerLon: -180 + Math.random() * 360  // Full longitude range
+    };
+  } else {
+    // Generate continental location (weighted towards populated areas)
+    const populatedAreas = [
+      { lat: 40, lon: -100, weight: 0.2 }, // North America
+      { lat: -15, lon: -60, weight: 0.15 }, // South America
+      { lat: 50, lon: 10, weight: 0.15 },   // Europe
+      { lat: 0, lon: 20, weight: 0.1 },     // Africa
+      { lat: 35, lon: 100, weight: 0.25 },  // Asia
+      { lat: -25, lon: 140, weight: 0.1 },  // Australia
+      { lat: 70, lon: 0, weight: 0.05 }     // Arctic
+    ];
+    
+    const chosen = populatedAreas[Math.floor(Math.random() * populatedAreas.length)];
+    
+    // Add significant randomness (±20 degrees) for global spread
+    return {
+      centerLat: Math.max(-85, Math.min(85, chosen.lat + (Math.random() - 0.5) * 40)),
+      centerLon: chosen.lon + (Math.random() - 0.5) * 40
+    };
+  }
 }
 
 /**
@@ -489,7 +592,7 @@ async function notifyDiscordWeatherEvent(weatherEvent, weatherType, client) {
         },
         {
           name: '**Location**',
-          value: `**Coordinates:** ${weatherEvent.centerLat.toFixed(2)}, ${weatherEvent.centerLon.toFixed(2)}\n**Map:** [View on QuestCord Map](https://questcord.com/)`,
+          value: `**Coordinates:** ${weatherEvent.centerLat.toFixed(2)}, ${weatherEvent.centerLon.toFixed(2)}\n**Map:** [View on QuestCord Map](https://questcord.fun/)`,
           inline: true
         }
       )
@@ -536,23 +639,18 @@ function generateWeatherEvents(client = null) {
     // Increase spawn rate if below target
     const spawnRateMultiplier = activeCount < targetEventCount ? 2.0 : 1.0;
     
-    // Get world bounds for weather generation (approximate inhabited area)
-    const servers = db.prepare('SELECT lat, lon FROM servers WHERE lat IS NOT NULL AND lon IS NOT NULL AND archived = 0').all();
-    if (servers.length === 0) return;
+    // Get active weather events for spacing calculations
+    const activeWeatherEvents = getActiveWeather();
     
-    const lats = servers.map(s => s.lat);
-    const lons = servers.map(s => s.lon);
-    const minLat = Math.min(...lats) - 2;
-    const maxLat = Math.max(...lats) + 2;
-    const minLon = Math.min(...lons) - 2;
-    const maxLon = Math.max(...lons) + 2;
+    // Get servers for geographic context (but don't limit weather to server areas)
+    const servers = db.prepare('SELECT lat, lon FROM servers WHERE lat IS NOT NULL AND lon IS NOT NULL AND archived = 0').all();
     
     // Generate weather events based on probability and geography
     for (const [typeId, weather] of Object.entries(WEATHER_TYPES)) {
       const adjustedRarity = weather.rarity * spawnRateMultiplier;
       if (Math.random() < adjustedRarity) {
         // Use geographic preferences for realistic weather placement
-        const location = generateRealisticWeatherLocation(typeId, weather, servers, minLat, maxLat, minLon, maxLon);
+        const location = generateRealisticWeatherLocation(typeId, weather, servers, activeWeatherEvents);
         
         // Apply seasonal and geographic rarity bonus
         const effectiveRarity = weather.rarity * location.rarityMultiplier;

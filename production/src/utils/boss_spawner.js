@@ -324,7 +324,7 @@ async function notifyBossSpawn(bossData, client) {
         },
         {
           name: '📍 **Location**',
-          value: `**${bossData.serverName || 'Unknown Server'}**\nServer ID: ${bossData.guildId}\n🗺️ [View on Map](https://questcord.com/${bossData.guildId})`,
+          value: `**${bossData.serverName || 'Unknown Server'}**\nServer ID: ${bossData.guildId}\n🗺️ [View on Map](https://questcord.fun/${bossData.guildId})`,
           inline: true
         },
         {

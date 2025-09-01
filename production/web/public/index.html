@@ -1240,6 +1240,34 @@
 }
 .leaflet-popup-content div[style*="text-align: center"] strong {
   color: #4f46e5 !important;
+}
+
+/* Weather marker animations */
+@keyframes weatherPulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.8; }
+}
+
+@keyframes severePulse {
+  0% { transform: scale(1); opacity: 0.6; box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7); }
+  50% { transform: scale(1.05); opacity: 1; box-shadow: 0 0 0 10px rgba(255, 0, 0, 0); }
+  100% { transform: scale(1); opacity: 0.6; box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); }
+}
+
+.weather-marker {
+  z-index: 1000 !important;
+}
+
+.weather-marker div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(4px);
+}
   font-weight: 600 !important;
 }
 
@@ -1400,7 +1428,41 @@
   }
 }
 
-</style>
+/* Enhanced weather visual effects */
+.weather-marker div {
+  transition: all 0.3s ease !important;
+}
+
+.weather-marker:hover div {
+  transform: scale(1.2) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-width: 3px !important;
+  animation-duration: 1s !important;
+}
+
+.weather-circle.severity-5 {
+  animation: severeStormPulse 1.5s ease-in-out infinite !important;
+}
+
+.weather-circle.severity-4 {
+  animation: dangerousStormPulse 2s ease-in-out infinite !important;
+}
+
+.weather-circle.blocking {
+  box-shadow: 0 0 25px rgba(220, 38, 38, 0.5) !important;
+}
+
+@keyframes severeStormPulse {
+  0% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.02); }
+  100% { opacity: 0.8; transform: scale(1); }
+}
+
+@keyframes dangerousStormPulse {
+  0% { opacity: 0.7; }
+  50% { opacity: 0.3; }
+  100% { opacity: 0.7; }
+}\n</style>
 </head>
 <body>
 <div id="app">
@@ -1839,15 +1901,21 @@
             const pos = [weather.centerLat, weather.centerLon];
             const radiusMeters = weather.radius * 1000; // Convert km to meters (radius already 5x from backend)
             
-            // Create weather circle
+            // Create enhanced weather circle with severity-based styling
+            const baseOpacity = weather.blockTravel ? 0.8 : 0.6;
+            const fillOpacity = weather.blockTravel ? 0.4 : 0.2;
+            const strokeWidth = weather.severity >= 4 ? 4 : weather.severity >= 3 ? 3 : 2;
+            const dashPattern = weather.blockTravel ? '10,5' : weather.severity >= 3 ? '15,10' : null;
+            
             const weatherCircle = L.circle(pos, {
               radius: radiusMeters,
               color: weather.color,
-              weight: weather.blockTravel ? 3 : 2,
-              opacity: weather.blockTravel ? 0.8 : 0.6,
+              weight: strokeWidth,
+              opacity: baseOpacity,
               fillColor: weather.color,
-              fillOpacity: weather.blockTravel ? 0.3 : 0.15,
-              dashArray: weather.blockTravel ? '10,5' : null
+              fillOpacity: fillOpacity,
+              dashArray: dashPattern,
+              className: `weather-circle severity-${weather.severity} ${weather.blockTravel ? 'blocking' : 'slowing'}`
             });
             
             // Time remaining display
@@ -1884,17 +1952,29 @@
             
             weatherCircle.bindPopup(popupContent);
             
-            // Create weather center marker
+            // Create enhanced weather center marker with dynamic styling
+            const isBlocking = weather.blockTravel;
+            const severityClass = weather.severity >= 4 ? 'severe' : weather.severity >= 3 ? 'dangerous' : 'moderate';
+            
             const weatherMarker = L.marker(pos, {
               icon: L.divIcon({
                 className: 'weather-marker',
                 html: `<div style="
-                  font-size: 24px; 
-                  text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
-                  filter: drop-shadow(0 0 3px ${weather.color});
+                  font-size: ${weather.severity >= 4 ? '32px' : weather.severity >= 3 ? '28px' : '24px'}; 
+                  text-shadow: 2px 2px 6px rgba(0,0,0,0.8);
+                  filter: drop-shadow(0 0 ${weather.severity >= 4 ? '8px' : '6px'} ${weather.color});
+                  animation: ${isBlocking ? 'severePulse' : 'weatherPulse'} ${weather.severity >= 4 ? '1.5s' : '2s'} ease-in-out infinite;
+                  width: ${weather.severity >= 4 ? '40px' : weather.severity >= 3 ? '35px' : '30px'};
+                  height: ${weather.severity >= 4 ? '40px' : weather.severity >= 3 ? '35px' : '30px'};
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  position: relative;
+                  z-index: 1000;
+                  ${isBlocking ? 'background: radial-gradient(circle, rgba(255,0,0,0.2), transparent 70%);' : ''}
                 ">${weather.icon}</div>`,
-                iconSize: [30, 30],
-                iconAnchor: [15, 15]
+                iconSize: [weather.severity >= 4 ? 40 : weather.severity >= 3 ? 35 : 30, weather.severity >= 4 ? 40 : weather.severity >= 3 ? 35 : 30],
+                iconAnchor: [weather.severity >= 4 ? 20 : weather.severity >= 3 ? 17 : 15, weather.severity >= 4 ? 20 : weather.severity >= 3 ? 17 : 15]
               })
             });
             
@@ -2163,7 +2243,7 @@ async function loadMe(){
   document.getElementById('addBotBtn').addEventListener('click', function(e) {
     e.preventDefault();
     // Discord bot invite URL with necessary permissions
-    const botInviteUrl = 'https://discord.com/oauth2/authorize?client_id=1403949996868374558&permissions=2147863552&integration_type=0&scope=bot+applications.commands';
+    const botInviteUrl = 'https://discord.com/oauth2/authorize?client_id=1411793854235021322&permissions=2147863552&integration_type=0&scope=bot+applications.commands';
     window.open(botInviteUrl, '_blank');
   });
   
