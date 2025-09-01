@@ -1,0 +1,52 @@
+{
+  "environments": {
+    "development": {
+      "tokens": 10,
+      "stamina": 100,
+      "healthRegen": 15
+    },
+    "staging": {
+      "tokens": 25,
+      "stamina": 100,
+      "healthRegen": 10
+    },
+    "production": {
+      "tokens": 60,
+      "stamina": 100,
+      "healthRegen": 5
+    }
+  },
+  "web": {
+    "port": 3001,
+    "publicBaseUrl": "http://localhost:3001"
+  },
+  "auth": {
+    "discord": {
+      "clientId": "DISCORD_CLIENT_ID",
+      "clientSecret": "DISCORD_CLIENT_SECRET",
+      "scope": "identify",
+      "prompt": "none"
+    },
+    "stateSecret": "dev-state-secret-change-me"
+  },
+  "currencyName": "Drakari",
+  "marketTaxPct": 5,
+  "tradeBlacklist": [],
+  "security": {
+    "enabled": false,
+    "commandRate": {
+      "max": 20,
+      "perMs": 5000
+    },
+    "apiRate": {
+      "max": 100,
+      "perMs": 60000
+    }
+  },
+  "development": {
+    "fastRegen": true,
+    "unlimitedTokens": true,
+    "debugMode": true,
+    "skipCooldowns": true
+  }
+}

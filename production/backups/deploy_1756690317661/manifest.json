@@ -1,0 +1,10 @@
+{
+  "deploymentId": "deploy_1756690317661",
+  "timestamp": "2025-09-01T01:31:58.758Z",
+  "files": [
+    ".env",
+    "config.json",
+    "data.sqlite"
+  ],
+  "version": "1.1.0"
+}

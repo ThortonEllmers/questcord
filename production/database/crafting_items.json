@@ -1,0 +1,2499 @@
+[
+  {
+    "id": "stone",
+    "name": "Stone",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "A basic stone found everywhere. Essential for early crafting."
+  },
+  {
+    "id": "wood",
+    "name": "Wood",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Basic wood from common trees. The foundation of many crafts."
+  },
+  {
+    "id": "iron_ore",
+    "name": "Iron Ore",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Raw iron ore that needs smelting. Common but valuable."
+  },
+  {
+    "id": "copper_ore",
+    "name": "Copper Ore",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Reddish ore used for basic metalwork and alloys."
+  },
+  {
+    "id": "coal",
+    "name": "Coal",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Black mineral used for fuel and smelting operations."
+  },
+  {
+    "id": "leather",
+    "name": "Leather",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Processed animal hide used for armor and accessories."
+  },
+  {
+    "id": "cloth",
+    "name": "Cloth",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Basic textile material woven from plant fibers."
+  },
+  {
+    "id": "sand",
+    "name": "Sand",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Fine granular material used in glass making and construction."
+  },
+  {
+    "id": "clay",
+    "name": "Clay",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Moldable earth used for pottery and construction."
+  },
+  {
+    "id": "flint",
+    "name": "Flint",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Sharp stone used for tools and fire-starting."
+  },
+  {
+    "id": "hemp_fiber",
+    "name": "Hemp Fiber",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Strong plant fiber used for rope and rough cloth."
+  },
+  {
+    "id": "bone",
+    "name": "Bone",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Animal bone used for tools and decorative items."
+  },
+  {
+    "id": "salt",
+    "name": "Salt",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Essential mineral for food preservation and alchemy."
+  },
+  {
+    "id": "ash",
+    "name": "Ash",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Residue from burning wood, used in soap and glass making."
+  },
+  {
+    "id": "water",
+    "name": "Pure Water",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Clean water essential for many crafting processes."
+  },
+  {
+    "id": "tin_ore",
+    "name": "Tin Ore",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Soft metal ore used primarily for alloys like bronze."
+  },
+  {
+    "id": "zinc_ore",
+    "name": "Zinc Ore",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Bluish metal ore used for galvanization and alloys."
+  },
+  {
+    "id": "plant_fiber",
+    "name": "Plant Fiber",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Generic plant fibers collected from various vegetation."
+  },
+  {
+    "id": "wool",
+    "name": "Wool",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Soft animal hair used for warm clothing and textiles."
+  },
+  {
+    "id": "feather",
+    "name": "Feather",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Light bird feather used for arrows and decoration."
+  },
+  {
+    "id": "tree_sap",
+    "name": "Tree Sap",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Sticky tree resin used for waterproofing and adhesives."
+  },
+  {
+    "id": "charcoal",
+    "name": "Charcoal",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Processed carbon fuel that burns hotter than wood."
+  },
+  {
+    "id": "granite",
+    "name": "Granite",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Hard igneous rock used for durable construction."
+  },
+  {
+    "id": "limestone",
+    "name": "Limestone",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Sedimentary rock used for building and lime production."
+  },
+  {
+    "id": "quartz",
+    "name": "Quartz",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Clear crystalline mineral used in jewelry and tools."
+  },
+  {
+    "id": "oak_wood",
+    "name": "Oak Wood",
+    "rarity": "uncommon",
+    "category": "materials",
+    "tradable": true,
+    "description": "Strong hardwood from ancient oak trees, prized for durability."
+  },
+  {
+    "id": "iron_ingot",
+    "name": "Iron Ingot",
+    "rarity": "uncommon",
+    "category": "materials",
+    "tradable": true,
+    "description": "Refined iron ready for crafting weapons and tools.",
+    "recipe": [
+      {"id": "iron_ore", "qty": 3},
+      {"id": "coal", "qty": 1}
+    ]
+  },
+  {
+    "id": "copper_ingot",
+    "name": "Copper Ingot",
+    "rarity": "uncommon",
+    "category": "materials",
+    "tradable": true,
+    "description": "Pure copper ingot with excellent conductivity properties.",
+    "recipe": [
+      {"id": "copper_ore", "qty": 3},
+      {"id": "coal", "qty": 1}
+    ]
+  },
+  {
+    "id": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "rarity": "uncommon",
+    "category": "materials",
+    "tradable": true,
+    "description": "Alloy of copper and tin, stronger than pure copper.",
+    "recipe": [
+      {"id": "copper_ingot", "qty": 3},
+      {"id": "tin_ore", "qty": 1}
+    ]
+  },
+  {
+    "id": "glass",
+    "name": "Glass",
+    "rarity": "uncommon",
+    "category": "materials",
+    "tradable": true,
+    "description": "Transparent material created by melting sand at high temperatures.",
+    "recipe": [
+      {"id": "sand", "qty": 5},
+      {"id": "ash", "qty": 2}
+    ]
+  },
+  {
+    "id": "steel_ingot",
+    "name": "Steel Ingot",
+    "rarity": "rare",
+    "category": "materials",
+    "tradable": true,
+    "description": "Superior iron-carbon alloy with exceptional strength.",
+    "recipe": [
+      {"id": "iron_ingot", "qty": 3},
+      {"id": "charcoal", "qty": 2}
+    ]
+  },
+  {
+    "id": "silver_ore",
+    "name": "Silver Ore",
+    "rarity": "rare",
+    "category": "materials",
+    "tradable": true,
+    "description": "Precious white metal ore with magical conductivity."
+  },
+  {
+    "id": "gold_ore",
+    "name": "Gold Ore",
+    "rarity": "rare",
+    "category": "materials",
+    "tradable": true,
+    "description": "Noble metal ore that never tarnishes, highly valued."
+  },
+  {
+    "id": "mithril_ore",
+    "name": "Mithril Ore",
+    "rarity": "epic",
+    "category": "materials",
+    "tradable": true,
+    "description": "Legendary silver-blue metal lighter than steel but twice as strong."
+  },
+  {
+    "id": "adamantine_ore",
+    "name": "Adamantine Ore",
+    "rarity": "legendary",
+    "category": "materials",
+    "tradable": true,
+    "description": "The hardest known metal, said to be forged in the hearts of stars."
+  },
+  {
+    "id": "orichalcum_ore",
+    "name": "Orichalcum Ore",
+    "rarity": "mythic",
+    "category": "materials",
+    "tradable": true,
+    "description": "Mystical golden metal that resonates with magical energies.",
+    "bossOnly": true
+  },
+  {
+    "id": "primordial_essence_fire",
+    "name": "Primordial Essence of Fire",
+    "rarity": "transcendent",
+    "category": "materials",
+    "tradable": false,
+    "description": "The fundamental essence of all fire, burning with the heat of creation itself.",
+    "bossOnly": true,
+    "premiumNeeded": true
+  },
+  {
+    "id": "primordial_essence_water",
+    "name": "Primordial Essence of Water",
+    "rarity": "transcendent",
+    "category": "materials",
+    "tradable": false,
+    "description": "The purest form of water essence, flowing with infinite potential.",
+    "bossOnly": true,
+    "premiumNeeded": true
+  },
+  {
+    "id": "primordial_essence_earth",
+    "name": "Primordial Essence of Earth",
+    "rarity": "transcendent",
+    "category": "materials",
+    "tradable": false,
+    "description": "The bedrock essence of stability and endurance from the world's foundation.",
+    "bossOnly": true,
+    "premiumNeeded": true
+  },
+  {
+    "id": "primordial_essence_air",
+    "name": "Primordial Essence of Air",
+    "rarity": "transcendent",
+    "category": "materials",
+    "tradable": false,
+    "description": "The breath of the primordial winds that shaped the first storms.",
+    "bossOnly": true,
+    "premiumNeeded": true
+  },
+  {
+    "id": "primordial_essence_light",
+    "name": "Primordial Essence of Light",
+    "rarity": "transcendent",
+    "category": "materials",
+    "tradable": false,
+    "description": "The first light that banished the primordial darkness.",
+    "bossOnly": true,
+    "premiumNeeded": true
+  },
+  {
+    "id": "wooden_sword",
+    "name": "Wooden Sword",
+    "rarity": "common",
+    "category": "equipment",
+    "equipSlot": "weapon",
+    "tradable": true,
+    "description": "A simple training sword made from sturdy wood.",
+    "recipe": [
+      {"id": "wood", "qty": 3}
+    ]
+  },
+  {
+    "id": "stone_axe",
+    "name": "Stone Axe",
+    "rarity": "common",
+    "category": "equipment",
+    "equipSlot": "weapon",
+    "tradable": true,
+    "description": "Primitive axe with a stone head bound to a wooden handle.",
+    "recipe": [
+      {"id": "stone", "qty": 2},
+      {"id": "wood", "qty": 1}
+    ]
+  },
+  {
+    "id": "leather_armor",
+    "name": "Leather Armor",
+    "rarity": "common",
+    "category": "equipment",
+    "equipSlot": "armor",
+    "tradable": true,
+    "description": "Basic chest protection made from treated animal hide.",
+    "recipe": [
+      {"id": "leather", "qty": 5}
+    ]
+  },
+  {
+    "id": "cloth_robes",
+    "name": "Cloth Robes",
+    "rarity": "common",
+    "category": "equipment",
+    "equipSlot": "armor",
+    "tradable": true,
+    "description": "Simple robes providing minimal protection but good mobility.",
+    "recipe": [
+      {"id": "cloth", "qty": 4}
+    ]
+  },
+  {
+    "id": "iron_sword",
+    "name": "Iron Sword",
+    "rarity": "uncommon",
+    "category": "equipment",
+    "equipSlot": "weapon",
+    "tradable": true,
+    "description": "Well-balanced sword forged from solid iron.",
+    "recipe": [
+      {"id": "iron_ingot", "qty": 2},
+      {"id": "wood", "qty": 1}
+    ]
+  },
+  {
+    "id": "steel_sword",
+    "name": "Steel Sword",
+    "rarity": "rare",
+    "category": "equipment",
+    "equipSlot": "weapon",
+    "tradable": true,
+    "description": "Superior blade forged from hardened steel.",
+    "recipe": [
+      {"id": "steel_ingot", "qty": 3},
+      {"id": "oak_wood", "qty": 1}
+    ]
+  },
+  {
+    "id": "excalibur",
+    "name": "Excalibur",
+    "rarity": "legendary",
+    "category": "equipment",
+    "equipSlot": "weapon",
+    "tradable": true,
+    "description": "The legendary sword of kings, glowing with divine light.",
+    "recipe": [
+      {"id": "adamantine_ore", "qty": 5},
+      {"id": "divine_crystal", "qty": 1},
+      {"id": "ancient_blessing", "qty": 1}
+    ],
+    "premiumNeeded": true
+  },
+  {
+    "id": "bicycle",
+    "name": "Bicycle",
+    "rarity": "common",
+    "category": "vehicles",
+    "equipSlot": "vehicle",
+    "vehicleSpeedMultiplier": 2.0,
+    "tradable": true,
+    "description": "A simple two-wheeled vehicle powered by pedaling.",
+    "recipe": [
+      {"id": "iron_ingot", "qty": 3},
+      {"id": "rubber", "qty": 2}
+    ]
+  },
+  {
+    "id": "motorcycle",
+    "name": "Motorcycle",
+    "rarity": "uncommon",
+    "category": "vehicles",
+    "equipSlot": "vehicle",
+    "vehicleSpeedMultiplier": 4.0,
+    "tradable": true,
+    "description": "Fast two-wheeled motorized vehicle for quick travel.",
+    "recipe": [
+      {"id": "steel_ingot", "qty": 5},
+      {"id": "engine_parts", "qty": 1},
+      {"id": "rubber", "qty": 2}
+    ]
+  },
+  {
+    "id": "flying_carpet",
+    "name": "Flying Carpet",
+    "rarity": "epic",
+    "category": "vehicles",
+    "equipSlot": "vehicle",
+    "vehicleSpeedMultiplier": 6.0,
+    "tradable": true,
+    "description": "Enchanted carpet that soars through the skies with magical power.",
+    "recipe": [
+      {"id": "enchanted_silk", "qty": 10},
+      {"id": "levitation_crystal", "qty": 3},
+      {"id": "wind_essence", "qty": 5}
+    ]
+  },
+  {
+    "id": "reality_walker",
+    "name": "Reality Walker",
+    "rarity": "transcendent",
+    "category": "vehicles",
+    "equipSlot": "vehicle",
+    "vehicleSpeedMultiplier": 20.0,
+    "tradable": false,
+    "description": "Transcendent vehicle that steps between dimensions, bending reality itself.",
+    "recipe": [
+      {"id": "void_essence", "qty": 100},
+      {"id": "reality_fragment", "qty": 50},
+      {"id": "primordial_essence_air", "qty": 1},
+      {"id": "primordial_essence_earth", "qty": 1}
+    ],
+    "premiumNeeded": true
+  },
+  {
+    "id": "health_potion",
+    "name": "Health Potion",
+    "rarity": "common",
+    "category": "consumables",
+    "tradable": true,
+    "description": "Red liquid that quickly restores health when consumed.",
+    "recipe": [
+      {"id": "red_herb", "qty": 2},
+      {"id": "water", "qty": 1}
+    ]
+  },
+  {
+    "id": "mana_potion",
+    "name": "Mana Potion",
+    "rarity": "common",
+    "category": "consumables",
+    "tradable": true,
+    "description": "Blue elixir that restores magical energy.",
+    "recipe": [
+      {"id": "blue_herb", "qty": 2},
+      {"id": "water", "qty": 1}
+    ]
+  },
+  {
+    "id": "bread",
+    "name": "Bread",
+    "rarity": "common",
+    "category": "consumables",
+    "tradable": true,
+    "description": "Basic sustenance that reduces hunger.",
+    "recipe": [
+      {"id": "wheat", "qty": 3},
+      {"id": "water", "qty": 1}
+    ]
+  },
+  {
+    "id": "elixir_of_immortality",
+    "name": "Elixir of Immortality",
+    "rarity": "transcendent",
+    "category": "consumables",
+    "tradable": false,
+    "description": "The ultimate potion granting eternal life to those brave enough to drink it.",
+    "recipe": [
+      {"id": "primordial_essence_water", "qty": 1},
+      {"id": "phoenix_tears", "qty": 10},
+      {"id": "nectar_of_gods", "qty": 5},
+      {"id": "eternal_spring_water", "qty": 100}
+    ],
+    "premiumNeeded": true
+  },
+  {
+    "id": "stone_pickaxe",
+    "name": "Stone Pickaxe",
+    "rarity": "common",
+    "category": "tools",
+    "equipSlot": "tool",
+    "tradable": true,
+    "description": "Basic mining tool with a stone head.",
+    "recipe": [
+      {"id": "stone", "qty": 3},
+      {"id": "wood", "qty": 2}
+    ]
+  },
+  {
+    "id": "iron_pickaxe",
+    "name": "Iron Pickaxe",
+    "rarity": "uncommon",
+    "category": "tools",
+    "equipSlot": "tool",
+    "tradable": true,
+    "description": "Sturdy pickaxe that can mine harder materials.",
+    "recipe": [
+      {"id": "iron_ingot", "qty": 3},
+      {"id": "oak_wood", "qty": 2}
+    ]
+  },
+  {
+    "id": "reality_forge",
+    "name": "The Reality Forge",
+    "rarity": "transcendent",
+    "category": "tools",
+    "equipSlot": "tool",
+    "tradable": false,
+    "description": "The ultimate crafting tool capable of forging reality itself. The culmination of all crafting knowledge.",
+    "recipe": [
+      {"id": "primordial_essence_fire", "qty": 1},
+      {"id": "primordial_essence_water", "qty": 1},
+      {"id": "primordial_essence_earth", "qty": 1},
+      {"id": "primordial_essence_air", "qty": 1},
+      {"id": "primordial_essence_light", "qty": 1},
+      {"id": "primordial_essence_shadow", "qty": 1},
+      {"id": "primordial_essence_time", "qty": 1},
+      {"id": "primordial_essence_space", "qty": 1},
+      {"id": "primordial_essence_life", "qty": 1},
+      {"id": "primordial_essence_death", "qty": 1},
+      {"id": "primordial_essence_order", "qty": 1},
+      {"id": "primordial_essence_chaos", "qty": 1},
+      {"id": "cosmic_anvil", "qty": 1},
+      {"id": "stellar_hammer", "qty": 1},
+      {"id": "void_bellows", "qty": 1}
+    ],
+    "premiumNeeded": true
+  },
+  {
+    "id": "orb_of_infinite_knowledge",
+    "name": "Orb of Infinite Knowledge",
+    "rarity": "legendary",
+    "category": "artifacts",
+    "tradable": true,
+    "description": "Ancient artifact containing the accumulated wisdom of lost civilizations.",
+    "bossOnly": true
+  },
+  {
+    "id": "gear",
+    "name": "Gear",
+    "rarity": "common",
+    "category": "components",
+    "tradable": true,
+    "description": "Mechanical component used in various contraptions.",
+    "recipe": [
+      {"id": "iron_ingot", "qty": 1}
+    ]
+  },
+  {
+    "id": "spring",
+    "name": "Spring",
+    "rarity": "common",
+    "category": "components",
+    "tradable": true,
+    "description": "Coiled metal component that stores mechanical energy.",
+    "recipe": [
+      {"id": "steel_ingot", "qty": 1}
+    ]
+  },
+  {
+    "id": "crystal_lens",
+    "name": "Crystal Lens",
+    "rarity": "rare",
+    "category": "components",
+    "tradable": true,
+    "description": "Precisely cut crystal that focuses magical energy.",
+    "recipe": [
+      {"id": "magic_crystal", "qty": 1},
+      {"id": "diamond_dust", "qty": 2}
+    ]
+  },
+  {
+    "id": "quantum_processor",
+    "name": "Quantum Processor",
+    "rarity": "mythic",
+    "category": "components",
+    "tradable": true,
+    "description": "Advanced component that processes information at the quantum level.",
+    "recipe": [
+      {"id": "quantum_crystal", "qty": 5},
+      {"id": "exotic_matter", "qty": 10},
+      {"id": "void_circuits", "qty": 3}
+    ],
+    "bossOnly": true
+  },
+  {
+    "id": "red_herb",
+    "name": "Red Herb",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Crimson healing herb found in warm climates."
+  },
+  {
+    "id": "blue_herb",
+    "name": "Blue Herb",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Azure herb that enhances magical energy."
+  },
+  {
+    "id": "wheat",
+    "name": "Wheat",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Golden grain used for baking and brewing."
+  },
+  {
+    "id": "rubber",
+    "name": "Rubber",
+    "rarity": "uncommon",
+    "category": "materials",
+    "tradable": true,
+    "description": "Flexible material harvested from rubber trees."
+  },
+  {
+    "id": "engine_parts",
+    "name": "Engine Parts",
+    "rarity": "uncommon",
+    "category": "components",
+    "tradable": true,
+    "description": "Mechanical components needed to build engines.",
+    "recipe": [
+      {"id": "steel_ingot", "qty": 5},
+      {"id": "gear", "qty": 10},
+      {"id": "spring", "qty": 5}
+    ]
+  },
+  {
+    "id": "enchanted_silk",
+    "name": "Enchanted Silk",
+    "rarity": "epic",
+    "category": "materials",
+    "tradable": true,
+    "description": "Luxurious silk woven with magical threads."
+  },
+  {
+    "id": "levitation_crystal",
+    "name": "Levitation Crystal",
+    "rarity": "epic",
+    "category": "materials",
+    "tradable": true,
+    "description": "Crystal that naturally defies gravity."
+  },
+  {
+    "id": "wind_essence",
+    "name": "Wind Essence",
+    "rarity": "rare",
+    "category": "materials",
+    "tradable": true,
+    "description": "Captured essence of powerful winds."
+  },
+  {
+    "id": "void_essence",
+    "name": "Void Essence",
+    "rarity": "legendary",
+    "category": "materials",
+    "tradable": true,
+    "description": "Dark essence from the spaces between realities.",
+    "bossOnly": true
+  },
+  {
+    "id": "reality_fragment",
+    "name": "Reality Fragment",
+    "rarity": "mythic",
+    "category": "materials",
+    "tradable": true,
+    "description": "Crystallized pieces of reality itself.",
+    "bossOnly": true
+  },
+  {
+    "id": "divine_crystal",
+    "name": "Divine Crystal",
+    "rarity": "legendary",
+    "category": "materials",
+    "tradable": true,
+    "description": "Crystal blessed by divine powers.",
+    "bossOnly": true
+  },
+  {
+    "id": "ancient_blessing",
+    "name": "Ancient Blessing",
+    "rarity": "legendary",
+    "category": "materials",
+    "tradable": false,
+    "description": "Sacred blessing from ancient gods.",
+    "bossOnly": true
+  },
+  {
+    "id": "phoenix_tears",
+    "name": "Phoenix Tears",
+    "rarity": "mythic",
+    "category": "materials",
+    "tradable": true,
+    "description": "Crystallized tears of the immortal phoenix.",
+    "bossOnly": true
+  },
+  {
+    "id": "nectar_of_gods",
+    "name": "Nectar of Gods",
+    "rarity": "mythic",
+    "category": "materials",
+    "tradable": true,
+    "description": "Divine drink that grants immortality.",
+    "bossOnly": true
+  },
+  {
+    "id": "eternal_spring_water",
+    "name": "Eternal Spring Water",
+    "rarity": "legendary",
+    "category": "materials",
+    "tradable": true,
+    "description": "Water from springs that never run dry."
+  },
+  {
+    "id": "magic_crystal",
+    "name": "Magic Crystal",
+    "rarity": "rare",
+    "category": "materials",
+    "tradable": true,
+    "description": "Crystal infused with pure magical energy."
+  },
+  {
+    "id": "diamond_dust",
+    "name": "Diamond Dust",
+    "rarity": "rare",
+    "category": "materials",
+    "tradable": true,
+    "description": "Finest particles of diamond, used for precision work."
+  },
+  {
+    "id": "quantum_crystal",
+    "name": "Quantum Crystal",
+    "rarity": "mythic",
+    "category": "materials",
+    "tradable": true,
+    "description": "Crystal that exists in multiple states simultaneously.",
+    "bossOnly": true
+  },
+  {
+    "id": "exotic_matter",
+    "name": "Exotic Matter",
+    "rarity": "legendary",
+    "category": "materials",
+    "tradable": true,
+    "description": "Matter with properties that defy conventional physics.",
+    "bossOnly": true
+  },
+  {
+    "id": "void_circuits",
+    "name": "Void Circuits",
+    "rarity": "legendary",
+    "category": "components",
+    "tradable": true,
+    "description": "Circuits that channel energy through dimensional voids.",
+    "recipe": [
+      {"id": "void_essence", "qty": 5},
+      {"id": "quantum_crystal", "qty": 2}
+    ]
+  },
+  {
+    "id": "cosmic_anvil",
+    "name": "Cosmic Anvil",
+    "rarity": "mythic",
+    "category": "tools",
+    "equipSlot": "tool",
+    "tradable": false,
+    "description": "Anvil forged from the core of a collapsed star.",
+    "bossOnly": true,
+    "premiumNeeded": true
+  },
+  {
+    "id": "stellar_hammer",
+    "name": "Stellar Hammer",
+    "rarity": "mythic",
+    "category": "tools",
+    "equipSlot": "tool",
+    "tradable": false,
+    "description": "Hammer that channels the power of stellar fusion.",
+    "bossOnly": true,
+    "premiumNeeded": true
+  },
+  {
+    "id": "void_bellows",
+    "name": "Void Bellows",
+    "rarity": "mythic",
+    "category": "tools",
+    "equipSlot": "tool",
+    "tradable": false,
+    "description": "Bellows that breathe the cold wind of deep space.",
+    "bossOnly": true,
+    "premiumNeeded": true
+  },
+  {
+    "id": "primordial_essence_shadow",
+    "name": "Primordial Essence of Shadow",
+    "rarity": "transcendent",
+    "category": "materials",
+    "tradable": false,
+    "description": "The primordial darkness that existed before light.",
+    "bossOnly": true,
+    "premiumNeeded": true
+  },
+  {
+    "id": "primordial_essence_time",
+    "name": "Primordial Essence of Time",
+    "rarity": "transcendent",
+    "category": "materials",
+    "tradable": false,
+    "description": "The essence of time itself, flowing through all moments.",
+    "bossOnly": true,
+    "premiumNeeded": true
+  },
+  {
+    "id": "primordial_essence_space",
+    "name": "Primordial Essence of Space",
+    "rarity": "transcendent",
+    "category": "materials",
+    "tradable": false,
+    "description": "The fabric of space that holds all existence together.",
+    "bossOnly": true,
+    "premiumNeeded": true
+  },
+  {
+    "id": "primordial_essence_life",
+    "name": "Primordial Essence of Life",
+    "rarity": "transcendent",
+    "category": "materials",
+    "tradable": false,
+    "description": "The spark of life that animates all living beings.",
+    "bossOnly": true,
+    "premiumNeeded": true
+  },
+  {
+    "id": "primordial_essence_death",
+    "name": "Primordial Essence of Death",
+    "rarity": "transcendent",
+    "category": "materials",
+    "tradable": false,
+    "description": "The inevitability of ending that gives life meaning.",
+    "bossOnly": true,
+    "premiumNeeded": true
+  },
+  {
+    "id": "primordial_essence_order",
+    "name": "Primordial Essence of Order",
+    "rarity": "transcendent",
+    "category": "materials",
+    "tradable": false,
+    "description": "The fundamental laws that govern reality.",
+    "bossOnly": true,
+    "premiumNeeded": true
+  },
+  {
+    "id": "primordial_essence_chaos",
+    "name": "Primordial Essence of Chaos",
+    "rarity": "transcendent",
+    "category": "materials",
+    "tradable": false,
+    "description": "The unpredictable force that breaks all patterns.",
+    "bossOnly": true,
+    "premiumNeeded": true
+  },
+  {
+    "id": "stick",
+    "name": "Stick",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Simple wooden stick, the building block of many tools."
+  },
+  {
+    "id": "rope",
+    "name": "Rope",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Twisted fibers forming a strong binding material.",
+    "recipe": [
+      {"id": "hemp_fiber", "qty": 5}
+    ]
+  },
+  {
+    "id": "nail",
+    "name": "Nail",
+    "rarity": "common",
+    "category": "components",
+    "tradable": true,
+    "description": "Small metal fastener for joining materials.",
+    "recipe": [
+      {"id": "iron_ingot", "qty": 1}
+    ]
+  },
+  {
+    "id": "screw",
+    "name": "Screw",
+    "rarity": "common",
+    "category": "components",
+    "tradable": true,
+    "description": "Threaded fastener for secure connections.",
+    "recipe": [
+      {"id": "iron_ingot", "qty": 1}
+    ]
+  },
+  {
+    "id": "bolt",
+    "name": "Bolt",
+    "rarity": "uncommon",
+    "category": "components",
+    "tradable": true,
+    "description": "Heavy-duty fastener for structural connections.",
+    "recipe": [
+      {"id": "steel_ingot", "qty": 1}
+    ]
+  },
+  {
+    "id": "wire",
+    "name": "Wire",
+    "rarity": "uncommon",
+    "category": "components",
+    "tradable": true,
+    "description": "Thin metal conductor for electrical applications.",
+    "recipe": [
+      {"id": "copper_ingot", "qty": 1}
+    ]
+  },
+  {
+    "id": "battery",
+    "name": "Battery",
+    "rarity": "uncommon",
+    "category": "components",
+    "tradable": true,
+    "description": "Energy storage device for electrical systems.",
+    "recipe": [
+      {"id": "zinc_ore", "qty": 3},
+      {"id": "copper_ingot", "qty": 1},
+      {"id": "acid", "qty": 1}
+    ]
+  },
+  {
+    "id": "motor",
+    "name": "Motor",
+    "rarity": "rare",
+    "category": "components",
+    "tradable": true,
+    "description": "Electric motor that converts electricity to motion.",
+    "recipe": [
+      {"id": "wire", "qty": 10},
+      {"id": "magnet", "qty": 2},
+      {"id": "steel_ingot", "qty": 3}
+    ]
+  },
+  {
+    "id": "acid",
+    "name": "Acid",
+    "rarity": "uncommon",
+    "category": "materials",
+    "tradable": true,
+    "description": "Corrosive liquid used in various chemical processes."
+  },
+  {
+    "id": "magnet",
+    "name": "Magnet",
+    "rarity": "uncommon",
+    "category": "materials",
+    "tradable": true,
+    "description": "Natural or artificial material that attracts iron."
+  },
+  {
+    "id": "simple_potion",
+    "name": "Simple Potion",
+    "rarity": "common",
+    "category": "consumables",
+    "tradable": true,
+    "description": "Basic alchemical mixture with mild effects.",
+    "recipe": [
+      {"id": "water", "qty": 1},
+      {"id": "red_herb", "qty": 1}
+    ]
+  },
+  {
+    "id": "strength_potion",
+    "name": "Strength Potion",
+    "rarity": "uncommon",
+    "category": "consumables",
+    "tradable": true,
+    "description": "Enhances physical strength for a limited time.",
+    "recipe": [
+      {"id": "simple_potion", "qty": 1},
+      {"id": "bear_claw", "qty": 2}
+    ]
+  },
+  {
+    "id": "invisibility_potion",
+    "name": "Invisibility Potion",
+    "rarity": "rare",
+    "category": "consumables",
+    "tradable": true,
+    "description": "Grants temporary invisibility to the drinker.",
+    "recipe": [
+      {"id": "ghost_essence", "qty": 3},
+      {"id": "clear_water", "qty": 2},
+      {"id": "moonstone_dust", "qty": 1}
+    ]
+  },
+  {
+    "id": "bear_claw",
+    "name": "Bear Claw",
+    "rarity": "uncommon",
+    "category": "materials",
+    "tradable": true,
+    "description": "Sharp claw from a powerful bear."
+  },
+  {
+    "id": "ghost_essence",
+    "name": "Ghost Essence",
+    "rarity": "rare",
+    "category": "materials",
+    "tradable": true,
+    "description": "Ethereal essence from spectral beings."
+  },
+  {
+    "id": "clear_water",
+    "name": "Clear Water",
+    "rarity": "uncommon",
+    "category": "materials",
+    "tradable": true,
+    "description": "Perfectly pure water from mountain springs."
+  },
+  {
+    "id": "moonstone_dust",
+    "name": "Moonstone Dust",
+    "rarity": "rare",
+    "category": "materials",
+    "tradable": true,
+    "description": "Powdered moonstone that glows with lunar energy."
+  },
+  {
+    "id": "leather_boots",
+    "name": "Leather Boots",
+    "rarity": "common",
+    "category": "equipment",
+    "equipSlot": "boots",
+    "tradable": true,
+    "description": "Sturdy footwear for protection and comfort.",
+    "recipe": [
+      {"id": "leather", "qty": 3}
+    ]
+  },
+  {
+    "id": "iron_helmet",
+    "name": "Iron Helmet",
+    "rarity": "uncommon",
+    "category": "equipment",
+    "equipSlot": "helmet",
+    "tradable": true,
+    "description": "Protective headgear forged from iron.",
+    "recipe": [
+      {"id": "iron_ingot", "qty": 2}
+    ]
+  },
+  {
+    "id": "steel_gauntlets",
+    "name": "Steel Gauntlets",
+    "rarity": "rare",
+    "category": "equipment",
+    "equipSlot": "gloves",
+    "tradable": true,
+    "description": "Armored gloves providing excellent hand protection.",
+    "recipe": [
+      {"id": "steel_ingot", "qty": 2},
+      {"id": "leather", "qty": 1}
+    ]
+  },
+  {
+    "id": "silver_ring",
+    "name": "Silver Ring",
+    "rarity": "rare",
+    "category": "equipment",
+    "equipSlot": "ring",
+    "tradable": true,
+    "description": "Elegant ring crafted from pure silver.",
+    "recipe": [
+      {"id": "silver_ingot", "qty": 1}
+    ]
+  },
+  {
+    "id": "gold_necklace",
+    "name": "Gold Necklace",
+    "rarity": "epic",
+    "category": "equipment",
+    "equipSlot": "necklace",
+    "tradable": true,
+    "description": "Luxurious necklace made from finest gold.",
+    "recipe": [
+      {"id": "gold_ingot", "qty": 2}
+    ]
+  },
+  {
+    "id": "wooden_shield",
+    "name": "Wooden Shield",
+    "rarity": "common",
+    "category": "equipment",
+    "equipSlot": "shield",
+    "tradable": true,
+    "description": "Basic shield carved from sturdy wood.",
+    "recipe": [
+      {"id": "oak_wood", "qty": 3}
+    ]
+  },
+  {
+    "id": "silver_ingot",
+    "name": "Silver Ingot",
+    "rarity": "rare",
+    "category": "materials",
+    "tradable": true,
+    "description": "Refined silver with excellent magical conductivity.",
+    "recipe": [
+      {"id": "silver_ore", "qty": 3},
+      {"id": "coal", "qty": 1}
+    ]
+  },
+  {
+    "id": "gold_ingot",
+    "name": "Gold Ingot",
+    "rarity": "epic",
+    "category": "materials",
+    "tradable": true,
+    "description": "Pure gold ingot that never tarnishes.",
+    "recipe": [
+      {"id": "gold_ore", "qty": 3},
+      {"id": "coal", "qty": 2}
+    ]
+  },
+  {
+    "id": "horse",
+    "name": "Horse",
+    "rarity": "uncommon",
+    "category": "vehicles",
+    "equipSlot": "vehicle",
+    "vehicleSpeedMultiplier": 3.0,
+    "tradable": true,
+    "description": "Noble steed for swift travel across land."
+  },
+  {
+    "id": "cart",
+    "name": "Cart",
+    "rarity": "common",
+    "category": "vehicles",
+    "equipSlot": "vehicle",
+    "vehicleSpeedMultiplier": 1.5,
+    "tradable": true,
+    "description": "Simple wheeled vehicle for transporting goods.",
+    "recipe": [
+      {"id": "wood", "qty": 10},
+      {"id": "iron_ingot", "qty": 4}
+    ]
+  },
+  {
+    "id": "boat",
+    "name": "Boat",
+    "rarity": "uncommon",
+    "category": "vehicles",
+    "equipSlot": "vehicle",
+    "vehicleSpeedMultiplier": 2.5,
+    "tradable": true,
+    "description": "Watercraft for traversing rivers and lakes.",
+    "recipe": [
+      {"id": "oak_wood", "qty": 15},
+      {"id": "rope", "qty": 5}
+    ]
+  },
+  {
+    "id": "airship",
+    "name": "Airship",
+    "rarity": "legendary",
+    "category": "vehicles",
+    "equipSlot": "vehicle",
+    "vehicleSpeedMultiplier": 8.0,
+    "tradable": true,
+    "description": "Magnificent flying vessel powered by magic crystals.",
+    "recipe": [
+      {"id": "enchanted_wood", "qty": 50},
+      {"id": "levitation_crystal", "qty": 10},
+      {"id": "wind_essence", "qty": 20}
+    ],
+    "premiumNeeded": true
+  },
+  {
+    "id": "enchanted_wood",
+    "name": "Enchanted Wood",
+    "rarity": "epic",
+    "category": "materials",
+    "tradable": true,
+    "description": "Wood infused with magical properties."
+  },
+  {
+    "id": "iron_shovel",
+    "name": "Iron Shovel",
+    "rarity": "uncommon",
+    "category": "tools",
+    "equipSlot": "tool",
+    "tradable": true,
+    "description": "Sturdy digging tool for excavation work.",
+    "recipe": [
+      {"id": "iron_ingot", "qty": 2},
+      {"id": "oak_wood", "qty": 1}
+    ]
+  },
+  {
+    "id": "steel_hammer",
+    "name": "Steel Hammer",
+    "rarity": "rare",
+    "category": "tools",
+    "equipSlot": "tool",
+    "tradable": true,
+    "description": "Heavy-duty hammer for construction and smithing.",
+    "recipe": [
+      {"id": "steel_ingot", "qty": 3},
+      {"id": "oak_wood", "qty": 1}
+    ]
+  },
+  {
+    "id": "enchanted_saw",
+    "name": "Enchanted Saw",
+    "rarity": "epic",
+    "category": "tools",
+    "equipSlot": "tool",
+    "tradable": true,
+    "description": "Magical saw that cuts through any material.",
+    "recipe": [
+      {"id": "mithril_ingot", "qty": 2},
+      {"id": "enchanted_wood", "qty": 1},
+      {"id": "sharpness_rune", "qty": 1}
+    ]
+  },
+  {
+    "id": "mithril_ingot",
+    "name": "Mithril Ingot",
+    "rarity": "epic",
+    "category": "materials",
+    "tradable": true,
+    "description": "Refined mithril with incredible strength-to-weight ratio.",
+    "recipe": [
+      {"id": "mithril_ore", "qty": 5},
+      {"id": "starfire", "qty": 1}
+    ]
+  },
+  {
+    "id": "starfire",
+    "name": "Starfire",
+    "rarity": "legendary",
+    "category": "materials",
+    "tradable": true,
+    "description": "Eternal flame that burns with stellar intensity.",
+    "bossOnly": true
+  },
+  {
+    "id": "sharpness_rune",
+    "name": "Sharpness Rune",
+    "rarity": "rare",
+    "category": "materials",
+    "tradable": true,
+    "description": "Magical rune that enhances cutting edges."
+  },
+  {
+    "id": "crown_of_kings",
+    "name": "Crown of Kings",
+    "rarity": "legendary",
+    "category": "artifacts",
+    "tradable": true,
+    "description": "Ancient crown that grants authority over kingdoms.",
+    "bossOnly": true
+  },
+  {
+    "id": "staff_of_power",
+    "name": "Staff of Power",
+    "rarity": "legendary",
+    "category": "artifacts",
+    "tradable": true,
+    "description": "Arcane staff that amplifies magical abilities tenfold.",
+    "bossOnly": true
+  },
+  {
+    "id": "ring_of_wishes",
+    "name": "Ring of Wishes",
+    "rarity": "mythic",
+    "category": "artifacts",
+    "tradable": false,
+    "description": "Legendary ring that grants three wishes to its bearer.",
+    "bossOnly": true,
+    "premiumNeeded": true
+  },
+  {
+    "id": "apple",
+    "name": "Apple",
+    "rarity": "common",
+    "category": "consumables",
+    "tradable": true,
+    "description": "Fresh fruit that restores a small amount of health."
+  },
+  {
+    "id": "cheese",
+    "name": "Cheese",
+    "rarity": "common",
+    "category": "consumables",
+    "tradable": true,
+    "description": "Aged dairy product with lasting nutritional value."
+  },
+  {
+    "id": "meat",
+    "name": "Meat",
+    "rarity": "common",
+    "category": "consumables",
+    "tradable": true,
+    "description": "Protein-rich food that provides substantial nourishment."
+  },
+  {
+    "id": "wine",
+    "name": "Wine",
+    "rarity": "uncommon",
+    "category": "consumables",
+    "tradable": true,
+    "description": "Fermented grape beverage that enhances social interactions."
+  },
+  {
+    "id": "energy_drink",
+    "name": "Energy Drink",
+    "rarity": "uncommon",
+    "category": "consumables",
+    "tradable": true,
+    "description": "Stimulating beverage that temporarily increases speed."
+  },
+  {
+    "id": "wisdom_scroll",
+    "name": "Scroll of Wisdom",
+    "rarity": "rare",
+    "category": "consumables",
+    "tradable": true,
+    "description": "Ancient scroll that permanently increases intelligence."
+  },
+  {
+    "id": "strength_scroll",
+    "name": "Scroll of Strength",
+    "rarity": "rare",
+    "category": "consumables",
+    "tradable": true,
+    "description": "Magical scroll that permanently enhances physical power."
+  },
+  {
+    "id": "teleport_scroll",
+    "name": "Scroll of Teleportation",
+    "rarity": "epic",
+    "category": "consumables",
+    "tradable": true,
+    "description": "Instantly transports the user to any known location."
+  },
+  {
+    "id": "resurrection_scroll",
+    "name": "Scroll of Resurrection",
+    "rarity": "legendary",
+    "category": "consumables",
+    "tradable": true,
+    "description": "Brings back fallen allies from the brink of death."
+  },
+  {
+    "id": "crystal_ball",
+    "name": "Crystal Ball",
+    "rarity": "epic",
+    "category": "tools",
+    "equipSlot": "tool",
+    "tradable": true,
+    "description": "Mystical sphere that reveals hidden knowledge.",
+    "recipe": [
+      {"id": "perfect_crystal", "qty": 1},
+      {"id": "divination_essence", "qty": 5}
+    ]
+  },
+  {
+    "id": "perfect_crystal",
+    "name": "Perfect Crystal",
+    "rarity": "rare",
+    "category": "materials",
+    "tradable": true,
+    "description": "Flawless crystal with perfect clarity."
+  },
+  {
+    "id": "divination_essence",
+    "name": "Divination Essence",
+    "rarity": "epic",
+    "category": "materials",
+    "tradable": true,
+    "description": "Essence that enhances foresight and prophecy."
+  },
+  {
+    "id": "fishing_rod",
+    "name": "Fishing Rod",
+    "rarity": "common",
+    "category": "tools",
+    "equipSlot": "tool",
+    "tradable": true,
+    "description": "Simple rod for catching fish from water.",
+    "recipe": [
+      {"id": "stick", "qty": 1},
+      {"id": "string", "qty": 1},
+      {"id": "hook", "qty": 1}
+    ]
+  },
+  {
+    "id": "string",
+    "name": "String",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Thin cord used for various crafting purposes."
+  },
+  {
+    "id": "hook",
+    "name": "Hook",
+    "rarity": "common",
+    "category": "components",
+    "tradable": true,
+    "description": "Small curved metal piece for catching fish.",
+    "recipe": [
+      {"id": "iron_ingot", "qty": 1}
+    ]
+  },
+  {
+    "id": "net",
+    "name": "Net",
+    "rarity": "uncommon",
+    "category": "tools",
+    "equipSlot": "tool",
+    "tradable": true,
+    "description": "Woven mesh for catching multiple fish at once.",
+    "recipe": [
+      {"id": "rope", "qty": 10}
+    ]
+  },
+  {
+    "id": "compass",
+    "name": "Compass",
+    "rarity": "uncommon",
+    "category": "tools",
+    "equipSlot": "tool",
+    "tradable": true,
+    "description": "Navigation instrument that always points north.",
+    "recipe": [
+      {"id": "magnet", "qty": 1},
+      {"id": "glass", "qty": 1},
+      {"id": "bronze_ingot", "qty": 1}
+    ]
+  },
+  {
+    "id": "lantern",
+    "name": "Lantern",
+    "rarity": "uncommon",
+    "category": "tools",
+    "equipSlot": "tool",
+    "tradable": true,
+    "description": "Portable light source for dark places.",
+    "recipe": [
+      {"id": "iron_ingot", "qty": 2},
+      {"id": "glass", "qty": 1},
+      {"id": "oil", "qty": 1}
+    ]
+  },
+  {
+    "id": "oil",
+    "name": "Oil",
+    "rarity": "uncommon",
+    "category": "materials",
+    "tradable": true,
+    "description": "Combustible liquid fuel for lamps and machinery."
+  },
+  {
+    "id": "telescope",
+    "name": "Telescope",
+    "rarity": "rare",
+    "category": "tools",
+    "equipSlot": "tool",
+    "tradable": true,
+    "description": "Optical instrument for viewing distant objects.",
+    "recipe": [
+      {"id": "glass", "qty": 5},
+      {"id": "bronze_ingot", "qty": 3},
+      {"id": "lens", "qty": 2}
+    ]
+  },
+  {
+    "id": "lens",
+    "name": "Lens",
+    "rarity": "rare",
+    "category": "components",
+    "tradable": true,
+    "description": "Curved glass that focuses or disperses light.",
+    "recipe": [
+      {"id": "glass", "qty": 2}
+    ]
+  },
+  {
+    "id": "microscope",
+    "name": "Microscope",
+    "rarity": "epic",
+    "category": "tools",
+    "equipSlot": "tool",
+    "tradable": true,
+    "description": "Advanced optical device for examining tiny objects.",
+    "recipe": [
+      {"id": "lens", "qty": 5},
+      {"id": "steel_ingot", "qty": 3},
+      {"id": "precision_gears", "qty": 2}
+    ]
+  },
+  {
+    "id": "precision_gears",
+    "name": "Precision Gears",
+    "rarity": "rare",
+    "category": "components",
+    "tradable": true,
+    "description": "Extremely accurate mechanical gears.",
+    "recipe": [
+      {"id": "steel_ingot", "qty": 2},
+      {"id": "diamond_dust", "qty": 1}
+    ]
+  },
+  {
+    "id": "glider",
+    "name": "Glider",
+    "rarity": "rare",
+    "category": "vehicles",
+    "equipSlot": "vehicle",
+    "vehicleSpeedMultiplier": 5.0,
+    "tradable": true,
+    "description": "Lightweight aircraft for gliding through the air.",
+    "recipe": [
+      {"id": "lightweight_wood", "qty": 10},
+      {"id": "silk", "qty": 15},
+      {"id": "wire", "qty": 5}
+    ]
+  },
+  {
+    "id": "lightweight_wood",
+    "name": "Lightweight Wood",
+    "rarity": "uncommon",
+    "category": "materials",
+    "tradable": true,
+    "description": "Special wood that's both strong and extremely light."
+  },
+  {
+    "id": "silk",
+    "name": "Silk",
+    "rarity": "uncommon",
+    "category": "materials",
+    "tradable": true,
+    "description": "Smooth, strong fiber produced by silkworms."
+  },
+  {
+    "id": "hot_air_balloon",
+    "name": "Hot Air Balloon",
+    "rarity": "epic",
+    "category": "vehicles",
+    "equipSlot": "vehicle",
+    "vehicleSpeedMultiplier": 4.0,
+    "tradable": true,
+    "description": "Colorful balloon that lifts passengers into the sky.",
+    "recipe": [
+      {"id": "silk", "qty": 30},
+      {"id": "rope", "qty": 20},
+      {"id": "basket", "qty": 1},
+      {"id": "burner", "qty": 1}
+    ]
+  },
+  {
+    "id": "basket",
+    "name": "Basket",
+    "rarity": "common",
+    "category": "components",
+    "tradable": true,
+    "description": "Woven container for carrying items.",
+    "recipe": [
+      {"id": "plant_fiber", "qty": 10}
+    ]
+  },
+  {
+    "id": "burner",
+    "name": "Burner",
+    "rarity": "uncommon",
+    "category": "components",
+    "tradable": true,
+    "description": "Device for producing controlled flames.",
+    "recipe": [
+      {"id": "iron_ingot", "qty": 2},
+      {"id": "oil", "qty": 3}
+    ]
+  },
+  {
+    "id": "submarine",
+    "name": "Submarine",
+    "rarity": "legendary",
+    "category": "vehicles",
+    "equipSlot": "vehicle",
+    "vehicleSpeedMultiplier": 3.5,
+    "tradable": true,
+    "description": "Underwater vessel for exploring ocean depths.",
+    "recipe": [
+      {"id": "steel_plates", "qty": 50},
+      {"id": "pressure_seals", "qty": 20},
+      {"id": "periscope", "qty": 1},
+      {"id": "engine_parts", "qty": 5}
+    ],
+    "premiumNeeded": true
+  },
+  {
+    "id": "steel_plates",
+    "name": "Steel Plates",
+    "rarity": "rare",
+    "category": "components",
+    "tradable": true,
+    "description": "Thick sheets of steel for construction.",
+    "recipe": [
+      {"id": "steel_ingot", "qty": 3}
+    ]
+  },
+  {
+    "id": "pressure_seals",
+    "name": "Pressure Seals",
+    "rarity": "rare",
+    "category": "components",
+    "tradable": true,
+    "description": "Specialized seals that prevent water infiltration.",
+    "recipe": [
+      {"id": "rubber", "qty": 5},
+      {"id": "chemical_treatment", "qty": 2}
+    ]
+  },
+  {
+    "id": "chemical_treatment",
+    "name": "Chemical Treatment",
+    "rarity": "rare",
+    "category": "materials",
+    "tradable": true,
+    "description": "Special chemical process for enhancing materials."
+  },
+  {
+    "id": "periscope",
+    "name": "Periscope",
+    "rarity": "epic",
+    "category": "components",
+    "tradable": true,
+    "description": "Optical device for seeing above water while submerged.",
+    "recipe": [
+      {"id": "lens", "qty": 4},
+      {"id": "mirror", "qty": 2},
+      {"id": "steel_tube", "qty": 1}
+    ]
+  },
+  {
+    "id": "mirror",
+    "name": "Mirror",
+    "rarity": "uncommon",
+    "category": "materials",
+    "tradable": true,
+    "description": "Reflective surface made of polished metal or glass.",
+    "recipe": [
+      {"id": "glass", "qty": 1},
+      {"id": "silver_dust", "qty": 1}
+    ]
+  },
+  {
+    "id": "silver_dust",
+    "name": "Silver Dust",
+    "rarity": "rare",
+    "category": "materials",
+    "tradable": true,
+    "description": "Fine particles of pure silver."
+  },
+  {
+    "id": "steel_tube",
+    "name": "Steel Tube",
+    "rarity": "uncommon",
+    "category": "components",
+    "tradable": true,
+    "description": "Hollow steel cylinder for various applications.",
+    "recipe": [
+      {"id": "steel_plates", "qty": 2}
+    ]
+  },
+  {
+    "id": "rocket",
+    "name": "Rocket",
+    "rarity": "mythic",
+    "category": "vehicles",
+    "equipSlot": "vehicle",
+    "vehicleSpeedMultiplier": 15.0,
+    "tradable": false,
+    "description": "Advanced spacecraft capable of interplanetary travel.",
+    "recipe": [
+      {"id": "rocket_engine", "qty": 3},
+      {"id": "fuel_tank", "qty": 10},
+      {"id": "navigation_computer", "qty": 1},
+      {"id": "heat_shield", "qty": 5}
+    ],
+    "premiumNeeded": true
+  },
+  {
+    "id": "rocket_engine",
+    "name": "Rocket Engine",
+    "rarity": "legendary",
+    "category": "components",
+    "tradable": true,
+    "description": "Powerful propulsion system for space travel.",
+    "recipe": [
+      {"id": "exotic_alloy", "qty": 20},
+      {"id": "plasma_coils", "qty": 5},
+      {"id": "quantum_stabilizer", "qty": 1}
+    ]
+  },
+  {
+    "id": "exotic_alloy",
+    "name": "Exotic Alloy",
+    "rarity": "legendary",
+    "category": "materials",
+    "tradable": true,
+    "description": "Advanced metal alloy with extraordinary properties.",
+    "bossOnly": true
+  },
+  {
+    "id": "plasma_coils",
+    "name": "Plasma Coils",
+    "rarity": "epic",
+    "category": "components",
+    "tradable": true,
+    "description": "Electromagnetic coils for plasma containment.",
+    "recipe": [
+      {"id": "superconductor", "qty": 10},
+      {"id": "magnetic_core", "qty": 3}
+    ]
+  },
+  {
+    "id": "superconductor",
+    "name": "Superconductor",
+    "rarity": "epic",
+    "category": "materials",
+    "tradable": true,
+    "description": "Material with zero electrical resistance."
+  },
+  {
+    "id": "magnetic_core",
+    "name": "Magnetic Core",
+    "rarity": "rare",
+    "category": "components",
+    "tradable": true,
+    "description": "Highly magnetic core for electromagnetic devices.",
+    "recipe": [
+      {"id": "rare_earth_metals", "qty": 5},
+      {"id": "crystalline_structure", "qty": 2}
+    ]
+  },
+  {
+    "id": "rare_earth_metals",
+    "name": "Rare Earth Metals",
+    "rarity": "rare",
+    "category": "materials",
+    "tradable": true,
+    "description": "Scarce metallic elements with unique properties."
+  },
+  {
+    "id": "crystalline_structure",
+    "name": "Crystalline Structure",
+    "rarity": "epic",
+    "category": "materials",
+    "tradable": true,
+    "description": "Perfectly ordered crystal lattice."
+  },
+  {
+    "id": "quantum_stabilizer",
+    "name": "Quantum Stabilizer",
+    "rarity": "mythic",
+    "category": "components",
+    "tradable": true,
+    "description": "Device that maintains quantum coherence.",
+    "recipe": [
+      {"id": "quantum_crystal", "qty": 10},
+      {"id": "void_stabilizer", "qty": 3},
+      {"id": "temporal_anchor", "qty": 1}
+    ],
+    "bossOnly": true
+  },
+  {
+    "id": "void_stabilizer",
+    "name": "Void Stabilizer",
+    "rarity": "legendary",
+    "category": "components",
+    "tradable": true,
+    "description": "Component that prevents dimensional collapse.",
+    "bossOnly": true
+  },
+  {
+    "id": "temporal_anchor",
+    "name": "Temporal Anchor",
+    "rarity": "mythic",
+    "category": "components",
+    "tradable": true,
+    "description": "Device that locks objects in temporal space.",
+    "bossOnly": true
+  },
+  {
+    "id": "fuel_tank",
+    "name": "Fuel Tank",
+    "rarity": "rare",
+    "category": "components",
+    "tradable": true,
+    "description": "Pressurized container for storing rocket fuel.",
+    "recipe": [
+      {"id": "titanium_alloy", "qty": 5},
+      {"id": "pressure_valve", "qty": 2}
+    ]
+  },
+  {
+    "id": "titanium_alloy",
+    "name": "Titanium Alloy",
+    "rarity": "epic",
+    "category": "materials",
+    "tradable": true,
+    "description": "Lightweight, corrosion-resistant metal alloy."
+  },
+  {
+    "id": "pressure_valve",
+    "name": "Pressure Valve",
+    "rarity": "uncommon",
+    "category": "components",
+    "tradable": true,
+    "description": "Valve for controlling pressure in containers.",
+    "recipe": [
+      {"id": "steel_ingot", "qty": 2},
+      {"id": "spring", "qty": 1}
+    ]
+  },
+  {
+    "id": "navigation_computer",
+    "name": "Navigation Computer",
+    "rarity": "legendary",
+    "category": "components",
+    "tradable": true,
+    "description": "Advanced computer system for space navigation.",
+    "recipe": [
+      {"id": "quantum_processor", "qty": 5},
+      {"id": "star_map_data", "qty": 1},
+      {"id": "ai_core", "qty": 1}
+    ]
+  },
+  {
+    "id": "star_map_data",
+    "name": "Star Map Data",
+    "rarity": "epic",
+    "category": "materials",
+    "tradable": true,
+    "description": "Comprehensive astronomical navigation data."
+  },
+  {
+    "id": "ai_core",
+    "name": "AI Core",
+    "rarity": "legendary",
+    "category": "components",
+    "tradable": true,
+    "description": "Advanced artificial intelligence processing unit.",
+    "bossOnly": true
+  },
+  {
+    "id": "heat_shield",
+    "name": "Heat Shield",
+    "rarity": "epic",
+    "category": "components",
+    "tradable": true,
+    "description": "Protective barrier against extreme heat.",
+    "recipe": [
+      {"id": "ablative_material", "qty": 10},
+      {"id": "ceramic_tiles", "qty": 5}
+    ]
+  },
+  {
+    "id": "ablative_material",
+    "name": "Ablative Material",
+    "rarity": "rare",
+    "category": "materials",
+    "tradable": true,
+    "description": "Material that dissipates heat through controlled burning."
+  },
+  {
+    "id": "ceramic_tiles",
+    "name": "Ceramic Tiles",
+    "rarity": "uncommon",
+    "category": "materials",
+    "tradable": true,
+    "description": "Heat-resistant ceramic plates.",
+    "recipe": [
+      {"id": "clay", "qty": 5},
+      {"id": "high_temperature_kiln", "qty": 1}
+    ]
+  },
+  {
+    "id": "high_temperature_kiln",
+    "name": "High Temperature Kiln",
+    "rarity": "rare",
+    "category": "tools",
+    "equipSlot": "tool",
+    "tradable": true,
+    "description": "Furnace capable of extreme temperatures.",
+    "recipe": [
+      {"id": "refractory_brick", "qty": 50},
+      {"id": "heating_element", "qty": 10}
+    ]
+  },
+  {
+    "id": "refractory_brick",
+    "name": "Refractory Brick",
+    "rarity": "uncommon",
+    "category": "materials",
+    "tradable": true,
+    "description": "Heat-resistant brick for furnace construction.",
+    "recipe": [
+      {"id": "clay", "qty": 3},
+      {"id": "silica_sand", "qty": 2}
+    ]
+  },
+  {
+    "id": "silica_sand",
+    "name": "Silica Sand",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Pure sand with high silica content."
+  },
+  {
+    "id": "heating_element",
+    "name": "Heating Element",
+    "rarity": "uncommon",
+    "category": "components",
+    "tradable": true,
+    "description": "Electric coil that generates heat.",
+    "recipe": [
+      {"id": "resistance_wire", "qty": 10},
+      {"id": "ceramic_insulator", "qty": 5}
+    ]
+  },
+  {
+    "id": "resistance_wire",
+    "name": "Resistance Wire",
+    "rarity": "uncommon",
+    "category": "materials",
+    "tradable": true,
+    "description": "Wire designed to resist electrical current."
+  },
+  {
+    "id": "ceramic_insulator",
+    "name": "Ceramic Insulator",
+    "rarity": "uncommon",
+    "category": "materials",
+    "tradable": true,
+    "description": "Non-conductive ceramic material."
+  },
+  {
+    "id": "time_machine",
+    "name": "Time Machine",
+    "rarity": "transcendent",
+    "category": "vehicles",
+    "equipSlot": "vehicle",
+    "vehicleSpeedMultiplier": 1.0,
+    "tradable": false,
+    "description": "Ultimate vehicle that travels through the timestream itself.",
+    "recipe": [
+      {"id": "primordial_essence_time", "qty": 1},
+      {"id": "temporal_core", "qty": 1},
+      {"id": "chronon_stabilizer", "qty": 10},
+      {"id": "paradox_engine", "qty": 1}
+    ],
+    "premiumNeeded": true
+  },
+  {
+    "id": "temporal_core",
+    "name": "Temporal Core",
+    "rarity": "mythic",
+    "category": "components",
+    "tradable": false,
+    "description": "Core component that manipulates the flow of time.",
+    "bossOnly": true,
+    "premiumNeeded": true
+  },
+  {
+    "id": "chronon_stabilizer",
+    "name": "Chronon Stabilizer",
+    "rarity": "legendary",
+    "category": "components",
+    "tradable": true,
+    "description": "Device that prevents temporal paradoxes.",
+    "bossOnly": true
+  },
+  {
+    "id": "paradox_engine",
+    "name": "Paradox Engine",
+    "rarity": "mythic",
+    "category": "components",
+    "tradable": false,
+    "description": "Engine that resolves temporal contradictions.",
+    "bossOnly": true,
+    "premiumNeeded": true
+  },
+  {
+    "id": "philosopher_stone",
+    "name": "Philosopher's Stone",
+    "rarity": "mythic",
+    "category": "artifacts",
+    "tradable": false,
+    "description": "Legendary stone that transmutes base metals into gold.",
+    "recipe": [
+      {"id": "mercury", "qty": 100},
+      {"id": "sulfur", "qty": 100},
+      {"id": "salt_of_wisdom", "qty": 1},
+      {"id": "eternal_flame", "qty": 1}
+    ],
+    "bossOnly": true,
+    "premiumNeeded": true
+  },
+  {
+    "id": "mercury",
+    "name": "Mercury",
+    "rarity": "rare",
+    "category": "materials",
+    "tradable": true,
+    "description": "Liquid metal with alchemical properties."
+  },
+  {
+    "id": "sulfur",
+    "name": "Sulfur",
+    "rarity": "uncommon",
+    "category": "materials",
+    "tradable": true,
+    "description": "Yellow crystalline element used in alchemy."
+  },
+  {
+    "id": "salt_of_wisdom",
+    "name": "Salt of Wisdom",
+    "rarity": "legendary",
+    "category": "materials",
+    "tradable": true,
+    "description": "Alchemical salt that crystallizes knowledge itself.",
+    "bossOnly": true
+  },
+  {
+    "id": "eternal_flame",
+    "name": "Eternal Flame",
+    "rarity": "mythic",
+    "category": "materials",
+    "tradable": true,
+    "description": "Fire that burns forever without consuming fuel.",
+    "bossOnly": true
+  },
+  {
+    "id": "holy_grail",
+    "name": "Holy Grail",
+    "rarity": "mythic",
+    "category": "artifacts",
+    "tradable": false,
+    "description": "Sacred chalice that grants eternal life and wisdom.",
+    "bossOnly": true,
+    "premiumNeeded": true
+  },
+  {
+    "id": "excalibur_sheath",
+    "name": "Excalibur's Sheath",
+    "rarity": "legendary",
+    "category": "artifacts",
+    "tradable": true,
+    "description": "Scabbard that makes the bearer invulnerable to harm.",
+    "bossOnly": true
+  },
+  {
+    "id": "pandora_box",
+    "name": "Pandora's Box",
+    "rarity": "mythic",
+    "category": "artifacts",
+    "tradable": false,
+    "description": "Ancient box containing all the evils of the world - and hope.",
+    "bossOnly": true,
+    "premiumNeeded": true
+  },
+  {
+    "id": "atlas_sphere",
+    "name": "Atlas Sphere",
+    "rarity": "transcendent",
+    "category": "artifacts",
+    "tradable": false,
+    "description": "Mystical sphere that bears the weight of all existence.",
+    "recipe": [
+      {"id": "primordial_essence_earth", "qty": 1},
+      {"id": "world_core_fragment", "qty": 50},
+      {"id": "gravitational_well", "qty": 10}
+    ],
+    "bossOnly": true,
+    "premiumNeeded": true
+  },
+  {
+    "id": "world_core_fragment",
+    "name": "World Core Fragment",
+    "rarity": "legendary",
+    "category": "materials",
+    "tradable": true,
+    "description": "Piece of the world's molten core.",
+    "bossOnly": true
+  },
+  {
+    "id": "gravitational_well",
+    "name": "Gravitational Well",
+    "rarity": "mythic",
+    "category": "materials",
+    "tradable": true,
+    "description": "Concentrated gravity in crystalline form.",
+    "bossOnly": true
+  },
+  {
+    "id": "cake",
+    "name": "Cake",
+    "rarity": "uncommon",
+    "category": "consumables",
+    "tradable": true,
+    "description": "Sweet dessert that greatly improves morale.",
+    "recipe": [
+      {"id": "flour", "qty": 3},
+      {"id": "sugar", "qty": 2},
+      {"id": "eggs", "qty": 2},
+      {"id": "milk", "qty": 1}
+    ]
+  },
+  {
+    "id": "flour",
+    "name": "Flour",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Ground grain used for baking.",
+    "recipe": [
+      {"id": "wheat", "qty": 2}
+    ]
+  },
+  {
+    "id": "sugar",
+    "name": "Sugar",
+    "rarity": "uncommon",
+    "category": "materials",
+    "tradable": true,
+    "description": "Sweet crystalline substance from sugar cane."
+  },
+  {
+    "id": "eggs",
+    "name": "Eggs",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Nutritious protein source from birds."
+  },
+  {
+    "id": "milk",
+    "name": "Milk",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Creamy liquid from dairy animals."
+  },
+  {
+    "id": "pizza",
+    "name": "Pizza",
+    "rarity": "uncommon",
+    "category": "consumables",
+    "tradable": true,
+    "description": "Delicious flatbread with toppings that boosts team morale.",
+    "recipe": [
+      {"id": "dough", "qty": 1},
+      {"id": "tomato_sauce", "qty": 1},
+      {"id": "cheese", "qty": 2}
+    ]
+  },
+  {
+    "id": "dough",
+    "name": "Dough",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Kneaded mixture of flour and water.",
+    "recipe": [
+      {"id": "flour", "qty": 2},
+      {"id": "water", "qty": 1}
+    ]
+  },
+  {
+    "id": "tomato_sauce",
+    "name": "Tomato Sauce",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Savory sauce made from ripe tomatoes."
+  },
+  {
+    "id": "burger",
+    "name": "Burger",
+    "rarity": "uncommon",
+    "category": "consumables",
+    "tradable": true,
+    "description": "Hearty sandwich that provides substantial nourishment.",
+    "recipe": [
+      {"id": "bun", "qty": 1},
+      {"id": "meat_patty", "qty": 1},
+      {"id": "lettuce", "qty": 1}
+    ]
+  },
+  {
+    "id": "bun",
+    "name": "Bun",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Soft bread roll for sandwiches.",
+    "recipe": [
+      {"id": "flour", "qty": 2},
+      {"id": "yeast", "qty": 1}
+    ]
+  },
+  {
+    "id": "meat_patty",
+    "name": "Meat Patty",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Seasoned ground meat formed into a patty.",
+    "recipe": [
+      {"id": "meat", "qty": 2}
+    ]
+  },
+  {
+    "id": "lettuce",
+    "name": "Lettuce",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Fresh green leafy vegetable."
+  },
+  {
+    "id": "yeast",
+    "name": "Yeast",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Living organism that makes bread rise."
+  },
+  {
+    "id": "coffee",
+    "name": "Coffee",
+    "rarity": "common",
+    "category": "consumables",
+    "tradable": true,
+    "description": "Stimulating beverage that increases alertness.",
+    "recipe": [
+      {"id": "coffee_beans", "qty": 3},
+      {"id": "water", "qty": 1}
+    ]
+  },
+  {
+    "id": "coffee_beans",
+    "name": "Coffee Beans",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Roasted seeds that produce energizing coffee."
+  },
+  {
+    "id": "tea",
+    "name": "Tea",
+    "rarity": "common",
+    "category": "consumables",
+    "tradable": true,
+    "description": "Soothing herbal beverage that calms the mind.",
+    "recipe": [
+      {"id": "tea_leaves", "qty": 2},
+      {"id": "water", "qty": 1}
+    ]
+  },
+  {
+    "id": "tea_leaves",
+    "name": "Tea Leaves",
+    "rarity": "common",
+    "category": "materials",
+    "tradable": true,
+    "description": "Dried leaves that brew into relaxing tea."
+  },
+  {
+    "id": "ambrosia",
+    "name": "Ambrosia",
+    "rarity": "legendary",
+    "category": "consumables",
+    "tradable": false,
+    "description": "Food of the gods that grants temporary divine powers.",
+    "recipe": [
+      {"id": "divine_honey", "qty": 10},
+      {"id": "celestial_fruit", "qty": 5},
+      {"id": "nectar_of_gods", "qty": 1}
+    ],
+    "bossOnly": true,
+    "premiumNeeded": true
+  },
+  {
+    "id": "divine_honey",
+    "name": "Divine Honey",
+    "rarity": "epic",
+    "category": "materials",
+    "tradable": true,
+    "description": "Golden honey blessed by divine bees."
+  },
+  {
+    "id": "celestial_fruit",
+    "name": "Celestial Fruit",
+    "rarity": "legendary",
+    "category": "materials",
+    "tradable": true,
+    "description": "Fruit that grows in the gardens of heaven.",
+    "bossOnly": true
+  },
+  {
+    "id": "elixir_of_youth",
+    "name": "Elixir of Youth",
+    "rarity": "mythic",
+    "category": "consumables",
+    "tradable": false,
+    "description": "Potion that reverses aging and restores vitality.",
+    "recipe": [
+      {"id": "fountain_of_youth_water", "qty": 1},
+      {"id": "time_flower_petals", "qty": 20},
+      {"id": "phoenix_feather", "qty": 3}
+    ],
+    "bossOnly": true,
+    "premiumNeeded": true
+  },
+  {
+    "id": "fountain_of_youth_water",
+    "name": "Fountain of Youth Water",
+    "rarity": "legendary",
+    "category": "materials",
+    "tradable": true,
+    "description": "Water from the legendary fountain of youth.",
+    "bossOnly": true
+  },
+  {
+    "id": "time_flower_petals",
+    "name": "Time Flower Petals",
+    "rarity": "epic",
+    "category": "materials",
+    "tradable": true,
+    "description": "Petals from flowers that bloom backwards through time."
+  },
+  {
+    "id": "phoenix_feather",
+    "name": "Phoenix Feather",
+    "rarity": "legendary",
+    "category": "materials",
+    "tradable": true,
+    "description": "Feather from the immortal phoenix.",
+    "bossOnly": true
+  },
+  {
+    "id": "elixir_of_knowledge",
+    "name": "Elixir of All Knowledge",
+    "rarity": "transcendent",
+    "category": "consumables",
+    "tradable": false,
+    "description": "Ultimate elixir that grants complete understanding of reality.",
+    "recipe": [
+      {"id": "primordial_essence_light", "qty": 1},
+      {"id": "akashic_records_fragment", "qty": 100},
+      {"id": "consciousness_crystal", "qty": 50},
+      {"id": "wisdom_of_ages", "qty": 10}
+    ],
+    "premiumNeeded": true
+  },
+  {
+    "id": "akashic_records_fragment",
+    "name": "Akashic Records Fragment",
+    "rarity": "mythic",
+    "category": "materials",
+    "tradable": true,
+    "description": "Fragment containing all knowledge that ever was or will be.",
+    "bossOnly": true
+  },
+  {
+    "id": "consciousness_crystal",
+    "name": "Consciousness Crystal",
+    "rarity": "legendary",
+    "category": "materials",
+    "tradable": true,
+    "description": "Crystallized awareness and self-knowledge.",
+    "bossOnly": true
+  },
+  {
+    "id": "wisdom_of_ages",
+    "name": "Wisdom of Ages",
+    "rarity": "mythic",
+    "category": "materials",
+    "tradable": true,
+    "description": "Accumulated wisdom of all civilizations.",
+    "bossOnly": true
+  }
+]

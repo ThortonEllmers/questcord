@@ -1,0 +1,319 @@
+const express = require('express');
+const session = require('express-session');
+// Safe fetch polyfill: use global fetch if present, otherwise lazy-load node-fetch (ESM)
+const fetchFn = async (...args) => {
+  if (typeof globalThis.fetch === 'function') return globalThis.fetch(...args);
+  const mod = await import('node-fetch');
+  return mod.default(...args);
+};
+const path = require('path');
+const fetch = require('node-fetch');
+const { db } = require('../utils/store_sqlite');
+const { haversine } = require('../utils/geo');
+const { createAutoPlacementIfMissing, getSpawnServer, ensurePlayerRow, fetchRoleLevel, getMemberRoleIds } = require('./util');
+const config = require('../utils/config');
+const { rateLimit, ensureCsrf, setCsrf } = require('./security');
+const { log } = require('../utils/logger');
+
+function visitorsCount(guildId){
+  return db.prepare('SELECT COUNT(*) as n FROM players WHERE locationGuildId=? AND (travelArrivalAt=0 OR travelArrivalAt<=?)').get(guildId, Date.now()).n;
+}
+function listServers(includeArchived=false){
+  const q = includeArchived ? 'SELECT guildId, name, lat, lon, iconUrl, discoverable, archived FROM servers' :
+                              'SELECT guildId, name, lat, lon, iconUrl, discoverable, archived FROM servers WHERE archived=0';
+  return db.prepare(q).all();
+}
+
+function nearest(center, limit=50, opts={}){
+  const all = listServers(opts.includeArchived).filter(s => s.lat!=null && s.lon!=null).filter(s => (opts.discoverableOnly ? s.discoverable : true));
+  let rows = all.map(s => ({...s, dist: haversine(center.lat, center.lon, s.lat, s.lon), visitors: visitorsCount(s.guildId)}));
+  if (opts.bossActiveOnly){
+    const activeGuilds = db.prepare('SELECT DISTINCT guildId FROM bosses WHERE active=1').all().map(r=>r.guildId);
+    rows = rows.filter(r=> activeGuilds.includes(r.guildId));
+  }
+  rows.sort((a,b)=>a.dist-b.dist);
+  return rows.slice(0, limit);
+}
+
+function globalList(limit=500, opts={}){
+  const all = listServers(opts.includeArchived).filter(s => s.lat!=null && s.lon!=null).filter(s => (opts.discoverableOnly ? s.discoverable : true));
+  let rows = all.map(s => ({...s, visitors: visitorsCount(s.guildId)}));
+  if (opts.bossActiveOnly){
+    const activeGuilds = db.prepare('SELECT DISTINCT guildId FROM bosses WHERE active=1').all().map(r=>r.guildId);
+    rows = rows.filter(r=> activeGuilds.includes(r.guildId));
+  }
+  return rows.slice(0, limit);
+}
+
+function activeBosses(){
+  const bosses = db.prepare('SELECT * FROM bosses WHERE active=1').all();
+  return bosses.map(b=>{
+    const s = db.prepare('SELECT lat, lon, name FROM servers WHERE guildId=?').get(b.guildId);
+    return {...b, lat: s?.lat, lon: s?.lon, serverName: s?.name};
+  });
+}
+
+function createWebServer(){
+  const app = express();
+  app.set('trust proxy', true);
+
+  
+  // sessions for web login
+  app.use(session({
+    name: 'sid',
+    secret: process.env.SESSION_SECRET || 'devsecret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { sameSite: 'lax', secure: false }
+  }));
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'change-me',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge: 7*24*3600*1000, httpOnly: true, sameSite: 'lax' }
+  }));
+  app.use(express.json({ limit: '256kb' }));
+  app.use('/static', express.static(path.join(process.cwd(), 'web', 'public')));
+
+  // CSRF token
+  app.get('/api/csrf', rateLimit(), setCsrf);
+
+  // OAuth2 routes
+
+  app.get('/auth/debug', (req,res)=>{
+    const ru = process.env.OAUTH_REDIRECT_URI;
+    const params = new URLSearchParams({
+      client_id: process.env.CLIENT_ID,
+      redirect_uri: ru,
+      response_type: 'code',
+      scope: 'identify guilds'
+    });
+    const url = `https://discord.com/oauth2/authorize?${params.toString()}`;
+    res.setHeader('Content-Type','application/json');
+    res.end(JSON.stringify({ redirect_uri_env: ru, authorize_url: url }, null, 2));
+  });
+  // OAuth2 routes
+  app.get('/auth/login', (req, res) => {
+    const params = new URLSearchParams({
+      client_id: process.env.CLIENT_ID,
+      redirect_uri: process.env.OAUTH_REDIRECT_URI,
+      response_type: 'code',
+      scope: 'identify guilds'
+    });
+    res.redirect(`https://discord.com/oauth2/authorize?${params.toString()}`);
+  });
+
+  // OAuth2 callback (supports both /auth/callback and /auth/discord/callback)
+  const oauthCallback = async (req, res) => {
+    const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'https');
+    const host = (req.headers['x-forwarded-host'] || req.get('host'));
+    const computedRedirect = `${proto}://${host}${req.path}`;
+    const dbg = { step: 'start', redirect_env: process.env.OAUTH_REDIRECT_URI, redirect_req: computedRedirect };
+    try {
+      const code = req.query.code;
+      if (!code) return res.status(400).send('Missing code');
+
+      const body = new URLSearchParams({
+        client_id: process.env.CLIENT_ID,
+        client_secret: process.env.CLIENT_SECRET,
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: computedRedirect
+      });
+
+      dbg.step = 'token_request';
+      dbg.token_url = 'https://discord.com/api/oauth2/token';
+      dbg.body = Object.fromEntries(body);
+
+      const r = await fetchFn('https://discord.com/api/oauth2/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+        body: body.toString()
+      });
+      const tok = await r.json();
+      if (!r.ok || !tok.access_token) {
+        console.error('[oauth] token exchange failed', { status: r.status, tok });
+        return res.status(500).type('text/plain').send('Auth error: ' + JSON.stringify({status:r.status, tok, redirect: computedRedirect, client_id: process.env.CLIENT_ID.slice(-4)}));
+      }
+
+      const ur = await fetchFn('https://discord.com/api/users/@me', {
+        headers: { Authorization: `Bearer ${tok.access_token}` }
+      });
+      const user = await ur.json();
+
+      req.session.user = { id: user.id, username: user.username, avatar: user.avatar };
+      ensurePlayerRow(user);
+      req.session.roleLevel = await fetchRoleLevel(user.id);
+      log('auth_login', { userId: user.id, details: { username: user.username, roleLevel: req.session.roleLevel } });
+
+      res.redirect('/');
+    } catch (e) {
+      console.error('[oauth] exception', e, dbg);
+      res.status(500).type('text/plain').send('Auth error: ' + (e && e.message ? e.message : String(e)));
+    }
+  };
+  app.get('/auth/discord/callback', oauthCallback);
+
+
+  app.get('/auth/logout', (req,res)=>{
+    const u = req.session.user?.id;
+    req.session.destroy(()=> {
+      if (u) log('auth_logout', { userId: u });
+      res.redirect('/');
+    });
+  });
+
+  // Me
+  
+
+  // Me (with travel progress)
+  
+  // Me (with travel progress)
+  app.get('/api/me', rateLimit(180, 60000), async (req, res) => {
+    try {
+      if (!req.session.user) return res.json({ user: null });
+      const u = req.session.user;
+      const player = db.prepare(`
+        SELECT userId, name, drakari, locationGuildId,
+               travelArrivalAt, travelFromGuildId, travelStartAt,
+               vehicle, health, stamina, staminaUpdatedAt
+        FROM players WHERE userId=?`).get(u.id);
+      const inv = db.prepare('SELECT itemId, qty FROM inventory WHERE userId=? ORDER BY itemId').all(u.id);
+      const roleLevel   = await fetchRoleLevel(u.id);
+      const memberRoles = await getMemberRoleIds(u.id);
+      let travel = null;
+      if (player && player.travelArrivalAt > Date.now() &&
+          player.travelFromGuildId && player.locationGuildId && player.travelStartAt) {
+        const from = db.prepare('SELECT guildId, name, lat, lon FROM servers WHERE guildId=?').get(player.travelFromGuildId);
+        const to   = db.prepare('SELECT guildId, name, lat, lon FROM servers WHERE guildId=?').get(player.locationGuildId);
+        if (from && to) {
+          const total    = Math.max(1, player.travelArrivalAt - player.travelStartAt);
+          const elapsed  = Math.max(0, Date.now() - player.travelStartAt);
+          const progress = Math.min(1, elapsed / total);
+          const lat = from.lat + (to.lat - from.lat) * progress;
+          const lon = from.lon + (to.lon - from.lon) * progress;
+          travel = {
+            fromGuildId: from.guildId,
+            toGuildId:   to.guildId,
+            startAt:     player.travelStartAt,
+            arrivalAt:   player.travelArrivalAt,
+            progress,
+            from: { name: from.name, lat: from.lat, lon: from.lon },
+            to:   { name: to.name,   lat: to.lat,   lon: to.lon   },
+            position: { lat, lon }
+          };
+        }
+      }
+      res.json({ user: u, player, inventory: inv, roleLevel, memberRoles, travel });
+    } catch (err) {
+      console.error('GET /api/me error', err);
+      res.status(500).json({ error: 'me_failed' });
+    }
+  });
+;
+    const u = req.session.user;
+    const player = db.prepare('SELECT userId, name, drakari, locationGuildId, travelArrivalAt, vehicle, health, stamina FROM players WHERE userId=?').get(u.id);
+    const inv = db.prepare('SELECT itemId, qty FROM inventory WHERE userId=? ORDER BY itemId').all(u.id);
+    const roleLevel = await fetchRoleLevel(u.id);
+    const memberRoles = await getMemberRoleIds(u.id);
+    res.json({ user: u, player, inventory: inv, roleLevel, memberRoles });
+  });
+
+  // Admin: set coords (drag)
+  app.patch('/api/admin/set-coords', rateLimit(20, 10000), ensureCsrf, async (req,res)=>{
+    if (!req.session.user) return res.status(401).json({ error: 'auth' });
+    const role = req.session.roleLevel || await fetchRoleLevel(req.session.user.id);
+    if (!(role === 'Developer' || role === 'Staff')) return res.status(403).json({ error: 'forbidden' });
+    const { guildId, lat, lon } = req.body || {};
+    if (!guildId || typeof lat !== 'number' || typeof lon !== 'number') return res.status(400).json({ error: 'bad_input' });
+    db.prepare('UPDATE servers SET lat=?, lon=? WHERE guildId=?').run(lat, lon, guildId);
+    log('admin_set_coords', { userId: req.session.user.id, guildId, details: { lat, lon } });
+    res.json({ ok: true });
+  });
+
+  // Admin: archive/restore
+  app.post('/api/admin/server-archive', rateLimit(20, 10000), ensureCsrf, async (req,res)=>{
+    if (!req.session.user) return res.status(401).json({ error: 'auth' });
+    const role = req.session.roleLevel || await fetchRoleLevel(req.session.user.id);
+    if (!(role === 'Developer' || role === 'Staff')) return res.status(403).json({ error: 'forbidden' });
+    const { guildId, reason } = req.body || {};
+    if (!guildId) return res.status(400).json({ error: 'bad_input' });
+    db.prepare('UPDATE servers SET archived=1, archivedAt=?, archivedBy=? WHERE guildId=?').run(Date.now(), req.session.user.id, guildId);
+    log('server_archive', { userId: req.session.user.id, guildId, details: { reason: reason || null } });
+    res.json({ ok: true });
+  });
+
+  app.post('/api/admin/server-restore', rateLimit(20, 10000), ensureCsrf, async (req,res)=>{
+    if (!req.session.user) return res.status(401).json({ error: 'auth' });
+    const role = req.session.roleLevel || await fetchRoleLevel(req.session.user.id);
+    if (!(role === 'Developer' || role === 'Staff')) return res.status(403).json({ error: 'forbidden' });
+    const { guildId } = req.body || {};
+    if (!guildId) return res.status(400).json({ error: 'bad_input' });
+    db.prepare('UPDATE servers SET archived=0, archivedAt=NULL, archivedBy=NULL WHERE guildId=?').run(guildId);
+    log('server_restore', { userId: req.session.user.id, guildId });
+    res.json({ ok: true });
+  });
+
+  // Map data
+  function basePayload(req){
+    const limit = Math.min(500, Math.max(1, parseInt(req.query.limit||'50',10)));
+    const fromGuildId = (req.query.fromGuildId||'').trim();
+    const mode = (req.query.mode||config.web?.defaultMode||'nearest').toLowerCase(); // nearest|global
+    const discoverableOnly = req.query.discoverableOnly === '1';
+    const bossActiveOnly = req.query.bossActiveOnly === '1';
+    const includeArchived = req.query.includeArchived === '1';
+    return { limit, fromGuildId, mode, discoverableOnly, bossActiveOnly, includeArchived };
+  }
+
+  app.get('/api/map/servers', rateLimit(), (req,res)=>{
+    createAutoPlacementIfMissing();
+    const opts = basePayload(req);
+    let payload;
+    const listOpts = { discoverableOnly: opts.discoverableOnly, bossActiveOnly: opts.bossActiveOnly, includeArchived: opts.includeArchived && !!(req.session && (req.session.roleLevel==='Developer' || req.session.roleLevel==='Staff')) };
+    if (opts.mode === 'global'){
+      payload = { center: null, servers: globalList(opts.limit, listOpts), mode: opts.mode };
+    } else {
+      const center = db.prepare('SELECT * FROM servers WHERE guildId=?').get(opts.fromGuildId) || getSpawnServer();
+      if (!center) return res.json({ center:null, servers:[], mode: opts.mode });
+      payload = { center, servers: nearest(center, opts.limit, listOpts), mode: opts.mode };
+    }
+    if (req.session.user){
+      const p = db.prepare('SELECT locationGuildId, travelArrivalAt FROM players WHERE userId=?').get(req.session.user.id);
+      payload.me = p || null;
+      payload.roleLevel = req.session.roleLevel || 'User';
+    }
+    res.json(payload);
+  });
+
+  app.get('/api/bosses', rateLimit(), (_,res)=> res.json({ bosses: activeBosses() }));
+
+  // Invite URL with applications.commands scope
+  app.get('/invite', (req,res)=>{
+    const params = new URLSearchParams({
+      client_id: process.env.CLIENT_ID,
+      scope: 'bot applications.commands',
+      permissions: process.env.INVITE_PERMS || '274877958976'
+    });
+    res.json({ invite: `https://discord.com/oauth2/authorize?${params.toString()}` });
+  });
+
+  // Route inspector for debugging
+  app.get('/__routes', (req,res)=>{
+    const out = [];
+    (app._router?.stack || []).forEach(layer => {
+      if (layer.route?.path){ out.push({ path: layer.route.path, methods: Object.keys(layer.route.methods) }); }
+      else if (layer.name === 'router' && layer.handle?.stack){
+        layer.handle.stack.forEach(r=>{ if (r.route?.path) out.push({ path: r.route.path, methods: Object.keys(r.route.methods) }); });
+      }
+    });
+    res.json(out);
+  });
+
+  app.get('/:guildId?', (req,res)=> res.sendFile(path.join(process.cwd(), 'web', 'public', 'index.html')));
+
+  const port = (config.web && config.web.port) || 3000;
+  app.listen(port, ()=>console.log(`[web] Listening on http://localhost:${port}`));
+  return app;
+}
+
+module.exports = { createWebServer };

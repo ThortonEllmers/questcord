@@ -1,0 +1,38 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: 'production/package-lock.json'
+    
+    - name: Install dependencies
+      run: |
+        cd production
+        npm ci --only=production
+    
+    - name: Deploy to VPS
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USER }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        script: |
+          cd /home/${{ secrets.VPS_USER }}/questcord
+          git pull origin main
+          cd production
+          npm install --only=production
+          pm2 restart questcord-bot || pm2 start src/index.js --name questcord-bot
+          pm2 restart questcord-worker || pm2 start worker/spawner.js --name questcord-worker

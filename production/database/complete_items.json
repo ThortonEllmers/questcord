@@ -1,0 +1,1734 @@
+[
+  {
+    "id": "commercial_plane",
+    "name": "Commercial Plane",
+    "rarity": "uncommon",
+    "category": "vehicle",
+    "tradable": true,
+    "equipSlot": "vehicle",
+    "vehicleSpeedMultiplier": 1.5,
+    "description": "Standard air travel for adventurers"
+  },
+  {
+    "id": "private_jet",
+    "name": "Private Jet",
+    "rarity": "legendary",
+    "category": "vehicle",
+    "tradable": true,
+    "equipSlot": "vehicle",
+    "vehicleSpeedMultiplier": 3,
+    "premiumNeeded": true,
+    "description": "A luxury private jet for high-speed travel across the world"
+  },
+  {
+    "id": "iron_ore",
+    "name": "Iron Ore",
+    "rarity": "common",
+    "category": "material",
+    "tradable": true,
+    "description": "Basic metal ore found in rocky areas"
+  },
+  {
+    "id": "copper_ore",
+    "name": "Copper Ore", 
+    "rarity": "common",
+    "category": "material",
+    "tradable": true,
+    "description": "Soft metal ore with good conductivity"
+  },
+  {
+    "id": "silver_ore",
+    "name": "Silver Ore",
+    "rarity": "uncommon",
+    "category": "material",
+    "tradable": true,
+    "description": "Precious metal with magical properties"
+  },
+  {
+    "id": "gold_ore",
+    "name": "Gold Ore",
+    "rarity": "rare",
+    "category": "material", 
+    "tradable": true,
+    "description": "Valuable metal that never tarnishes"
+  },
+  {
+    "id": "platinum_ore",
+    "name": "Platinum Ore",
+    "rarity": "epic",
+    "category": "material",
+    "tradable": true,
+    "description": "The rarest and most durable metal"
+  },
+  {
+    "id": "wood",
+    "name": "Oak Wood",
+    "rarity": "common",
+    "category": "material",
+    "tradable": true,
+    "description": "Sturdy wood from oak trees"
+  },
+  {
+    "id": "stone",
+    "name": "Stone Block",
+    "rarity": "common", 
+    "category": "material",
+    "tradable": true,
+    "description": "Basic building stone"
+  },
+  {
+    "id": "leather",
+    "name": "Leather Hide",
+    "rarity": "common",
+    "category": "material",
+    "tradable": true,
+    "description": "Cured animal hide for crafting"
+  },
+  {
+    "id": "cloth",
+    "name": "Woven Cloth",
+    "rarity": "common",
+    "category": "material",
+    "tradable": true,
+    "description": "Basic textile material"
+  },
+  {
+    "id": "crystal_shard",
+    "name": "Crystal Shard",
+    "rarity": "uncommon",
+    "category": "material",
+    "tradable": true,
+    "description": "A fragment of magical crystal"
+  },
+  {
+    "id": "dragon_scale",
+    "name": "Dragon Scale",
+    "rarity": "epic",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "A gleaming scale from an ancient dragon"
+  },
+  {
+    "id": "phoenix_feather",
+    "name": "Phoenix Feather",
+    "rarity": "legendary",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "A mystical feather that burns with eternal flame"
+  },
+  {
+    "id": "void_shard",
+    "name": "Void Shard",
+    "rarity": "mythic",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "A fragment of pure void energy"
+  },
+  {
+    "id": "time_crystal",
+    "name": "Time Crystal",
+    "rarity": "mythic",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "A shard of crystallized time itself"
+  },
+  {
+    "id": "primordial_essence_creation",
+    "name": "Primordial Essence of Creation",
+    "rarity": "transcendent",
+    "category": "artifact",
+    "tradable": false,
+    "bossOnly": true,
+    "description": "The fundamental force of creation itself"
+  },
+  {
+    "id": "primordial_essence_destruction",
+    "name": "Primordial Essence of Destruction", 
+    "rarity": "transcendent",
+    "category": "artifact",
+    "tradable": false,
+    "bossOnly": true,
+    "description": "The fundamental force of destruction itself"
+  },
+  {
+    "id": "primordial_essence_time",
+    "name": "Primordial Essence of Time",
+    "rarity": "transcendent",
+    "category": "artifact", 
+    "tradable": false,
+    "bossOnly": true,
+    "description": "The fundamental force controlling time"
+  },
+  {
+    "id": "primordial_essence_space",
+    "name": "Primordial Essence of Space",
+    "rarity": "transcendent",
+    "category": "artifact",
+    "tradable": false,
+    "bossOnly": true,
+    "description": "The fundamental force controlling space"
+  },
+  {
+    "id": "primordial_essence_life",
+    "name": "Primordial Essence of Life",
+    "rarity": "transcendent",
+    "category": "artifact",
+    "tradable": false,
+    "bossOnly": true,
+    "description": "The fundamental force of all living things"
+  },
+  {
+    "id": "primordial_essence_death",
+    "name": "Primordial Essence of Death",
+    "rarity": "transcendent",
+    "category": "artifact",
+    "tradable": false,
+    "bossOnly": true,
+    "description": "The fundamental force of endings"
+  },
+  {
+    "id": "primordial_essence_order",
+    "name": "Primordial Essence of Order",
+    "rarity": "transcendent",
+    "category": "artifact",
+    "tradable": false,
+    "bossOnly": true,
+    "description": "The fundamental force of structure and law"
+  },
+  {
+    "id": "primordial_essence_chaos",
+    "name": "Primordial Essence of Chaos",
+    "rarity": "transcendent",
+    "category": "artifact",
+    "tradable": false,
+    "bossOnly": true,
+    "description": "The fundamental force of randomness and change"
+  },
+  {
+    "id": "primordial_essence_light",
+    "name": "Primordial Essence of Light",
+    "rarity": "transcendent",
+    "category": "artifact",
+    "tradable": false,
+    "bossOnly": true,
+    "description": "The fundamental force of illumination"
+  },
+  {
+    "id": "primordial_essence_dark",
+    "name": "Primordial Essence of Dark",
+    "rarity": "transcendent",
+    "category": "artifact",
+    "tradable": false,
+    "bossOnly": true,
+    "description": "The fundamental force of shadow"
+  },
+  {
+    "id": "primordial_essence_matter",
+    "name": "Primordial Essence of Matter",
+    "rarity": "transcendent",
+    "category": "artifact",
+    "tradable": false,
+    "bossOnly": true,
+    "description": "The fundamental force of physical existence"
+  },
+  {
+    "id": "primordial_essence_energy",
+    "name": "Primordial Essence of Energy",
+    "rarity": "transcendent",
+    "category": "artifact",
+    "tradable": false,
+    "bossOnly": true,
+    "description": "The fundamental force of power and motion"
+  },
+  {
+    "id": "basic_sword",
+    "name": "Basic Sword",
+    "rarity": "common",
+    "category": "equipment",
+    "equipSlot": "weapon",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "iron_ore", "qty": 3},
+      {"id": "wood", "qty": 1}
+    ],
+    "description": "A simple iron blade for beginners"
+  },
+  {
+    "id": "steel_sword",
+    "name": "Steel Sword",
+    "rarity": "uncommon",
+    "category": "equipment",
+    "equipSlot": "weapon", 
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "basic_sword", "qty": 1},
+      {"id": "iron_ore", "qty": 5},
+      {"id": "crystal_shard", "qty": 1}
+    ],
+    "description": "An improved blade of hardened steel"
+  },
+  {
+    "id": "enchanted_blade",
+    "name": "Enchanted Blade",
+    "rarity": "rare",
+    "category": "equipment",
+    "equipSlot": "weapon",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "steel_sword", "qty": 1},
+      {"id": "crystal_shard", "qty": 3},
+      {"id": "silver_ore", "qty": 2}
+    ],
+    "description": "A magically enhanced weapon"
+  },
+  {
+    "id": "dragon_sword",
+    "name": "Dragon Forged Sword",
+    "rarity": "epic",
+    "category": "equipment",
+    "equipSlot": "weapon",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "enchanted_blade", "qty": 1},
+      {"id": "dragon_scale", "qty": 5},
+      {"id": "gold_ore", "qty": 3}
+    ],
+    "description": "A blade forged with dragon fire"
+  },
+  {
+    "id": "godslayer_sword",
+    "name": "Godslayer Sword",
+    "rarity": "legendary",
+    "category": "equipment",
+    "equipSlot": "weapon",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "dragon_sword", "qty": 1},
+      {"id": "phoenix_feather", "qty": 3},
+      {"id": "platinum_ore", "qty": 5}
+    ],
+    "description": "A weapon capable of harming divine beings"
+  },
+  {
+    "id": "reality_blade",
+    "name": "Reality Cutting Blade",
+    "rarity": "transcendent",
+    "category": "equipment",
+    "equipSlot": "weapon",
+    "tradable": false,
+    "craftable": true,
+    "recipe": [
+      {"id": "godslayer_sword", "qty": 1},
+      {"id": "void_shard", "qty": 10},
+      {"id": "time_crystal", "qty": 3}
+    ],
+    "description": "A blade that can cut through the fabric of reality itself"
+  },
+  {
+    "id": "leather_armor",
+    "name": "Leather Armor",
+    "rarity": "common",
+    "category": "equipment",
+    "equipSlot": "chest",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "leather", "qty": 4},
+      {"id": "cloth", "qty": 2}
+    ],
+    "description": "Basic protection from animal hide"
+  },
+  {
+    "id": "chain_mail",
+    "name": "Chain Mail",
+    "rarity": "uncommon",
+    "category": "equipment",
+    "equipSlot": "chest",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "iron_ore", "qty": 6},
+      {"id": "leather_armor", "qty": 1}
+    ],
+    "description": "Interlocked metal rings for better protection"
+  },
+  {
+    "id": "plate_armor",
+    "name": "Plate Armor",
+    "rarity": "rare",
+    "category": "equipment",
+    "equipSlot": "chest",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "chain_mail", "qty": 1},
+      {"id": "iron_ore", "qty": 10},
+      {"id": "silver_ore", "qty": 3}
+    ],
+    "description": "Heavy metal plates offering maximum protection"
+  },
+  {
+    "id": "dragon_armor",
+    "name": "Dragon Scale Armor",
+    "rarity": "epic", 
+    "category": "equipment",
+    "equipSlot": "chest",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "plate_armor", "qty": 1},
+      {"id": "dragon_scale", "qty": 8},
+      {"id": "gold_ore", "qty": 5}
+    ],
+    "description": "Armor made from the scales of ancient dragons"
+  },
+  {
+    "id": "celestial_armor",
+    "name": "Celestial Armor",
+    "rarity": "legendary",
+    "category": "equipment", 
+    "equipSlot": "chest",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "dragon_armor", "qty": 1},
+      {"id": "phoenix_feather", "qty": 5},
+      {"id": "platinum_ore", "qty": 8}
+    ],
+    "description": "Divine armor blessed by celestial beings"
+  },
+  {
+    "id": "infinity_armor",
+    "name": "Infinity Armor",
+    "rarity": "transcendent",
+    "category": "equipment",
+    "equipSlot": "chest",
+    "tradable": false,
+    "craftable": true,
+    "recipe": [
+      {"id": "celestial_armor", "qty": 1},
+      {"id": "void_shard", "qty": 15},
+      {"id": "time_crystal", "qty": 5}
+    ],
+    "description": "Armor that exists beyond the constraints of reality"
+  },
+  {
+    "id": "health_potion",
+    "name": "Health Potion",
+    "rarity": "common",
+    "category": "consumable",
+    "tradable": true,
+    "craftable": true,
+    "consumable": true,
+    "recipe": [
+      {"id": "wood", "qty": 1},
+      {"id": "crystal_shard", "qty": 1}
+    ],
+    "description": "A basic healing potion"
+  },
+  {
+    "id": "mana_elixir", 
+    "name": "Mana Elixir",
+    "rarity": "uncommon",
+    "category": "consumable",
+    "tradable": true,
+    "craftable": true,
+    "consumable": true,
+    "recipe": [
+      {"id": "health_potion", "qty": 2},
+      {"id": "crystal_shard", "qty": 3}
+    ],
+    "description": "Restores magical energy"
+  },
+  {
+    "id": "phoenix_essence",
+    "name": "Phoenix Essence",
+    "rarity": "epic",
+    "category": "consumable",
+    "tradable": true,
+    "craftable": true,
+    "consumable": true,
+    "recipe": [
+      {"id": "mana_elixir", "qty": 5},
+      {"id": "phoenix_feather", "qty": 1}
+    ],
+    "description": "A legendary potion of rebirth and healing"
+  },
+  {
+    "id": "god_essence",
+    "name": "God Essence",
+    "rarity": "legendary",
+    "category": "consumable",
+    "tradable": true,
+    "craftable": true,
+    "consumable": true,
+    "recipe": [
+      {"id": "phoenix_essence", "qty": 3},
+      {"id": "dragon_scale", "qty": 5},
+      {"id": "platinum_ore", "qty": 3}
+    ],
+    "description": "The concentrated power of divine beings"
+  },
+  {
+    "id": "wooden_staff",
+    "name": "Wooden Staff",
+    "rarity": "common",
+    "category": "equipment",
+    "equipSlot": "weapon",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "wood", "qty": 3}
+    ],
+    "description": "A simple magical focus"
+  },
+  {
+    "id": "crystal_staff",
+    "name": "Crystal Staff",
+    "rarity": "rare",
+    "category": "equipment",
+    "equipSlot": "weapon",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "wooden_staff", "qty": 1},
+      {"id": "crystal_shard", "qty": 5}
+    ],
+    "description": "A staff that amplifies magical power"
+  },
+  {
+    "id": "archmage_staff",
+    "name": "Archmage Staff",
+    "rarity": "legendary",
+    "category": "equipment",
+    "equipSlot": "weapon",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "crystal_staff", "qty": 1},
+      {"id": "phoenix_feather", "qty": 2},
+      {"id": "void_shard", "qty": 3}
+    ],
+    "description": "The ultimate weapon of magical mastery"
+  },
+  {
+    "id": "basic_bow",
+    "name": "Basic Bow",
+    "rarity": "common",
+    "category": "equipment",
+    "equipSlot": "weapon",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "wood", "qty": 2},
+      {"id": "cloth", "qty": 1}
+    ],
+    "description": "A simple ranged weapon"
+  },
+  {
+    "id": "elven_bow",
+    "name": "Elven Bow",
+    "rarity": "rare",
+    "category": "equipment",
+    "equipSlot": "weapon",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "basic_bow", "qty": 1},
+      {"id": "silver_ore", "qty": 3},
+      {"id": "crystal_shard", "qty": 2}
+    ],
+    "description": "A graceful bow of elven craftsmanship"
+  },
+  {
+    "id": "dragon_bow",
+    "name": "Dragon Bone Bow",
+    "rarity": "epic",
+    "category": "equipment",
+    "equipSlot": "weapon",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "elven_bow", "qty": 1},
+      {"id": "dragon_scale", "qty": 3},
+      {"id": "phoenix_feather", "qty": 1}
+    ],
+    "description": "A bow carved from dragon bones"
+  },
+  {
+    "id": "infinity_bow",
+    "name": "Infinity Bow",
+    "rarity": "transcendent",
+    "category": "equipment",
+    "equipSlot": "weapon",
+    "tradable": false,
+    "craftable": true,
+    "recipe": [
+      {"id": "dragon_bow", "qty": 1},
+      {"id": "void_shard", "qty": 5},
+      {"id": "time_crystal", "qty": 2}
+    ],
+    "description": "A bow that fires arrows across infinite space"
+  },
+  {
+    "id": "bronze_helmet",
+    "name": "Bronze Helmet",
+    "rarity": "common",
+    "category": "equipment",
+    "equipSlot": "helmet",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "copper_ore", "qty": 3},
+      {"id": "leather", "qty": 1}
+    ],
+    "description": "Basic head protection"
+  },
+  {
+    "id": "iron_helmet",
+    "name": "Iron Helmet", 
+    "rarity": "uncommon",
+    "category": "equipment",
+    "equipSlot": "helmet",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "bronze_helmet", "qty": 1},
+      {"id": "iron_ore", "qty": 3}
+    ],
+    "description": "Sturdy iron head protection"
+  },
+  {
+    "id": "royal_crown",
+    "name": "Royal Crown",
+    "rarity": "legendary",
+    "category": "equipment",
+    "equipSlot": "helmet",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "iron_helmet", "qty": 1},
+      {"id": "gold_ore", "qty": 8},
+      {"id": "crystal_shard", "qty": 5},
+      {"id": "phoenix_feather", "qty": 1}
+    ],
+    "description": "The crown of divine rulership"
+  },
+  {
+    "id": "infinity_crown",
+    "name": "Infinity Crown",
+    "rarity": "transcendent",
+    "category": "artifact",
+    "equipSlot": "helmet",
+    "tradable": false,
+    "craftable": true,
+    "recipe": [
+      {"id": "royal_crown", "qty": 1},
+      {"id": "void_shard", "qty": 12},
+      {"id": "time_crystal", "qty": 8},
+      {"id": "primordial_essence_order", "qty": 1}
+    ],
+    "description": "A crown that grants dominion over infinite realities"
+  },
+  {
+    "id": "omnipotence_core",
+    "name": "Omnipotence Core", 
+    "rarity": "transcendent",
+    "category": "artifact",
+    "tradable": false,
+    "craftable": true,
+    "recipe": [
+      {"id": "primordial_essence_creation", "qty": 1},
+      {"id": "primordial_essence_destruction", "qty": 1},
+      {"id": "primordial_essence_time", "qty": 1},
+      {"id": "primordial_essence_space", "qty": 1},
+      {"id": "void_shard", "qty": 20}
+    ],
+    "description": "The core component of ultimate power"
+  },
+  {
+    "id": "reality_forge",
+    "name": "Reality Forge",
+    "rarity": "transcendent",
+    "category": "artifact",
+    "tradable": false,
+    "craftable": true,
+    "recipe": [
+      {"id": "infinity_crown", "qty": 1},
+      {"id": "omnipotence_core", "qty": 1},
+      {"id": "time_crystal", "qty": 12},
+      {"id": "void_shard", "qty": 25},
+      {"id": "primordial_essence_creation", "qty": 1},
+      {"id": "primordial_essence_destruction", "qty": 1},
+      {"id": "primordial_essence_time", "qty": 1},
+      {"id": "primordial_essence_space", "qty": 1},
+      {"id": "primordial_essence_life", "qty": 1},
+      {"id": "primordial_essence_death", "qty": 1},
+      {"id": "primordial_essence_order", "qty": 1},
+      {"id": "primordial_essence_chaos", "qty": 1},
+      {"id": "primordial_essence_light", "qty": 1},
+      {"id": "primordial_essence_dark", "qty": 1},
+      {"id": "primordial_essence_matter", "qty": 1},
+      {"id": "primordial_essence_energy", "qty": 1}
+    ],
+    "craftingTime": 168,
+    "craftingCost": 1000000,
+    "description": "THE ULTIMATE GOAL - The forge that can create anything in existence"
+  },
+  {
+    "id": "basic_shield",
+    "name": "Basic Shield",
+    "rarity": "common", 
+    "category": "equipment",
+    "equipSlot": "shield",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "wood", "qty": 3},
+      {"id": "iron_ore", "qty": 1}
+    ],
+    "description": "Simple wooden shield with iron rim"
+  },
+  {
+    "id": "tower_shield",
+    "name": "Tower Shield",
+    "rarity": "rare",
+    "category": "equipment", 
+    "equipSlot": "shield",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "basic_shield", "qty": 1},
+      {"id": "iron_ore", "qty": 5},
+      {"id": "silver_ore", "qty": 2}
+    ],
+    "description": "Massive shield offering full body protection"
+  },
+  {
+    "id": "dragon_shield",
+    "name": "Dragon Shield",
+    "rarity": "epic",
+    "category": "equipment",
+    "equipSlot": "shield", 
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "tower_shield", "qty": 1},
+      {"id": "dragon_scale", "qty": 6},
+      {"id": "gold_ore", "qty": 3}
+    ],
+    "description": "A shield made from dragon scales and gold"
+  },
+  {
+    "id": "boots_leather",
+    "name": "Leather Boots",
+    "rarity": "common",
+    "category": "equipment",
+    "equipSlot": "boots",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "leather", "qty": 2},
+      {"id": "cloth", "qty": 1}
+    ],
+    "description": "Basic footwear for adventurers"
+  },
+  {
+    "id": "boots_iron",
+    "name": "Iron Boots",
+    "rarity": "uncommon",
+    "category": "equipment",
+    "equipSlot": "boots",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "boots_leather", "qty": 1},
+      {"id": "iron_ore", "qty": 2}
+    ],
+    "description": "Heavy boots with iron reinforcement"
+  },
+  {
+    "id": "boots_speed",
+    "name": "Boots of Speed",
+    "rarity": "epic",
+    "category": "equipment",
+    "equipSlot": "boots",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "boots_iron", "qty": 1},
+      {"id": "crystal_shard", "qty": 4},
+      {"id": "phoenix_feather", "qty": 1}
+    ],
+    "description": "Enchanted boots that increase movement speed"
+  },
+  {
+    "id": "gloves_leather",
+    "name": "Leather Gloves",
+    "rarity": "common",
+    "category": "equipment",
+    "equipSlot": "gloves",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "leather", "qty": 1}
+    ],
+    "description": "Basic hand protection"
+  },
+  {
+    "id": "gloves_iron",
+    "name": "Iron Gauntlets",
+    "rarity": "uncommon", 
+    "category": "equipment",
+    "equipSlot": "gloves",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "gloves_leather", "qty": 1},
+      {"id": "iron_ore", "qty": 2}
+    ],
+    "description": "Heavy iron hand protection"
+  },
+  {
+    "id": "gloves_power",
+    "name": "Gauntlets of Power",
+    "rarity": "legendary",
+    "category": "equipment",
+    "equipSlot": "gloves",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "gloves_iron", "qty": 1},
+      {"id": "dragon_scale", "qty": 3},
+      {"id": "phoenix_feather", "qty": 1},
+      {"id": "platinum_ore", "qty": 2}
+    ],
+    "description": "Legendary gauntlets that amplify the wearer's strength"
+  },
+  {
+    "id": "ring_basic",
+    "name": "Basic Ring", 
+    "rarity": "common",
+    "category": "equipment",
+    "equipSlot": "ring",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "copper_ore", "qty": 1}
+    ],
+    "description": "A simple copper ring"
+  },
+  {
+    "id": "ring_silver",
+    "name": "Silver Ring",
+    "rarity": "uncommon",
+    "category": "equipment",
+    "equipSlot": "ring",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "silver_ore", "qty": 1},
+      {"id": "crystal_shard", "qty": 1}
+    ],
+    "description": "A ring of pure silver with a crystal"
+  },
+  {
+    "id": "ring_power",
+    "name": "Ring of Power",
+    "rarity": "legendary",
+    "category": "equipment",
+    "equipSlot": "ring",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "ring_silver", "qty": 1},
+      {"id": "gold_ore", "qty": 3},
+      {"id": "dragon_scale", "qty": 2},
+      {"id": "phoenix_feather", "qty": 1}
+    ],
+    "description": "A ring that grants immense magical power"
+  },
+  {
+    "id": "necklace_basic",
+    "name": "Basic Necklace",
+    "rarity": "common",
+    "category": "equipment",
+    "equipSlot": "necklace",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "silver_ore", "qty": 1},
+      {"id": "cloth", "qty": 1}
+    ],
+    "description": "Simple silver chain necklace"
+  },
+  {
+    "id": "necklace_wisdom",
+    "name": "Necklace of Wisdom",
+    "rarity": "epic",
+    "category": "equipment",
+    "equipSlot": "necklace",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "necklace_basic", "qty": 1},
+      {"id": "crystal_shard", "qty": 5},
+      {"id": "gold_ore", "qty": 2}
+    ],
+    "description": "A necklace that enhances magical knowledge"
+  },
+  {
+    "id": "pickaxe_iron",
+    "name": "Iron Pickaxe",
+    "rarity": "common",
+    "category": "tool",
+    "equipSlot": "tool",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "iron_ore", "qty": 3},
+      {"id": "wood", "qty": 2}
+    ],
+    "description": "A tool for mining ore"
+  },
+  {
+    "id": "pickaxe_diamond",
+    "name": "Diamond Pickaxe",
+    "rarity": "epic",
+    "category": "tool",
+    "equipSlot": "tool",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "pickaxe_iron", "qty": 1},
+      {"id": "crystal_shard", "qty": 8},
+      {"id": "platinum_ore", "qty": 2}
+    ],
+    "description": "The ultimate mining tool"
+  },
+  {
+    "id": "axe_wood",
+    "name": "Wood Axe",
+    "rarity": "common",
+    "category": "tool",
+    "equipSlot": "tool",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "iron_ore", "qty": 2},
+      {"id": "wood", "qty": 2}
+    ],
+    "description": "A tool for cutting wood"
+  },
+  {
+    "id": "fishing_rod",
+    "name": "Fishing Rod",
+    "rarity": "common",
+    "category": "tool",
+    "equipSlot": "tool",
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "wood", "qty": 3},
+      {"id": "cloth", "qty": 1}
+    ],
+    "description": "A tool for catching fish"
+  },
+  {
+    "id": "bicycle",
+    "name": "Bicycle",
+    "rarity": "uncommon",
+    "category": "vehicle",
+    "equipSlot": "vehicle",
+    "vehicleSpeedMultiplier": 1.2,
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "iron_ore", "qty": 5},
+      {"id": "leather", "qty": 2}
+    ],
+    "description": "A simple pedal-powered vehicle"
+  },
+  {
+    "id": "motorcycle",
+    "name": "Motorcycle",
+    "rarity": "rare",
+    "category": "vehicle", 
+    "equipSlot": "vehicle",
+    "vehicleSpeedMultiplier": 2.0,
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "bicycle", "qty": 1},
+      {"id": "iron_ore", "qty": 10},
+      {"id": "crystal_shard", "qty": 3}
+    ],
+    "description": "A fast motorized two-wheeler"
+  },
+  {
+    "id": "hover_bike",
+    "name": "Hover Bike",
+    "rarity": "epic",
+    "category": "vehicle",
+    "equipSlot": "vehicle",
+    "vehicleSpeedMultiplier": 2.5,
+    "tradable": true,
+    "craftable": true,
+    "recipe": [
+      {"id": "motorcycle", "qty": 1},
+      {"id": "crystal_shard", "qty": 8},
+      {"id": "dragon_scale", "qty": 2}
+    ],
+    "description": "A futuristic hovering motorcycle"
+  },
+  {
+    "id": "teleporter",
+    "name": "Personal Teleporter",
+    "rarity": "transcendent",
+    "category": "vehicle",
+    "equipSlot": "vehicle",
+    "vehicleSpeedMultiplier": 10.0,
+    "tradable": false,
+    "craftable": true,
+    "recipe": [
+      {"id": "hover_bike", "qty": 1},
+      {"id": "void_shard", "qty": 8},
+      {"id": "time_crystal", "qty": 3},
+      {"id": "primordial_essence_space", "qty": 1}
+    ],
+    "description": "Instant travel across any distance"
+  },
+  {
+    "id": "bread",
+    "name": "Bread",
+    "rarity": "common",
+    "category": "consumable",
+    "tradable": true,
+    "craftable": true,
+    "consumable": true,
+    "recipe": [
+      {"id": "wood", "qty": 1}
+    ],
+    "description": "Basic sustenance"
+  },
+  {
+    "id": "cooked_meat",
+    "name": "Cooked Meat",
+    "rarity": "common",
+    "category": "consumable",
+    "tradable": true,
+    "craftable": true,
+    "consumable": true,
+    "recipe": [
+      {"id": "leather", "qty": 1},
+      {"id": "wood", "qty": 1}
+    ],
+    "description": "Nutritious cooked meat"
+  },
+  {
+    "id": "energy_bar",
+    "name": "Energy Bar",
+    "rarity": "uncommon",
+    "category": "consumable",
+    "tradable": true,
+    "craftable": true,
+    "consumable": true,
+    "recipe": [
+      {"id": "bread", "qty": 2},
+      {"id": "crystal_shard", "qty": 1}
+    ],
+    "description": "A bar that restores stamina"
+  },
+  {
+    "id": "elixir_strength",
+    "name": "Elixir of Strength",
+    "rarity": "rare",
+    "category": "consumable",
+    "tradable": true,
+    "craftable": true,
+    "consumable": true,
+    "recipe": [
+      {"id": "health_potion", "qty": 3},
+      {"id": "dragon_scale", "qty": 1}
+    ],
+    "description": "Temporarily increases physical power"
+  },
+  {
+    "id": "elixir_speed",
+    "name": "Elixir of Speed",
+    "rarity": "rare",
+    "category": "consumable",
+    "tradable": true,
+    "craftable": true,
+    "consumable": true,
+    "recipe": [
+      {"id": "mana_elixir", "qty": 2},
+      {"id": "phoenix_feather", "qty": 1}
+    ],
+    "description": "Temporarily increases movement speed"
+  },
+  {
+    "id": "potion_invisibility",
+    "name": "Invisibility Potion",
+    "rarity": "epic",
+    "category": "consumable",
+    "tradable": true,
+    "craftable": true,
+    "consumable": true,
+    "recipe": [
+      {"id": "mana_elixir", "qty": 5},
+      {"id": "void_shard", "qty": 1}
+    ],
+    "description": "Makes the user temporarily invisible"
+  },
+  {
+    "id": "scroll_teleport",
+    "name": "Teleport Scroll",
+    "rarity": "rare",
+    "category": "consumable",
+    "tradable": true,
+    "craftable": true,
+    "consumable": true,
+    "recipe": [
+      {"id": "cloth", "qty": 3},
+      {"id": "crystal_shard", "qty": 5}
+    ],
+    "description": "Single-use item for instant travel"
+  },
+  {
+    "id": "tome_knowledge",
+    "name": "Tome of Knowledge",
+    "rarity": "legendary",
+    "category": "consumable",
+    "tradable": true,
+    "craftable": true,
+    "consumable": true,
+    "recipe": [
+      {"id": "cloth", "qty": 10},
+      {"id": "crystal_shard", "qty": 15},
+      {"id": "phoenix_feather", "qty": 2}
+    ],
+    "description": "Permanently increases crafting knowledge"
+  },
+  {
+    "id": "gem_ruby",
+    "name": "Ruby Gem",
+    "rarity": "rare",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "A precious red gemstone"
+  },
+  {
+    "id": "gem_sapphire",
+    "name": "Sapphire Gem",
+    "rarity": "rare",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "A precious blue gemstone"
+  },
+  {
+    "id": "gem_emerald",
+    "name": "Emerald Gem", 
+    "rarity": "rare",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "A precious green gemstone"
+  },
+  {
+    "id": "gem_diamond",
+    "name": "Diamond Gem",
+    "rarity": "epic",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "The hardest and most valuable gem"
+  },
+  {
+    "id": "ancient_rune",
+    "name": "Ancient Rune",
+    "rarity": "epic",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "A mystical symbol of power"
+  },
+  {
+    "id": "soul_stone",
+    "name": "Soul Stone",
+    "rarity": "legendary",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "A stone containing a trapped soul"
+  },
+  {
+    "id": "essence_fire",
+    "name": "Fire Essence",
+    "rarity": "epic",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Concentrated fire elemental energy"
+  },
+  {
+    "id": "essence_water",
+    "name": "Water Essence",
+    "rarity": "epic", 
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Concentrated water elemental energy"
+  },
+  {
+    "id": "essence_earth",
+    "name": "Earth Essence",
+    "rarity": "epic",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Concentrated earth elemental energy"
+  },
+  {
+    "id": "essence_air",
+    "name": "Air Essence",
+    "rarity": "epic",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Concentrated air elemental energy"
+  },
+  {
+    "id": "mythril_ore",
+    "name": "Mythril Ore",
+    "rarity": "legendary",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "The rarest and most magical metal"
+  },
+  {
+    "id": "adamantine_ore",
+    "name": "Adamantine Ore",
+    "rarity": "mythic",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Indestructible metal from the depths"
+  },
+  {
+    "id": "celestial_fragment",
+    "name": "Celestial Fragment",
+    "rarity": "mythic",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "A piece of a fallen star"
+  },
+  {
+    "id": "shadow_essence",
+    "name": "Shadow Essence",
+    "rarity": "legendary",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Concentrated darkness energy"
+  },
+  {
+    "id": "light_essence",
+    "name": "Light Essence", 
+    "rarity": "legendary",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Concentrated holy light energy"
+  },
+  {
+    "id": "chaos_fragment",
+    "name": "Chaos Fragment",
+    "rarity": "mythic",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "A shard of pure chaos energy"
+  },
+  {
+    "id": "order_crystal",
+    "name": "Order Crystal",
+    "rarity": "mythic",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Crystallized law and structure"
+  },
+  {
+    "id": "bone_fragment",
+    "name": "Ancient Bone",
+    "rarity": "uncommon",
+    "category": "material",
+    "tradable": true,
+    "description": "Old bones from ancient creatures"
+  },
+  {
+    "id": "spider_silk",
+    "name": "Giant Spider Silk",
+    "rarity": "rare",
+    "category": "material",
+    "tradable": true,
+    "description": "Incredibly strong silk from giant spiders"
+  },
+  {
+    "id": "unicorn_horn",
+    "name": "Unicorn Horn",
+    "rarity": "legendary",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "The horn of a pure unicorn"
+  },
+  {
+    "id": "pegasus_feather",
+    "name": "Pegasus Feather",
+    "rarity": "epic",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "A feather from a flying horse"
+  },
+  {
+    "id": "mermaid_scale",
+    "name": "Mermaid Scale",
+    "rarity": "rare",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "An iridescent scale from a sea maiden"
+  },
+  {
+    "id": "fairy_dust",
+    "name": "Fairy Dust",
+    "rarity": "epic",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Sparkling dust from forest fairies"
+  },
+  {
+    "id": "troll_hide",
+    "name": "Troll Hide",
+    "rarity": "uncommon",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Thick regenerating hide from a troll"
+  },
+  {
+    "id": "orc_tooth",
+    "name": "Orc Tooth",
+    "rarity": "common",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Sharp tooth from an orc warrior"
+  },
+  {
+    "id": "elf_hair",
+    "name": "Elven Hair",
+    "rarity": "uncommon",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Silky hair from an ancient elf"
+  },
+  {
+    "id": "dwarf_beard",
+    "name": "Dwarf Beard Hair",
+    "rarity": "rare",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Coarse hair from a mighty dwarf"
+  },
+  {
+    "id": "giant_toe",
+    "name": "Giant Toe",
+    "rarity": "epic",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Massive toe from an ancient giant"
+  },
+  {
+    "id": "demon_claw",
+    "name": "Demon Claw",
+    "rarity": "legendary",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Sharp claw from a powerful demon"
+  },
+  {
+    "id": "angel_feather",
+    "name": "Angel Feather",
+    "rarity": "legendary", 
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Pure white feather from a celestial being"
+  },
+  {
+    "id": "vampire_fang",
+    "name": "Vampire Fang",
+    "rarity": "epic",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Sharp fang from an ancient vampire"
+  },
+  {
+    "id": "werewolf_claw",
+    "name": "Werewolf Claw",
+    "rarity": "rare",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Razor claw from a lycanthrope"
+  },
+  {
+    "id": "zombie_brain",
+    "name": "Zombie Brain",
+    "rarity": "uncommon",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Preserved brain from the undead"
+  },
+  {
+    "id": "ghost_ectoplasm",
+    "name": "Ghost Ectoplasm",
+    "rarity": "rare",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Ethereal substance from spirits"
+  },
+  {
+    "id": "banshee_wail",
+    "name": "Bottled Banshee Wail",
+    "rarity": "epic",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "A captured scream of tormented souls"
+  },
+  {
+    "id": "phoenix_ash",
+    "name": "Phoenix Ash",
+    "rarity": "legendary",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Ash from a reborn phoenix"
+  },
+  {
+    "id": "dragon_blood",
+    "name": "Dragon Blood",
+    "rarity": "mythic",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "The life essence of an ancient dragon"
+  },
+  {
+    "id": "kraken_ink",
+    "name": "Kraken Ink",
+    "rarity": "epic",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Black ink from a legendary sea monster"
+  },
+  {
+    "id": "leviathan_scale",
+    "name": "Leviathan Scale",
+    "rarity": "mythic",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Massive scale from the ocean's apex predator"
+  },
+  {
+    "id": "behemoth_horn",
+    "name": "Behemoth Horn",
+    "rarity": "mythic",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Colossal horn from a land beast"
+  },
+  {
+    "id": "zephyr_essence",
+    "name": "Zephyr Essence",
+    "rarity": "legendary",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Captured essence of the wind itself"
+  },
+  {
+    "id": "thunder_stone",
+    "name": "Thunder Stone",
+    "rarity": "epic",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Stone infused with lightning energy"
+  },
+  {
+    "id": "blizzard_crystal",
+    "name": "Blizzard Crystal",
+    "rarity": "epic",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Ice crystal from eternal winter"
+  },
+  {
+    "id": "magma_core",
+    "name": "Magma Core",
+    "rarity": "legendary",
+    "category": "material",
+    "tradable": true,
+    "bossOnly": true,
+    "description": "Molten rock from the planet's core"
+  },
+  {
+    "id": "quantum_dust",
+    "name": "Quantum Dust",
+    "rarity": "transcendent",
+    "category": "material",
+    "tradable": false,
+    "bossOnly": true,
+    "description": "Matter that exists in multiple states"
+  },
+  {
+    "id": "neutron_fragment",
+    "name": "Neutron Star Fragment",
+    "rarity": "transcendent",
+    "category": "material",
+    "tradable": false,
+    "bossOnly": true,
+    "description": "Incredibly dense stellar matter"
+  },
+  {
+    "id": "dark_matter",
+    "name": "Dark Matter",
+    "rarity": "transcendent",
+    "category": "material", 
+    "tradable": false,
+    "bossOnly": true,
+    "description": "Invisible matter that shapes the universe"
+  },
+  {
+    "id": "antimatter",
+    "name": "Antimatter",
+    "rarity": "transcendent",
+    "category": "material",
+    "tradable": false,
+    "bossOnly": true,
+    "description": "Matter's opposite with immense energy"
+  },
+  {
+    "id": "quark_essence",
+    "name": "Quark Essence",
+    "rarity": "transcendent",
+    "category": "material",
+    "tradable": false,
+    "bossOnly": true,
+    "description": "The fundamental building blocks of reality"
+  },
+  {
+    "id": "higgs_particle",
+    "name": "Higgs Particle",
+    "rarity": "transcendent",
+    "category": "material",
+    "tradable": false,
+    "bossOnly": true,
+    "description": "The particle that gives mass to everything"
+  },
+  {
+    "id": "singularity_core",
+    "name": "Singularity Core",
+    "rarity": "transcendent",
+    "category": "material",
+    "tradable": false,
+    "bossOnly": true,
+    "description": "The heart of a collapsed black hole"
+  },
+  {
+    "id": "multiverse_key",
+    "name": "Multiverse Key",
+    "rarity": "transcendent",
+    "category": "artifact",
+    "tradable": false,
+    "bossOnly": true,
+    "description": "A key that opens doors between realities"
+  },
+  {
+    "id": "infinity_gauntlet",
+    "name": "Infinity Gauntlet",
+    "rarity": "transcendent",
+    "category": "equipment",
+    "equipSlot": "gloves",
+    "tradable": false,
+    "craftable": true,
+    "recipe": [
+      {"id": "gloves_power", "qty": 1},
+      {"id": "primordial_essence_creation", "qty": 1},
+      {"id": "primordial_essence_destruction", "qty": 1},
+      {"id": "primordial_essence_time", "qty": 1},
+      {"id": "primordial_essence_space", "qty": 1},
+      {"id": "primordial_essence_life", "qty": 1},
+      {"id": "primordial_essence_death", "qty": 1}
+    ],
+    "description": "Gloves that control the fundamental forces"
+  },
+  {
+    "id": "genesis_seed",
+    "name": "Genesis Seed",
+    "rarity": "transcendent",
+    "category": "artifact",
+    "tradable": false,
+    "craftable": true,
+    "recipe": [
+      {"id": "primordial_essence_creation", "qty": 1},
+      {"id": "primordial_essence_life", "qty": 1},
+      {"id": "time_crystal", "qty": 5}
+    ],
+    "description": "A seed that can create new worlds"
+  },
+  {
+    "id": "apocalypse_scroll",
+    "name": "Apocalypse Scroll",
+    "rarity": "transcendent", 
+    "category": "artifact",
+    "tradable": false,
+    "craftable": true,
+    "recipe": [
+      {"id": "primordial_essence_destruction", "qty": 1},
+      {"id": "primordial_essence_death", "qty": 1},
+      {"id": "void_shard", "qty": 10}
+    ],
+    "description": "A scroll that can end civilizations"
+  },
+  {
+    "id": "chronos_watch",
+    "name": "Chronos Watch",
+    "rarity": "transcendent",
+    "category": "artifact",
+    "tradable": false,
+    "craftable": true,
+    "recipe": [
+      {"id": "primordial_essence_time", "qty": 1},
+      {"id": "time_crystal", "qty": 8},
+      {"id": "gold_ore", "qty": 10}
+    ],
+    "description": "A timepiece that controls temporal flow"
+  },
+  {
+    "id": "dimension_portal",
+    "name": "Dimensional Portal Device",
+    "rarity": "transcendent",
+    "category": "artifact",
+    "tradable": false,
+    "craftable": true,
+    "recipe": [
+      {"id": "primordial_essence_space", "qty": 1},
+      {"id": "void_shard", "qty": 15},
+      {"id": "multiverse_key", "qty": 1}
+    ],
+    "description": "Device for traveling between dimensions"
+  },
+  {
+    "id": "balance_scale",
+    "name": "Cosmic Balance Scale",
+    "rarity": "transcendent",
+    "category": "artifact",
+    "tradable": false,
+    "craftable": true,
+    "recipe": [
+      {"id": "primordial_essence_order", "qty": 1},
+      {"id": "primordial_essence_chaos", "qty": 1},
+      {"id": "platinum_ore", "qty": 12}
+    ],
+    "description": "Scales that maintain universal equilibrium"
+  },
+  {
+    "id": "illumination_orb",
+    "name": "Orb of Eternal Illumination",
+    "rarity": "transcendent",
+    "category": "artifact", 
+    "tradable": false,
+    "craftable": true,
+    "recipe": [
+      {"id": "primordial_essence_light", "qty": 1},
+      {"id": "light_essence", "qty": 8},
+      {"id": "crystal_shard", "qty": 20}
+    ],
+    "description": "An orb that banishes all darkness"
+  },
+  {
+    "id": "shadow_cloak",
+    "name": "Cloak of Infinite Shadows",
+    "rarity": "transcendent",
+    "category": "equipment",
+    "equipSlot": "chest",
+    "tradable": false,
+    "craftable": true,
+    "recipe": [
+      {"id": "primordial_essence_dark", "qty": 1},
+      {"id": "shadow_essence", "qty": 8},
+      {"id": "cloth", "qty": 15}
+    ],
+    "description": "A cloak woven from the void between stars"
+  },
+  {
+    "id": "matter_transmuter",
+    "name": "Matter Transmutation Device",
+    "rarity": "transcendent",
+    "category": "artifact",
+    "tradable": false,
+    "craftable": true,
+    "recipe": [
+      {"id": "primordial_essence_matter", "qty": 1},
+      {"id": "adamantine_ore", "qty": 5},
+      {"id": "quantum_dust", "qty": 3}
+    ],
+    "description": "Device that can transform any material"
+  },
+  {
+    "id": "energy_conduit",
+    "name": "Infinite Energy Conduit",
+    "rarity": "transcendent",
+    "category": "artifact",
+    "tradable": false,
+    "craftable": true,
+    "recipe": [
+      {"id": "primordial_essence_energy", "qty": 1},
+      {"id": "crystal_shard", "qty": 25},
+      {"id": "antimatter", "qty": 1}
+    ],
+    "description": "A conduit for unlimited power"
+  }
+]

@@ -1,0 +1,55 @@
+{
+  "deployment": {
+    "source": {
+      "environment": "development",
+      "database": "data-dev.sqlite",
+      "config": "config.development.json",
+      "env": ".env.development"
+    },
+    "target": {
+      "environment": "production",
+      "database": "data.sqlite", 
+      "config": "config.json",
+      "env": ".env"
+    },
+    "backup": {
+      "enabled": true,
+      "directory": "./backups",
+      "keepBackups": 5,
+      "includeDatabase": true,
+      "includeConfig": true
+    },
+    "validation": {
+      "checkDependencies": true,
+      "runTests": false,
+      "validateConfig": true,
+      "checkPorts": true
+    },
+    "migration": {
+      "migrateDatabase": true,
+      "preserveUserData": true,
+      "mergeConfigs": true
+    },
+    "rollback": {
+      "enabled": true,
+      "autoRollbackOnError": true
+    },
+    "notifications": {
+      "discord": {
+        "enabled": false,
+        "webhookUrl": "",
+        "channel": ""
+      }
+    }
+  },
+  "excludeFiles": [
+    "node_modules/",
+    "data-dev.sqlite*",
+    ".env.development",
+    "config.development.json",
+    "backups/",
+    ".git/",
+    "*.log",
+    "*.tmp"
+  ]
+}
