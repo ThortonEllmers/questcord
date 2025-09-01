@@ -9,3 +9,7 @@ dist/
 build/
 development/
 .claude/
+# SSH Keys
+questcord_key*
+*.pem
+*.key
