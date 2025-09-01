@@ -186,26 +186,26 @@ module.exports = {
     const currentStamina = staminaRow?.stamina || 0;
     const staminaCost = config.stamina?.travelCost ?? 10;
     
-    // Create spectacular travel embed
+    // Create epic travel embed with enhanced theming
     const travelEmbed = new EmbedBuilder()
-      .setTitle('🌍✈️ **JOURNEY INITIATED** ✈️🌍')
-      .setDescription(`🚀 *Preparing for departure to another server* 🚀`)
+      .setTitle('🌍✈️ **DIMENSIONAL GATEWAY ACTIVATED** ✈️🌍')
+      .setDescription(`⚡ *Initiating quantum server jump through the multiverse* ⚡`)
       .setColor(isPremiumUser ? 0xFFD700 : 0x00AE86)
       .setAuthor({ 
-        name: `${userPrefix} - New Server Awaits`,
+        name: `${userPrefix} - Interdimensional Traveler`,
         iconURL: interaction.user.displayAvatarURL() 
       });
 
-    // Flight details
-    const vehicleEmoji = isPremiumUser ? '✈️' : '🛩️';
-    const vehicleName = isPremiumUser ? 'Premium Private Jet' : 'Commercial Aircraft';
+    // Enhanced vehicle theming
+    const vehicleEmoji = isPremiumUser ? '🚀' : '✈️';
+    const vehicleName = isPremiumUser ? 'Quantum Starship' : 'Interdimensional Cruiser';
     const vehicleDesc = isPremiumUser ? 
-      '🥂 Luxury cabin with premium amenities' : 
-      '🎒 Comfortable economy seating';
+      '✨ Luxurious quantum-enhanced cabin with reality distortion fields' : 
+      '⚡ Advanced propulsion systems with dimensional stabilizers';
 
     travelEmbed.addFields(
       {
-        name: `${vehicleEmoji} **Vehicle**`,
+        name: `${vehicleEmoji} **Transport Vessel**`,
         value: `**${vehicleName}**\n${vehicleDesc}`,
         inline: true
       },
@@ -215,46 +215,46 @@ module.exports = {
         inline: true
       },
       {
-        name: '⏱️ **Flight Time**',
-        value: `**${Math.floor(timeSec/60)}m ${timeSec%60}s**\n🏃‍♂️ ${speedMult}x speed boost`,
+        name: '⏱️ **Journey Duration**',
+        value: `**${Math.floor(timeSec/60)}m ${timeSec%60}s**\n🌟 ${speedMult}x quantum acceleration`,
         inline: true
       }
     );
 
     if (distance > 0) {
       travelEmbed.addFields({
-        name: '📏 **Distance**',
-        value: `**${distance.toFixed(1)} km**\n🗺️ Great circle route`,
+        name: '📏 **Dimensional Distance**',
+        value: `**${distance.toFixed(1)} km**\n🌌 Quantum tunnel trajectory`,
         inline: true
       });
     }
 
     if (fromServer) {
       travelEmbed.addFields({
-        name: '🏃‍♀️ **Departure**',
+        name: '🏃‍♀️ **Origin Portal**',
         value: `**${fromServer.name || fromServer.guildId}**\n🕐 ${new Date().toLocaleTimeString()}`,
         inline: true
       });
     }
 
     travelEmbed.addFields({
-      name: '🕐 **Arrival Time**',
-      value: `**${new Date(arrival).toLocaleTimeString()}**\n📅 ${new Date(arrival).toLocaleDateString()}`,
+      name: '🎯 **Arrival Portal**',
+      value: `**${new Date(arrival).toLocaleTimeString()}**\n🌌 ${new Date(arrival).toLocaleDateString()}\n⚡ Quantum sync in progress`,
       inline: true
     });
 
-    // Stamina section
+    // Energy consumption section
     travelEmbed.addFields({
-      name: '💨 **Stamina Usage**',
-      value: `**Used:** ${staminaCost} stamina\n**Remaining:** ${Math.max(0, currentStamina - staminaCost)} stamina`,
+      name: '⚡ **Energy Consumption**',
+      value: `**Quantum fuel used:** ${staminaCost} units\n**Remaining energy:** ${Math.max(0, currentStamina - staminaCost)} units`,
       inline: true
     });
 
     // Premium benefits
     if (isPremiumUser) {
       travelEmbed.addFields({
-        name: '👑 **Premium Benefits**',
-        value: `• ${speedMult}x faster travel\n• Luxury accommodations\n• Priority boarding\n• Complimentary refreshments`,
+        name: '👑 **Quantum Elite Perks**',
+        value: `• ${speedMult}x quantum acceleration\n• Luxurious reality-warped cabin\n• Priority dimensional access\n• Complimentary cosmic refreshments\n• Enhanced multiverse navigation`,
         inline: false
       });
     }
@@ -279,7 +279,7 @@ module.exports = {
 
     travelEmbed
       .setFooter({ 
-        text: `✈️ Bon voyage! Safe travels to your destination • QuestCord Travel`,
+        text: `🌌 Safe travels through the quantum void, adventurer! • QuestCord Dimensional Transit`,
         iconURL: interaction.client.user.displayAvatarURL()
       })
       .setTimestamp();

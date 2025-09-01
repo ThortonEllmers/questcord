@@ -17,20 +17,27 @@ module.exports = {
             .setDescription('Weather event type')
             .setRequired(true)
             .addChoices(
-              { name: '🌪️ Cyclone (Blocks travel)', value: 'cyclone' },
-              { name: '⛈️ Thunderstorm (Slows travel)', value: 'thunderstorm' },
-              { name: '🌨️ Blizzard (Blocks travel)', value: 'blizzard' },
-              { name: '🌊 Hurricane (Blocks travel)', value: 'hurricane' },
-              { name: '🌫️ Dense Fog (Slows travel)', value: 'dense_fog' },
-              { name: '🌧️ Heavy Rain (Slows travel)', value: 'heavy_rain' },
-              { name: '❄️ Ice Storm (Blocks travel)', value: 'ice_storm' },
-              { name: '🔥 Wildfire (Blocks travel)', value: 'wildfire' },
-              { name: '🌪️ Tornado (Blocks travel)', value: 'tornado' },
-              { name: '💨 High Winds (Slows travel)', value: 'high_winds' },
-              { name: '🏔️ Avalanche (Blocks travel)', value: 'avalanche' },
-              { name: '⚡ Lightning Storm (Slows travel)', value: 'lightning_storm' },
-              { name: '🌋 Volcanic Ash (Blocks travel)', value: 'volcanic_ash' },
-              { name: '🌪️ Dust Storm (Slows travel)', value: 'dust_storm' }
+              // Catastrophic (Severity 5)
+              { name: '🌪️ Superstorm Genesis (Blocks travel)', value: 'superstorm' },
+              { name: '🌀 Hypercane (Blocks travel)', value: 'category_6_hurricane' },
+              { name: '🧊 Ice Apocalypse (Blocks travel)', value: 'ice_apocalypse' },
+              
+              // Severe (Severity 4) 
+              { name: '💥 Cyclonic Bomb (Blocks travel)', value: 'cyclonic_bomb' },
+              { name: '🌋 Pyroclastic Flow (Blocks travel)', value: 'pyroclastic_surge' },
+              { name: '💨 Derecho Windstorm (Blocks travel)', value: 'derecho_windstorm' },
+              
+              // Dangerous (Severity 3)
+              { name: '🌪️ Supercell Complex (Slows travel)', value: 'supercell_outbreak' },
+              { name: '🌊 Atmospheric River (Slows travel)', value: 'atmospheric_river' },
+              { name: '🏜️ Haboob Dust Wall (Slows travel)', value: 'haboob_dust_wall' },
+              { name: '🥶 Polar Vortex (Slows travel)', value: 'polar_vortex' },
+              
+              // Moderate (Severity 2)
+              { name: '〰️ Gravity Wave Storm (Slows travel)', value: 'gravity_wave_storm' },
+              { name: '🌡️ Thermal Inversion (Slows travel)', value: 'temperature_inversion' },
+              { name: '⬇️ Microburst Cluster (Slows travel)', value: 'microbursts_cluster' },
+              { name: '🧊 Ice Pellet Storm (Slows travel)', value: 'ice_pellet_storm' }
             )
         )
         .addNumberOption(option =>
@@ -95,14 +102,14 @@ module.exports = {
             .setDescription('Weather event type')
             .setRequired(true)
             .addChoices(
-              { name: '🌪️ Cyclone', value: 'cyclone' },
-              { name: '⛈️ Thunderstorm', value: 'thunderstorm' },
-              { name: '🌨️ Blizzard', value: 'blizzard' },
-              { name: '🌊 Hurricane', value: 'hurricane' },
-              { name: '🌫️ Dense Fog', value: 'dense_fog' },
-              { name: '🌧️ Heavy Rain', value: 'heavy_rain' },
-              { name: '❄️ Ice Storm', value: 'ice_storm' },
-              { name: '🔥 Wildfire', value: 'wildfire' }
+              { name: '🌪️ Superstorm Genesis', value: 'superstorm' },
+              { name: '🌀 Hypercane', value: 'category_6_hurricane' },
+              { name: '🧊 Ice Apocalypse', value: 'ice_apocalypse' },
+              { name: '💥 Cyclonic Bomb', value: 'cyclonic_bomb' },
+              { name: '🌋 Pyroclastic Flow', value: 'pyroclastic_surge' },
+              { name: '💨 Derecho Windstorm', value: 'derecho_windstorm' },
+              { name: '🌪️ Supercell Complex', value: 'supercell_outbreak' },
+              { name: '🌊 Atmospheric River', value: 'atmospheric_river' }
             )
         )
         .addStringOption(option =>

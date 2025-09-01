@@ -406,21 +406,37 @@ module.exports = {
       }
       
       if (boss.expiresAt < Date.now()) {
-        // Remove boss fighter role from all participants
+        // Get participants before deleting records and clean up their roles
         const parts = db.prepare('SELECT userId FROM boss_participants WHERE bossId=?').all(boss.id);
-        for (const part of parts) {
-          await removeBossFighterRole(interaction.client, part.userId, location);
+        
+        // Clean up boss fighter roles using the improved cleanup function
+        try {
+          const { cleanupBossFighterRoles } = require('../utils/boss_spawner');
+          const participantUserIds = parts.map(p => p.userId);
+          await cleanupBossFighterRoles(interaction.client, location, participantUserIds);
+          console.log(`[boss] Cleaned up roles for ${participantUserIds.length} participants after boss expiration`);
+        } catch (error) {
+          console.warn('[boss] Failed to cleanup boss fighter roles after expiration:', error.message);
+          
+          // Fallback to old method if new method fails
+          for (const part of parts) {
+            try {
+              await removeBossFighterRole(interaction.client, part.userId, location);
+            } catch (e) {
+              console.warn(`[boss] Failed to remove role from user ${part.userId}:`, e.message);
+            }
+          }
         }
         
         db.prepare('UPDATE bosses SET active=0 WHERE id=?').run(boss.id);
         db.prepare('DELETE FROM boss_participants WHERE bossId=?').run(boss.id);
         
-        // Immediately run orphaned role cleanup after boss vanishes
+        // Also run global orphaned role cleanup to catch any other stale roles
         try {
           const { cleanupOrphanedBossFighterRoles } = require('../utils/boss_spawner');
           await cleanupOrphanedBossFighterRoles(interaction.client);
         } catch (error) {
-          console.warn('[boss] Failed to run immediate role cleanup after boss vanish:', error.message);
+          console.warn('[boss] Failed to run global role cleanup after boss vanish:', error.message);
         }
         
         const vanishedEmbed = new EmbedBuilder()
@@ -617,16 +633,26 @@ module.exports = {
             console.warn('[boss] Failed to check achievements for user:', part.userId, e.message);
           }
         }
+        
+        // Clean up boss fighter roles for all participants BEFORE deleting participation records
+        try {
+          const { cleanupBossFighterRoles } = require('../utils/boss_spawner');
+          const participantUserIds = parts.map(p => p.userId);
+          await cleanupBossFighterRoles(interaction.client, location, participantUserIds);
+          console.log(`[boss] Cleaned up roles for ${participantUserIds.length} participants after boss defeat`);
+        } catch (error) {
+          console.warn('[boss] Failed to cleanup boss fighter roles after defeat:', error.message);
+        }
+        
         db.prepare('DELETE FROM boss_participants WHERE bossId=?').run(boss.id);
         logger.info('boss_defeat: %s participants=%s name=%s', location, parts.length, boss.name);
         
-        // Immediately run orphaned role cleanup to ensure roles are removed from users
-        // who no longer have any active boss fights
+        // Also run global orphaned role cleanup to catch any other stale roles
         try {
           const { cleanupOrphanedBossFighterRoles } = require('../utils/boss_spawner');
           await cleanupOrphanedBossFighterRoles(interaction.client);
         } catch (error) {
-          console.warn('[boss] Failed to run immediate role cleanup:', error.message);
+          console.warn('[boss] Failed to run global role cleanup:', error.message);
         }
         
         const victoryEmbed = new EmbedBuilder()

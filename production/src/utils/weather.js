@@ -124,182 +124,265 @@ function generateRealisticWeatherLocation(weatherType, weatherData, servers, min
  * Generates dynamic weather events that affect travel and gameplay
  */
 
-// Weather event types with severity levels and effects
+// Ultimate Weather System - 20 Dynamic Global Weather Events
 const WEATHER_TYPES = {
-  // Severe weather that requires pathfinding around
-  'cyclone': {
-    name: 'Cyclone',
+  // CATASTROPHIC WEATHER (Severity 5) - Complete Travel Blockade
+  'superstorm': {
+    name: 'Superstorm Genesis',
     severity: 5,
-    icon: 'CYCLONE',
+    icon: '🌪️',
     color: '#8B0000',
-    radius: 150, // km radius of effect
-    blockTravel: true,
-    travelTimeMultiplier: 0, // Cannot travel through
-    description: 'Devastating winds and destruction',
-    rarity: 0.004 // Increased frequency
-  },
-  'supercell_thunderstorm': {
-    name: 'Supercell Thunderstorm',
-    severity: 4,
-    icon: 'SUPERCELL_STORM',
-    color: '#4B0082',
-    radius: 100,
+    radius: 250,
     blockTravel: true,
     travelTimeMultiplier: 0,
-    description: 'Extreme lightning and hail',
-    rarity: 0.008 // Increased frequency
+    description: 'Massive rotating storm system of unprecedented scale',
+    rarity: 0.001,
+    specialEffects: ['electromagnetic_interference', 'flight_grounding'],
+    duration: { min: 180, max: 360 }
   },
-  'hurricane': {
-    name: 'Hurricane',
+  'category_6_hurricane': {
+    name: 'Hypercane',
     severity: 5,
-    icon: 'HURRICANE',
+    icon: '🌀',
     color: '#DC143C',
+    radius: 300,
+    blockTravel: true,
+    travelTimeMultiplier: 0,
+    description: 'Theoretical Category 6 hurricane with winds exceeding 200mph',
+    rarity: 0.0005,
+    specialEffects: ['total_devastation'],
+    duration: { min: 240, max: 480 }
+  },
+  'ice_apocalypse': {
+    name: 'Ice Apocalypse',
+    severity: 5,
+    icon: '🧊',
+    color: '#191970',
     radius: 200,
     blockTravel: true,
     travelTimeMultiplier: 0,
-    description: 'Catastrophic storm system',
-    rarity: 0.002 // Increased frequency
+    description: 'Catastrophic ice storm causing complete infrastructure collapse',
+    rarity: 0.0008,
+    specialEffects: ['power_grid_failure'],
+    duration: { min: 300, max: 600 }
   },
-  'blizzard': {
-    name: 'Blizzard',
+
+  // SEVERE WEATHER (Severity 4) - Major Travel Disruption
+  'cyclonic_bomb': {
+    name: 'Cyclonic Bomb',
     severity: 4,
-    icon: 'BLIZZARD',
-    color: '#4682B4',
-    radius: 80,
+    icon: '💥',
+    color: '#4B0082',
+    radius: 150,
     blockTravel: true,
     travelTimeMultiplier: 0,
-    description: 'Zero visibility snowstorm',
-    rarity: 0.006 // Increased frequency
+    description: 'Rapidly intensifying storm with explosive development',
+    rarity: 0.003,
+    specialEffects: ['rapid_pressure_drop'],
+    duration: { min: 120, max: 240 }
   },
-  
-  // Moderate weather that slows travel
-  'thunderstorm': {
-    name: 'Thunderstorm',
-    severity: 3,
-    icon: 'THUNDERSTORM',
-    color: '#696969',
-    radius: 60,
-    blockTravel: false,
-    travelTimeMultiplier: 1.5,
-    description: 'Heavy rain and lightning',
-    rarity: 0.025 // Increased frequency
-  },
-  'heavy_snow': {
-    name: 'Heavy Snow',
-    severity: 3,
-    icon: 'SNOW',
-    color: '#B0C4DE',
-    radius: 70,
-    blockTravel: false,
-    travelTimeMultiplier: 1.4,
-    description: 'Thick snowfall reducing visibility',
-    rarity: 0.020 // Increased frequency
-  },
-  'sandstorm': {
-    name: 'Sandstorm',
-    severity: 3,
-    icon: 'SANDSTORM',
-    color: '#DDB570',
-    radius: 90,
-    blockTravel: false,
-    travelTimeMultiplier: 1.6,
-    description: 'Swirling sand and dust',
-    rarity: 0.015 // Increased frequency
-  },
-  'fog_bank': {
-    name: 'Dense Fog',
-    severity: 2,
-    icon: 'FOG',
-    color: '#C0C0C0',
-    radius: 40,
-    blockTravel: false,
-    travelTimeMultiplier: 1.3,
-    description: 'Thick fog reducing visibility',
-    rarity: 0.035 // Increased frequency
-  },
-  
-  // Mild weather with minor effects
-  'rain': {
-    name: 'Rain',
-    severity: 1,
-    icon: 'RAIN',
-    color: '#4169E1',
-    radius: 50,
-    blockTravel: false,
-    travelTimeMultiplier: 1.1,
-    description: 'Steady rainfall',
-    rarity: 0.050 // Increased frequency
-  },
-  'light_snow': {
-    name: 'Light Snow',
-    severity: 1,
-    icon: 'LIGHT_SNOW',
-    color: '#E6E6FA',
-    radius: 45,
-    blockTravel: false,
-    travelTimeMultiplier: 1.05,
-    description: 'Gentle snowfall',
-    rarity: 0.030 // Increased frequency
-  },
-  'high_winds': {
-    name: 'High Winds',
-    severity: 2,
-    icon: 'WIND',
-    color: '#708090',
-    radius: 60,
-    blockTravel: false,
-    travelTimeMultiplier: 1.2,
-    description: 'Strong gusting winds',
-    rarity: 0.025 // Increased frequency
-  },
-  
-  // Special/Rare weather events
-  'aurora_storm': {
-    name: 'Aurora Storm',
-    severity: 1,
-    icon: 'AURORA',
-    color: '#00FF7F',
-    radius: 100,
-    blockTravel: false,
-    travelTimeMultiplier: 0.9, // Actually helps travel!
-    description: 'Beautiful aurora with electromagnetic effects',
-    rarity: 0.0001,
-    special: 'navigation_boost'
-  },
-  'meteor_shower': {
-    name: 'Meteor Shower',
-    severity: 2,
-    icon: 'METEOR',
-    color: '#FFD700',
-    radius: 80,
-    blockTravel: false,
-    travelTimeMultiplier: 1.1,
-    description: 'Spectacular celestial display',
-    rarity: 0.0002,
-    special: 'rare_loot_chance'
-  },
-  'volcanic_ash': {
-    name: 'Volcanic Ash Cloud',
+  'pyroclastic_surge': {
+    name: 'Pyroclastic Flow',
     severity: 4,
-    icon: 'VOLCANIC',
-    color: '#A0522D',
+    icon: '🌋',
+    color: '#FF4500',
+    radius: 180,
+    blockTravel: true,
+    travelTimeMultiplier: 0,
+    description: 'Deadly volcanic gas and debris flow',
+    rarity: 0.0002,
+    specialEffects: ['air_toxicity', 'ash_fallout'],
+    duration: { min: 60, max: 180 }
+  },
+  'derecho_windstorm': {
+    name: 'Derecho',
+    severity: 4,
+    icon: '💨',
+    color: '#228B22',
     radius: 120,
     blockTravel: true,
     travelTimeMultiplier: 0,
-    description: 'Toxic ash cloud from volcanic activity',
-    rarity: 0.0003
+    description: 'Land hurricane with straight-line winds over 100mph',
+    rarity: 0.004,
+    specialEffects: ['widespread_destruction'],
+    duration: { min: 90, max: 180 }
   },
-  'plasma_storm': {
-    name: 'Plasma Storm',
+
+  // DANGEROUS WEATHER (Severity 3) - Significant Travel Impact
+  'supercell_outbreak': {
+    name: 'Supercell Tornado Complex',
     severity: 3,
-    icon: 'PLASMA',
-    color: '#FF1493',
-    radius: 75,
+    icon: '🌪️',
+    color: '#800080',
+    radius: 100,
+    blockTravel: false,
+    travelTimeMultiplier: 2.5,
+    description: 'Multiple rotating supercells spawning tornadoes',
+    rarity: 0.008,
+    specialEffects: ['tornado_spawning', 'hail_damage'],
+    duration: { min: 120, max: 300 }
+  },
+  'atmospheric_river': {
+    name: 'Atmospheric River',
+    severity: 3,
+    icon: '🌊',
+    color: '#1E90FF',
+    radius: 200,
+    blockTravel: false,
+    travelTimeMultiplier: 1.8,
+    description: 'Narrow corridor of concentrated water vapor causing flooding',
+    rarity: 0.006,
+    specialEffects: ['flash_flooding', 'landslides'],
+    duration: { min: 360, max: 720 }
+  },
+  'haboob_dust_wall': {
+    name: 'Haboob',
+    severity: 3,
+    icon: '🏜️',
+    color: '#D2B48C',
+    radius: 150,
+    blockTravel: false,
+    travelTimeMultiplier: 2.0,
+    description: 'Massive wall of dust reducing visibility to zero',
+    rarity: 0.005,
+    specialEffects: ['zero_visibility', 'respiratory_hazard'],
+    duration: { min: 45, max: 120 }
+  },
+  'polar_vortex': {
+    name: 'Polar Vortex',
+    severity: 3,
+    icon: '🥶',
+    color: '#00BFFF',
+    radius: 300,
+    blockTravel: false,
+    travelTimeMultiplier: 1.7,
+    description: 'Arctic air mass bringing life-threatening cold',
+    rarity: 0.007,
+    specialEffects: ['hypothermia_risk', 'infrastructure_freeze'],
+    duration: { min: 480, max: 1440 }
+  },
+
+  // MODERATE WEATHER (Severity 2) - Moderate Travel Delays
+  'gravity_wave_storm': {
+    name: 'Gravity Wave Storm',
+    severity: 2,
+    icon: '〰️',
+    color: '#9370DB',
+    radius: 80,
+    blockTravel: false,
+    travelTimeMultiplier: 1.4,
+    description: 'Atmospheric waves causing severe turbulence',
+    rarity: 0.012,
+    specialEffects: ['extreme_turbulence'],
+    duration: { min: 60, max: 180 }
+  },
+  'temperature_inversion': {
+    name: 'Thermal Inversion',
+    severity: 2,
+    icon: '🌡️',
+    color: '#FF6347',
+    radius: 120,
     blockTravel: false,
     travelTimeMultiplier: 1.3,
-    description: 'Electromagnetic anomaly',
+    description: 'Atmospheric layer trapping pollutants and creating hazardous conditions',
+    rarity: 0.015,
+    specialEffects: ['air_quality_hazard'],
+    duration: { min: 240, max: 720 }
+  },
+  'microbursts_cluster': {
+    name: 'Microburst Cluster',
+    severity: 2,
+    icon: '⬇️',
+    color: '#FF69B4',
+    radius: 60,
+    blockTravel: false,
+    travelTimeMultiplier: 1.5,
+    description: 'Localized downdrafts creating dangerous wind shear',
+    rarity: 0.018,
+    specialEffects: ['wind_shear', 'aviation_hazard'],
+    duration: { min: 30, max: 90 }
+  },
+  'ice_pellet_storm': {
+    name: 'Ice Pellet Storm',
+    severity: 2,
+    icon: '🧊',
+    color: '#B0E0E6',
+    radius: 70,
+    blockTravel: false,
+    travelTimeMultiplier: 1.4,
+    description: 'Freezing rain creating hazardous icy conditions',
+    rarity: 0.020,
+    specialEffects: ['icing_conditions'],
+    duration: { min: 120, max: 360 }
+  },
+
+  // MILD WEATHER (Severity 1) - Minor Travel Effects
+  'sea_fog_bank': {
+    name: 'Marine Layer Fog',
+    severity: 1,
+    icon: '🌫️',
+    color: '#C0C0C0',
+    radius: 90,
+    blockTravel: false,
+    travelTimeMultiplier: 1.2,
+    description: 'Dense fog rolling in from the ocean',
+    rarity: 0.035,
+    specialEffects: ['reduced_visibility'],
+    duration: { min: 180, max: 480 }
+  },
+  'mountain_wave_turbulence': {
+    name: 'Mountain Wave',
+    severity: 1,
+    icon: '🏔️',
+    color: '#8FBC8F',
+    radius: 50,
+    blockTravel: false,
+    travelTimeMultiplier: 1.1,
+    description: 'Turbulent air caused by mountain terrain',
+    rarity: 0.040,
+    specialEffects: ['moderate_turbulence'],
+    duration: { min: 120, max: 300 }
+  },
+
+  // RARE PHENOMENA - Special Effects
+  'aurora_substorm': {
+    name: 'Aurora Substorm',
+    severity: 1,
+    icon: '✨',
+    color: '#00FF7F',
+    radius: 150,
+    blockTravel: false,
+    travelTimeMultiplier: 0.85, // Actually helps navigation!
+    description: 'Spectacular aurora with enhanced magnetic activity',
+    rarity: 0.0008,
+    specialEffects: ['navigation_boost', 'communication_interference'],
+    duration: { min: 180, max: 600 }
+  },
+  'ball_lightning_field': {
+    name: 'Ball Lightning Phenomenon',
+    severity: 2,
+    icon: '⚡',
+    color: '#FFFF00',
+    radius: 40,
+    blockTravel: false,
+    travelTimeMultiplier: 1.2,
+    description: 'Rare electromagnetic phenomenon with floating plasma spheres',
     rarity: 0.0001,
-    special: 'energy_weapon_boost'
+    specialEffects: ['electrical_anomaly', 'equipment_malfunction'],
+    duration: { min: 15, max: 60 }
+  },
+  'sprite_lightning_storm': {
+    name: 'Sprite Lightning Event',
+    severity: 1,
+    icon: '👻',
+    color: '#FF1493',
+    radius: 100,
+    blockTravel: false,
+    travelTimeMultiplier: 1.0,
+    description: 'High-altitude electrical discharge creating otherworldly light show',
+    rarity: 0.0003,
+    specialEffects: ['upper_atmosphere_phenomenon'],
+    duration: { min: 30, max: 120 }
   }
 };
 
@@ -308,7 +391,7 @@ const WEATHER_TYPES = {
  */
 function initializeWeatherSystem() {
   try {
-    // Create weather_events table
+    // Create weather_events table with enhanced schema
     db.prepare(`
       CREATE TABLE IF NOT EXISTS weather_events (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -320,9 +403,17 @@ function initializeWeatherSystem() {
         startTime INTEGER NOT NULL,
         endTime INTEGER NOT NULL,
         active INTEGER DEFAULT 1,
+        specialEffects TEXT,
         created_at INTEGER DEFAULT (strftime('%s', 'now') * 1000)
       )
     `).run();
+    
+    // Add specialEffects column if it doesn't exist (migration)
+    try {
+      db.prepare('ALTER TABLE weather_events ADD COLUMN specialEffects TEXT').run();
+    } catch (error) {
+      // Column already exists, that's fine
+    }
     
     // Create weather_encounters table for tracking player interactions
     db.prepare(`
@@ -434,10 +525,16 @@ function generateWeatherEvents(client = null) {
     // Get current active weather count
     const activeCount = db.prepare('SELECT COUNT(*) as count FROM weather_events WHERE active = 1').get().count;
     
-    // Don't generate too many weather events at once (max 75 active globally)
-    if (activeCount >= 75) {
+    // Maintain optimal weather density (15-20 active events globally)
+    const targetEventCount = 18;
+    const maxEventCount = 25;
+    
+    if (activeCount >= maxEventCount) {
       return;
     }
+    
+    // Increase spawn rate if below target
+    const spawnRateMultiplier = activeCount < targetEventCount ? 2.0 : 1.0;
     
     // Get world bounds for weather generation (approximate inhabited area)
     const servers = db.prepare('SELECT lat, lon FROM servers WHERE lat IS NOT NULL AND lon IS NOT NULL AND archived = 0').all();
@@ -452,7 +549,8 @@ function generateWeatherEvents(client = null) {
     
     // Generate weather events based on probability and geography
     for (const [typeId, weather] of Object.entries(WEATHER_TYPES)) {
-      if (Math.random() < weather.rarity) {
+      const adjustedRarity = weather.rarity * spawnRateMultiplier;
+      if (Math.random() < adjustedRarity) {
         // Use geographic preferences for realistic weather placement
         const location = generateRealisticWeatherLocation(typeId, weather, servers, minLat, maxLat, minLon, maxLon);
         
@@ -462,24 +560,29 @@ function generateWeatherEvents(client = null) {
           continue; // Skip this iteration if the bonus wasn't enough
         }
         
-        // Duration based on severity (30min to 6 hours)
-        const baseDuration = 30 * 60 * 1000; // 30 minutes
-        const duration = baseDuration + (weather.severity * 60 * 60 * 1000); // +1 hour per severity level
+        // Dynamic duration based on weather type and severity
+        const weatherDuration = weather.duration || { min: 60, max: 300 };
+        const minDuration = weatherDuration.min * 60 * 1000; // Convert to milliseconds
+        const maxDuration = weatherDuration.max * 60 * 1000;
+        const duration = minDuration + Math.random() * (maxDuration - minDuration);
         
         const endTime = now + duration + (Math.random() * duration); // Add some randomness
         
-        // Create weather event with 5x larger radius
+        // Create weather event with dynamic radius scaling
+        const radiusScale = weather.severity >= 4 ? 6 : weather.severity >= 3 ? 5 : 4;
+        const finalRadius = weather.radius * radiusScale;
+        
         const result = db.prepare(`
-          INSERT INTO weather_events (type, centerLat, centerLon, radius, severity, startTime, endTime)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-        `).run(typeId, location.centerLat, location.centerLon, weather.radius * 5, weather.severity, now, endTime);
+          INSERT INTO weather_events (type, centerLat, centerLon, radius, severity, startTime, endTime, specialEffects)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(typeId, location.centerLat, location.centerLon, finalRadius, weather.severity, now, endTime, JSON.stringify(weather.specialEffects || []));
         
         const weatherEvent = {
           id: result.lastInsertRowid,
           type: typeId,
           centerLat: location.centerLat,
           centerLon: location.centerLon,
-          radius: weather.radius * 5, // Store actual 5x radius
+          radius: finalRadius,
           severity: weather.severity,
           startTime: now,
           endTime
@@ -490,7 +593,7 @@ function generateWeatherEvents(client = null) {
           notifyDiscordWeatherEvent(weatherEvent, weather, client);
         }
         
-        console.log(`[weather] Generated ${weather.name} at (${location.centerLat.toFixed(2)}, ${location.centerLon.toFixed(2)}), radius: ${weather.radius * 5}km, duration: ${Math.round((endTime - now) / 1000 / 60)}min`);
+        console.log(`[weather] Generated ${weather.name} at (${location.centerLat.toFixed(2)}, ${location.centerLon.toFixed(2)}), radius: ${finalRadius}km, duration: ${Math.round(duration / 1000 / 60)}min, severity: ${weather.severity}`);
       }
     }
     
