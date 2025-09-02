@@ -101,6 +101,15 @@ module.exports = { updateBossStatus };
 client.once(Events.ClientReady, async () => {
   console.log(`[bot] Logged in as ${client.user.tag}`);
   
+  // Auto-deploy slash commands on startup
+  try {
+    console.log('[deploy] Deploying slash commands...');
+    require('../scripts/deploy-commands');
+    console.log('[deploy] Slash commands deployed successfully');
+  } catch (error) {
+    console.error('[deploy] Failed to deploy slash commands:', error.message);
+  }
+  
   // Initialize boss status tracking
   updateBossStatus();
   setInterval(updateBossStatus, 30000); // Update every 30 seconds
