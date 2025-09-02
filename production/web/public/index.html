@@ -2054,6 +2054,14 @@
   let __didInitialCenter = false;
   let __userMovedMap = false;
   let __lastUserMoveTime = 0;
+  let __lastAutoCenterTime = Date.now(); // Track last auto-center time
+  
+  // Reset user move tracking on page load
+  window.addEventListener('load', function() {
+    __userMovedMap = false;
+    __lastUserMoveTime = 0;
+    __lastAutoCenterTime = Date.now();
+  });
 
   // Track when user manually moves the map
   let __currentlyTraveling = false; // Track travel state for movement detection
@@ -2099,9 +2107,19 @@
     // During travel, always center regardless of user movement to track progress
     const isTraveling = data.travel && data.travel.arrivalAt && Date.now() < data.travel.arrivalAt;
     
-    // Don't auto-center if user moved the map within last 60 seconds (unless traveling)
-    if (!isTraveling && __userMovedMap && (Date.now() - __lastUserMoveTime < 60000)) {
-      return;
+    // Smart auto-centering: Only auto-center if:
+    // 1. User is traveling (always center during travel)
+    // 2. User hasn't moved map in last 5 minutes AND it's been 5+ minutes since last auto-center
+    // 3. Or it's been more than 5 minutes since any auto-center (periodic re-center)
+    const now = Date.now();
+    const userMoveTimeout = 300000; // 5 minutes in milliseconds
+    const periodicCenterInterval = 300000; // 5 minutes in milliseconds
+    
+    if (!isTraveling && __userMovedMap && (now - __lastUserMoveTime < userMoveTimeout)) {
+      // User recently moved the map - don't auto-center unless it's been 5+ minutes since last center
+      if (now - __lastAutoCenterTime < periodicCenterInterval) {
+        return;
+      }
     }
 
     // Update center name based on user status
@@ -2123,6 +2141,9 @@
         if (currentZoom < 6) {
           map.setZoom(6);
         }
+        
+        // Update last auto-center time
+        __lastAutoCenterTime = Date.now();
       }
     } else if (data.currentLocationServer) {
       // User is at a server
@@ -2134,6 +2155,9 @@
         const currentZoom = map.getZoom();
         const targetZoom = currentZoom < 4 ? 6 : currentZoom; // Keep zoom if already zoomed in
         map.setView([data.currentLocationServer.lat, data.currentLocationServer.lon], targetZoom);
+        
+        // Update last auto-center time
+        __lastAutoCenterTime = Date.now();
       }
     } else {
       centerNameEl.textContent = 'Player location unknown';
