@@ -26,13 +26,14 @@
       margin-bottom: 30px;
     }
     .landmark-image {
-      width: 100%;
-      max-width: 400px;
-      height: 250px;
+      width: 200px;
+      height: 200px;
       object-fit: cover;
-      border-radius: 12px;
+      border-radius: 50%;
       margin: 20px auto;
       display: block;
+      border: 4px solid white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
     .landmark-title {
       font-size: 2.5em;
@@ -142,7 +143,7 @@
         </div>
         <div class="stat-card">
           <div id="visit-cost" class="stat-value">0</div>
-          <div class="stat-label">Visit Cost (Drakari)</div>
+          <div class="stat-label">Visit Cost (Gems)</div>
         </div>
         <div class="stat-card">
           <div id="coordinates" class="stat-value">—</div>
@@ -195,7 +196,7 @@
         
         // Update stats
         document.getElementById('total-visitors').textContent = landmark.statistics.totalVisitors;
-        document.getElementById('visit-cost').textContent = landmark.visitCost;
+        document.getElementById('visit-cost').textContent = `${landmark.visitCost} 💎`;
         document.getElementById('coordinates').textContent = `${landmark.lat.toFixed(2)}°, ${landmark.lon.toFixed(2)}°`;
         document.getElementById('category').textContent = landmark.category;
         
