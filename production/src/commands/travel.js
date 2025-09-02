@@ -7,6 +7,7 @@ const { isBanned, regenStamina } = require('./_guard');
 const logger = require('../utils/logger');
 const { itemById } = require('../utils/items');
 const { ensurePlayerWithVehicles } = require('../utils/players');
+const { getAllPOIs, getPOIById, calculateDistance, hasVisitedPOI, visitPOI } = require('../utils/pois');
 
 async function vehicleSpeed(client, userId) {
   // Premium users get private jet speed
@@ -20,16 +21,27 @@ async function vehicleSpeed(client, userId) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('travel')
-    .setDescription('Travel to a target server by name or id (virtual travel).')
+    .setDescription('Travel to a server or famous landmark')
+    .addStringOption(o =>
+      o.setName('destination_type')
+       .setDescription('Choose destination type')
+       .setRequired(true)
+       .addChoices(
+         { name: 'Server', value: 'server' },
+         { name: 'Landmark', value: 'landmark' }
+       )
+    )
     .addStringOption(o =>
       o.setName('target')
-       .setDescription('Server name or id')
+       .setDescription('Server name/ID or landmark name')
        .setRequired(true)
        .setAutocomplete(true)
     ),
 
   async autocomplete(interaction) {
     const focusedValue = interaction.options.getFocused();
+    const focusedOption = interaction.options.getFocused(true);
+    const destinationType = interaction.options.getString('destination_type');
     const userId = interaction.user.id;
 
     try {
@@ -49,53 +61,83 @@ module.exports = {
       const currentGuildId = player.locationGuildId || interaction.guildId;
       const currentServer = db.prepare('SELECT lat, lon FROM servers WHERE guildId=?').get(currentGuildId);
 
-      if (!currentServer || currentServer.lat == null || currentServer.lon == null) {
-        // No location data, just show some servers
-        const servers = db.prepare(`
-          SELECT guildId, name FROM servers 
-          WHERE archived=0 AND name IS NOT NULL 
-          ORDER BY name LIMIT 10
-        `).all();
+      if (focusedOption.name === 'target' && destinationType === 'landmark') {
+        // Handle landmark autocomplete
+        const pois = getAllPOIs();
+        const filtered = pois.filter(poi => 
+          poi.name.toLowerCase().includes(focusedValue.toLowerCase()) ||
+          poi.country.toLowerCase().includes(focusedValue.toLowerCase())
+        );
 
-        const choices = servers.map(s => ({
-          name: s.name,
+        // Calculate distances and add visit status
+        const suggestions = filtered.slice(0, 25).map(poi => {
+          let distance = '?';
+          if (currentServer && currentServer.lat != null) {
+            distance = Math.round(calculateDistance(currentServer.lat, currentServer.lon, poi.lat, poi.lon));
+          }
+          
+          const visited = hasVisitedPOI(userId, poi.id);
+          const status = visited ? '✅' : '💰' + poi.visitCost;
+          
+          return {
+            name: `${poi.emoji} ${poi.name} (${poi.country}) • ${distance}km • ${status}`,
+            value: poi.id
+          };
+        });
+
+        return interaction.respond(suggestions);
+      }
+
+      // Handle server autocomplete (default or when destination_type is 'server')
+      if (!destinationType || destinationType === 'server') {
+        if (!currentServer || currentServer.lat == null || currentServer.lon == null) {
+          // No location data, just show some servers
+          const servers = db.prepare(`
+            SELECT guildId, name FROM servers 
+            WHERE archived=0 AND name IS NOT NULL 
+            ORDER BY name LIMIT 10
+          `).all();
+
+          const choices = servers.map(s => ({
+            name: s.name,
+            value: s.name
+          }));
+
+          return interaction.respond(choices);
+        }
+
+        // Calculate distances and get closest servers
+        const servers = db.prepare(`
+          SELECT guildId, name, lat, lon FROM servers 
+          WHERE archived=0 AND guildId != ? AND name IS NOT NULL 
+          AND lat IS NOT NULL AND lon IS NOT NULL
+        `).all(currentGuildId);
+
+        // Calculate distances using haversine formula
+        const serversWithDistance = servers.map(s => {
+          const distance = haversine(
+            currentServer.lat, currentServer.lon,
+            s.lat, s.lon
+          );
+          return { ...s, distance };
+        });
+
+        // Sort by distance and take top 10
+        serversWithDistance.sort((a, b) => a.distance - b.distance);
+        const closest = serversWithDistance.slice(0, 10);
+
+        // Filter based on what user is typing
+        const filtered = closest.filter(s => 
+          s.name.toLowerCase().includes(focusedValue.toLowerCase())
+        );
+
+        const choices = filtered.slice(0, 10).map(s => ({
+          name: `${s.name} (${Math.round(s.distance)}km)`,
           value: s.name
         }));
 
         return interaction.respond(choices);
       }
-
-      // Calculate distances and get closest servers
-      const servers = db.prepare(`
-        SELECT guildId, name, lat, lon FROM servers 
-        WHERE archived=0 AND guildId != ? AND name IS NOT NULL 
-        AND lat IS NOT NULL AND lon IS NOT NULL
-      `).all(currentGuildId);
-
-      // Calculate distances using haversine formula
-      const serversWithDistance = servers.map(s => {
-        const distance = haversine(
-          currentServer.lat, currentServer.lon,
-          s.lat, s.lon
-        );
-        return { ...s, distance };
-      });
-
-      // Sort by distance and take top 10
-      serversWithDistance.sort((a, b) => a.distance - b.distance);
-      const closest = serversWithDistance.slice(0, 10);
-
-      // Filter based on what user is typing
-      const filtered = closest.filter(s => 
-        s.name.toLowerCase().includes(focusedValue.toLowerCase())
-      );
-
-      const choices = filtered.slice(0, 10).map(s => ({
-        name: `${s.name} (${Math.round(s.distance)}km)`,
-        value: s.name
-      }));
-
-      await interaction.respond(choices);
     } catch (error) {
       console.error('Travel autocomplete error:', error);
       await interaction.respond([]);
@@ -106,16 +148,125 @@ module.exports = {
     const userPrefix = await getUserPrefix(interaction.client, interaction.user);
     if (isBanned(interaction.user.id)) return interaction.reply({ content: `${userPrefix} You are banned from using this bot.`, ephemeral: true });
     regenStamina(interaction.user.id);
+    
+    const destinationType = interaction.options.getString('destination_type');
     const target = interaction.options.getString('target');
+    
+    if (destinationType === 'landmark') {
+      return this.handleLandmarkTravel(interaction, userPrefix, target);
+    } else {
+      return this.handleServerTravel(interaction, userPrefix, target);
+    }
+  },
+
+  async handleLandmarkTravel(interaction, userPrefix, landmarkId) {
+    const userId = interaction.user.id;
+    const poi = getPOIById(landmarkId);
+    
+    if (!poi) {
+      return interaction.reply({
+        content: `${userPrefix} Landmark not found.`,
+        ephemeral: true
+      });
+    }
+
+    // Ensure player exists
+    const player = await ensurePlayerWithVehicles(interaction.client, userId, interaction.user.username, interaction.guild?.id);
+    
+    // Check if user has enough currency for visit cost
+    if (player.drakari < poi.visitCost) {
+      return interaction.reply({
+        content: `${userPrefix} Insufficient funds! You need ${poi.visitCost} ${config.currencyName} to visit ${poi.name}. You have ${player.drakari}.`,
+        ephemeral: true
+      });
+    }
+    
+    // Check if already visited (for first-time bonus)
+    const alreadyVisited = hasVisitedPOI(userId, landmarkId);
+    
+    try {
+      // Deduct visit cost
+      db.prepare('UPDATE players SET drakari = drakari - ? WHERE userId = ?').run(poi.visitCost, userId);
+      
+      // Record the visit and get rewards (only gives reward for first visit)
+      let visitResult;
+      if (!alreadyVisited) {
+        visitResult = visitPOI(userId, landmarkId);
+      } else {
+        visitResult = { poi, isFirstVisit: false, reward: 0, visitedAt: Date.now() };
+      }
+      
+      // Create success embed
+      const embed = new EmbedBuilder()
+        .setTitle(`${poi.emoji} **LANDMARK VISIT: ${poi.name.toUpperCase()}**`)
+        .setDescription(`*${alreadyVisited ? 'Welcome back to' : 'Welcome to'} ${poi.name}, ${interaction.user.username}!*`)
+        .setColor(alreadyVisited ? 0xE67E22 : 0x00D26A)
+        .setAuthor({
+          name: `${userPrefix} - World Explorer`,
+          iconURL: interaction.user.displayAvatarURL()
+        })
+        .addFields(
+          {
+            name: '📍 **Location**',
+            value: `${poi.emoji} **${poi.name}**\n${poi.country}`,
+            inline: true
+          },
+          {
+            name: '💸 **Travel Cost**',
+            value: `${poi.visitCost} ${config.currencyName}\nFlight expenses`,
+            inline: true
+          }
+        );
+
+      if (visitResult.isFirstVisit) {
+        embed.addFields({
+          name: '💰 **First Visit Bonus**',
+          value: `+${visitResult.reward} ${config.currencyName}\nDiscovery reward!`,
+          inline: true
+        });
+        embed.setDescription(`*🎉 First time visiting ${poi.name}! Discovery bonus awarded!*`);
+      } else {
+        embed.addFields({
+          name: '✅ **Return Visit**',
+          value: `No bonus reward\nAlready discovered`,
+          inline: true
+        });
+      }
+      
+      if (poi.description) {
+        embed.addFields({
+          name: '📖 **About This Landmark**',
+          value: poi.description,
+          inline: false
+        });
+      }
+      
+      embed.setFooter({
+        text: alreadyVisited ? 'Thanks for visiting again! • QuestCord Travel' : 'Landmark discovered! • QuestCord Travel',
+        iconURL: interaction.client.user.displayAvatarURL()
+      }).setTimestamp();
+      
+      await interaction.reply({ embeds: [embed] });
+      
+    } catch (error) {
+      console.error('Landmark travel error:', error);
+      return interaction.reply({
+        content: `${userPrefix} ${error.message}`,
+        ephemeral: true
+      });
+    }
+  },
+
+  async handleServerTravel(interaction, userPrefix, target) {
     const servers = db.prepare('SELECT * FROM servers WHERE archived=0 AND (name LIKE ? OR guildId=?) AND lat IS NOT NULL AND lon IS NOT NULL').all(`%${target}%`, target);
     if (!servers.length) {
       return interaction.reply({ content: `${userPrefix} No matching active server with coordinates.`, ephemeral: true });
     }
     const dest = servers[0];
-    let p = await ensurePlayerWithVehicles(interaction.client, interaction.user.id, interaction.user.username, interaction.guild.id);
-    let fromServer = db.prepare('SELECT * FROM servers WHERE guildId=? AND archived=0').get(p.locationGuildId || interaction.guild.id);
+    let p = await ensurePlayerWithVehicles(interaction.client, interaction.user.id, interaction.user.username, interaction.guild?.id);
+    let fromServer = db.prepare('SELECT * FROM servers WHERE guildId=? AND archived=0').get(p.locationGuildId || interaction.guild?.id);
     if (!fromServer || fromServer.lat == null) {
-      fromServer = db.prepare('SELECT * FROM servers WHERE guildId=? AND archived=0').get(interaction.guild.id);
+      fromServer = db.prepare('SELECT * FROM servers WHERE guildId=? AND archived=0').get(interaction.guild?.id);
     }
     const tcfg = config.travel || {};
     const minS = tcfg.minSeconds ?? 60;

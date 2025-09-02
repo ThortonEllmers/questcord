@@ -12,6 +12,7 @@ const { createAutoPlacementIfMissing } = require('./web/util');
 const { placeOnSpiral, findLandPosition, checkAndFixWaterServers, findNonCollidingLandPosition } = require('./utils/geo');
 const logger = require('./utils/logger');
 const config = require('./utils/config');
+const { logBotStartup, logError, logBotShutdown, logCommandError } = require('./utils/webhook');
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
@@ -101,6 +102,14 @@ module.exports = { updateBossStatus };
 client.once(Events.ClientReady, async () => {
   console.log(`[bot] Logged in as ${client.user.tag}`);
   
+  // Log bot startup to webhook
+  try {
+    await logBotStartup();
+    console.log('[webhook] Startup logged to Discord');
+  } catch (error) {
+    console.warn('[webhook] Failed to log startup:', error.message);
+  }
+  
   // Auto-deploy slash commands on startup
   try {
     console.log('[deploy] Deploying slash commands...');
@@ -108,6 +117,7 @@ client.once(Events.ClientReady, async () => {
     console.log('[deploy] Slash commands deployed successfully');
   } catch (error) {
     console.error('[deploy] Failed to deploy slash commands:', error.message);
+    await logError(error, 'Slash command deployment failed');
   }
   
   // Initialize boss status tracking
@@ -126,6 +136,11 @@ client.once(Events.ClientReady, async () => {
   generateWeatherEvents(client); // Generate initial weather
   setInterval(() => generateWeatherEvents(client), 5 * 60 * 1000); // Generate new weather every 5 minutes
   console.log('[weather] Dynamic weather system initialized - storms, cyclones, and weather effects active');
+  
+  // Initialize POI system with famous landmarks
+  const { initializePOIs } = require('./utils/pois');
+  initializePOIs();
+  console.log('[poi] Points of Interest system initialized - famous landmarks ready for exploration');
   
   // Initialize automatic boss spawning system with randomized 4-6 hour intervals
   const { initializeBossSpawner, runBossSpawningCycle, getNextSpawnInterval, cleanupExpiredBosses, cleanupOrphanedBossFighterRoles } = require('./utils/boss_spawner');
@@ -486,6 +501,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
     logger.info('cmd: %s by %s in %s', interaction.commandName, interaction.user.id, interaction.guildId);
   } catch (e) {
     console.error(e);
+    
+    // Log command error to webhook
+    try {
+      await logCommandError(interaction.commandName, interaction.user.id, interaction.guildId, e);
+    } catch (webhookError) {
+      console.warn('[webhook] Failed to log command error:', webhookError.message);
+    }
+    
     if (interaction.isRepliable()) {
       if (interaction.deferred || interaction.replied) interaction.followUp({ content: 'Error executing command.', ephemeral: true });
       else interaction.reply({ content: 'Error executing command.', ephemeral: true });
@@ -495,6 +518,50 @@ client.on(Events.InteractionCreate, async (interaction) => {
 });
 
 client.login(process.env.DISCORD_TOKEN);
+
+// Handle uncaught exceptions and log them
+process.on('uncaughtException', async (error) => {
+  console.error('Uncaught Exception:', error);
+  try {
+    await logError(error, 'Uncaught Exception');
+  } catch (webhookError) {
+    console.warn('Failed to log uncaught exception:', webhookError.message);
+  }
+  process.exit(1);
+});
+
+// Handle unhandled promise rejections and log them
+process.on('unhandledRejection', async (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  try {
+    await logError(new Error(`Unhandled Rejection: ${reason}`), 'Unhandled Promise Rejection');
+  } catch (webhookError) {
+    console.warn('Failed to log unhandled rejection:', webhookError.message);
+  }
+});
+
+// Handle graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('\nReceived SIGINT. Graceful shutdown initiated...');
+  try {
+    await logBotShutdown('Manual shutdown (SIGINT)');
+    console.log('Shutdown logged to Discord');
+  } catch (webhookError) {
+    console.warn('Failed to log shutdown:', webhookError.message);
+  }
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  console.log('\nReceived SIGTERM. Graceful shutdown initiated...');
+  try {
+    await logBotShutdown('System shutdown (SIGTERM)');
+    console.log('Shutdown logged to Discord');
+  } catch (webhookError) {
+    console.warn('Failed to log shutdown:', webhookError.message);
+  }
+  process.exit(0);
+});
 
 // Ensure a guild has a biome assigned; if missing, assign randomly from config.biomes
 function ensureGuildBiome(guildId) {

@@ -344,6 +344,38 @@ try {
   `);
   console.log('[db] Ensured market_listings table exists');
 
+  // POIs (Points of Interest) table for famous landmarks
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS pois (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      description TEXT,
+      lat REAL NOT NULL,
+      lon REAL NOT NULL,
+      country TEXT,
+      category TEXT NOT NULL,
+      emoji TEXT,
+      discoveryReward INTEGER DEFAULT 100,
+      visitCost INTEGER DEFAULT 50,
+      createdAt INTEGER NOT NULL
+    )
+  `);
+  console.log('[db] Ensured pois table exists');
+
+  // POI visits tracking table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS poi_visits (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      userId TEXT NOT NULL,
+      poiId TEXT NOT NULL,
+      visitedAt INTEGER NOT NULL,
+      isFirstVisit INTEGER DEFAULT 0,
+      UNIQUE(userId, poiId),
+      FOREIGN KEY (poiId) REFERENCES pois(id)
+    )
+  `);
+  console.log('[db] Ensured poi_visits table exists');
+
 } catch (e) {
   console.warn('[db] Could not create new feature tables:', e.message);
 }

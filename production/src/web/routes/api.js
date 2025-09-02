@@ -5,6 +5,7 @@ const { haversine, isOnLand, findLandPosition } = require('../../utils/geo');
 const { rateLimit, ensureCsrf, setCsrf } = require('../security');
 const { createAutoPlacementIfMissing, getSpawnServer, ensurePlayerRow, fetchRoleLevel, getMemberRoleIds } = require('../util');
 const logger = require('../../utils/logger');
+const { logAdminAction } = require('../../utils/webhook');
 
 const router = express.Router();
 // Safe fetch helper for Node: use global fetch when available
@@ -32,6 +33,17 @@ async function getRoleLevel(req) {
   }
   
   return roleLevel;
+}
+
+// Helper to log admin actions to webhook
+async function logAdminActionFromReq(req, action, targetId = null, targetName = null, details = {}) {
+  try {
+    const adminUserId = req.session?.user?.id || 'Unknown';
+    const adminUsername = req.session?.user?.username || req.session?.user?.global_name || 'Unknown Admin';
+    await logAdminAction(action, adminUserId, adminUsername, targetId, targetName, details);
+  } catch (error) {
+    console.warn('[webhook] Failed to log admin action:', error.message);
+  }
 }
 
 function visitorsCount(guildId){
@@ -1323,6 +1335,13 @@ router.post('/api/admin/gems/add', rateLimit(20, 10000), ensureCsrf, async (req,
 
     logger.info('admin_gems_add: %s gems added to user %s by %s (reason: %s)', amountInt, userId, req.session.user?.id, reason || 'none');
 
+    // Log to webhook
+    await logAdminActionFromReq(req, 'Gems Added', userId, null, { 
+      'Amount Added': `${amountInt} gems`,
+      'New Balance': `${newBalance} gems`,
+      'Reason': reason || 'Admin grant'
+    });
+
     res.json({ 
       success: true, 
       userId, 
@@ -1633,6 +1652,12 @@ router.post('/api/admin/user/ban', rateLimit(20, 10000), ensureCsrf, async (req,
 
     logger.info('admin_user_ban: %s banned by %s (reason: %s)', userId, req.session.user?.id, reason || 'none');
 
+    // Log to webhook
+    await logAdminActionFromReq(req, 'User Ban', userId, null, { 
+      Reason: reason || 'Banned by staff',
+      Action: 'User account banned'
+    });
+
     res.json({ 
       success: true, 
       message: 'User banned successfully',
@@ -1692,6 +1717,12 @@ router.post('/api/admin/user/unban', rateLimit(20, 10000), ensureCsrf, async (re
     }
 
     logger.info('admin_user_unban: %s unbanned by %s (reason: %s)', userId, req.session.user?.id, reason || 'none');
+
+    // Log to webhook
+    await logAdminActionFromReq(req, 'User Unban', userId, null, { 
+      Reason: reason || 'Unbanned by staff',
+      Action: 'User account unbanned'
+    });
 
     res.json({ 
       success: true, 
@@ -2060,6 +2091,14 @@ router.post('/api/admin/user/reset-stats', rateLimit(20, 10000), ensureCsrf, asy
 
     logger.info('admin_user_reset_stats: user %s resetType %s by %s (reason: %s) - %d/%d operations successful', 
       userId, resetType, req.session.user?.id, reason || 'none', successCount, resetOperations.length);
+
+    // Log to webhook
+    await logAdminActionFromReq(req, 'User Stats Reset', userId, null, { 
+      'Reset Type': resetType,
+      'Operations Completed': `${successCount}/${resetOperations.length}`,
+      'Reset Areas': resetDescription.join(', '),
+      'Reason': reason || 'Admin reset'
+    });
 
     res.json({
       success: true,
@@ -2476,6 +2515,15 @@ router.post('/api/admin/boss/spawn', rateLimit(20, 10000), ensureCsrf, async (re
 
     logger.info('admin_boss_spawn: server %s boss %s tier %d hp %d duration %dm by %s', 
       serverId, bossName, validTier, maxHp, validDuration, req.session?.user?.username || 'Unknown');
+
+    // Log to webhook
+    await logAdminActionFromReq(req, 'Boss Spawn', serverId, server.name, { 
+      'Boss Name': bossName,
+      'Tier': `Tier ${validTier}`,
+      'Max HP': `${maxHp.toLocaleString()} HP`,
+      'Duration': `${validDuration} minutes`,
+      'Server': server.name || serverId
+    });
 
     res.json({
       success: true,
