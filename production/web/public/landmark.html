@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Landmark Details | QuestCord</title>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .landmark-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .landmark-image {
+      width: 100%;
+      max-width: 400px;
+      height: 250px;
+      object-fit: cover;
+      border-radius: 12px;
+      margin: 20px auto;
+      display: block;
+    }
+    .landmark-title {
+      font-size: 2.5em;
+      color: #ff6b6b;
+      margin: 10px 0;
+    }
+    .landmark-country {
+      font-size: 1.2em;
+      color: #666;
+      margin-bottom: 20px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin: 30px 0;
+    }
+    .stat-card {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 2em;
+      font-weight: bold;
+      color: #ff6b6b;
+    }
+    .stat-label {
+      color: #666;
+      margin-top: 5px;
+    }
+    .visitors-section {
+      margin-top: 30px;
+    }
+    .visitor-item {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    .visitor-item:last-child {
+      border-bottom: none;
+    }
+    .visitor-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 15px;
+    }
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+    .error {
+      text-align: center;
+      padding: 40px;
+      color: #e74c3c;
+    }
+    .back-button {
+      display: inline-block;
+      background: #ff6b6b;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      margin-bottom: 20px;
+    }
+    .travel-button {
+      background: #27ae60;
+      color: white;
+      padding: 15px 30px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 1.1em;
+      font-weight: 600;
+      display: inline-block;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/" class="back-button">← Back to Map</a>
+    
+    <div id="loading" class="loading">
+      Loading landmark details...
+    </div>
+    
+    <div id="error" class="error" style="display: none;">
+      Failed to load landmark information.
+    </div>
+    
+    <div id="landmark-content" style="display: none;">
+      <div class="landmark-header">
+        <h1 id="landmark-title" class="landmark-title"></h1>
+        <p id="landmark-country" class="landmark-country"></p>
+        <img id="landmark-image" class="landmark-image" alt="Landmark">
+        <p id="landmark-description" style="margin-top: 20px; font-size: 1.1em; line-height: 1.6;"></p>
+      </div>
+      
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div id="total-visitors" class="stat-value">0</div>
+          <div class="stat-label">Total Visitors</div>
+        </div>
+        <div class="stat-card">
+          <div id="visit-cost" class="stat-value">0</div>
+          <div class="stat-label">Visit Cost (Drakari)</div>
+        </div>
+        <div class="stat-card">
+          <div id="coordinates" class="stat-value">—</div>
+          <div class="stat-label">Coordinates</div>
+        </div>
+        <div class="stat-card">
+          <div id="category" class="stat-value">—</div>
+          <div class="stat-label">Category</div>
+        </div>
+      </div>
+      
+      <div class="visitors-section">
+        <h3>Recent Travelers</h3>
+        <div id="visitors-list">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+      
+      <div style="text-align: center;">
+        <span class="travel-button" id="travel-command" style="background: #666; cursor: default;">
+          /travel landmark [name]
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function loadLandmarkDetails() {
+      try {
+        const pathParts = window.location.pathname.split('/');
+        const landmarkId = pathParts[pathParts.length - 1];
+        
+        const response = await fetch(`/api/landmark/${landmarkId}`);
+        const data = await response.json();
+        
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        
+        const landmark = data.landmark;
+        
+        // Update page title
+        document.title = `${landmark.name} | QuestCord`;
+        
+        // Update content
+        document.getElementById('landmark-title').textContent = `${landmark.emoji} ${landmark.name}`;
+        document.getElementById('landmark-country').textContent = landmark.country;
+        document.getElementById('landmark-description').textContent = landmark.description;
+        document.getElementById('landmark-image').src = landmark.imageUrl;
+        
+        // Update stats
+        document.getElementById('total-visitors').textContent = landmark.statistics.totalVisitors;
+        document.getElementById('visit-cost').textContent = landmark.visitCost;
+        document.getElementById('coordinates').textContent = `${landmark.lat.toFixed(2)}°, ${landmark.lon.toFixed(2)}°`;
+        document.getElementById('category').textContent = landmark.category;
+        
+        // Update travel command
+        document.getElementById('travel-command').textContent = `/travel landmark ${landmark.name}`;
+        
+        // Update visitors list
+        const visitorsList = document.getElementById('visitors-list');
+        if (landmark.recentVisitors && landmark.recentVisitors.length > 0) {
+          visitorsList.innerHTML = landmark.recentVisitors.map(visitor => `
+            <div class="visitor-item">
+              <img src="${visitor.avatar}" alt="${visitor.name}" class="visitor-avatar">
+              <div>
+                <div style="font-weight: 600;">${visitor.name}</div>
+                <div style="color: #666; font-size: 0.9em;">
+                  Visited ${new Date(visitor.visitedAt).toLocaleDateString()}
+                </div>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          visitorsList.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">No visitors yet. Be the first to explore!</p>';
+        }
+        
+        // Show content
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('landmark-content').style.display = 'block';
+        
+      } catch (error) {
+        console.error('Error loading landmark details:', error);
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+      }
+    }
+    
+    // Load details when page loads
+    loadLandmarkDetails();
+  </script>
+</body>
+</html>

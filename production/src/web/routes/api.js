@@ -625,20 +625,167 @@ router.get('/api/map/landmarks', rateLimit(), (req, res) => {
 // Helper function to get real landmark images
 function getLandmarkImageUrl(poiId) {
   const landmarkImages = {
-    'eiffel_tower': 'https://images.unsplash.com/photo-1511739001486-6bfe10ce785f?w=200&h=200&fit=crop',
-    'statue_of_liberty': 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=200&h=200&fit=crop',
-    'great_wall_china': 'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=200&h=200&fit=crop',
-    'colosseum': 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=200&h=200&fit=crop',
-    'taj_mahal': 'https://images.unsplash.com/photo-1564507592333-c60657eea523?w=200&h=200&fit=crop',
-    'machu_picchu': 'https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=200&h=200&fit=crop',
-    'christ_redeemer': 'https://images.unsplash.com/photo-1483729558449-99ef09a8c325?w=200&h=200&fit=crop',
-    'mount_fuji': 'https://images.unsplash.com/photo-1570459027562-4a916cc6113f?w=200&h=200&fit=crop',
-    'pyramids_giza': 'https://images.unsplash.com/photo-1539650116574-75c0c6d73c6c?w=200&h=200&fit=crop',
-    'stonehenge': 'https://images.unsplash.com/photo-1599833975787-5351f8ccb3d5?w=200&h=200&fit=crop'
+    // Using Wikipedia Commons images (more reliable)
+    'eiffel_tower': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Tour_Eiffel_Wikimedia_Commons_%28cropped%29.jpg/200px-Tour_Eiffel_Wikimedia_Commons_%28cropped%29.jpg',
+    'statue_of_liberty': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Statue_of_Liberty_7.jpg/200px-Statue_of_Liberty_7.jpg',
+    'great_wall_china': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/The_Great_Wall_of_China_at_Jinshanling-edit.jpg/200px-The_Great_Wall_of_China_at_Jinshanling-edit.jpg',
+    'colosseum': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Colosseo_2020.jpg/200px-Colosseo_2020.jpg',
+    'taj_mahal': 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Taj_Mahal%2C_Agra%2C_India_edit3.jpg/200px-Taj_Mahal%2C_Agra%2C_India_edit3.jpg',
+    'machu_picchu': 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Machu_Picchu%2C_Peru.jpg/200px-Machu_Picchu%2C_Peru.jpg',
+    'christ_redeemer': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Christ_the_Redeemer_-_Cristo_Redentor.jpg/200px-Christ_the_Redeemer_-_Cristo_Redentor.jpg',
+    'mount_fuji': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Fujisan_from_Kawaguchiko_2019-11-06_%282%29.jpg/200px-Fujisan_from_Kawaguchiko_2019-11-06_%282%29.jpg',
+    'pyramids_giza': 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Kheops-Pyramid.jpg/200px-Kheops-Pyramid.jpg',
+    'stonehenge': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Stonehenge2007_07_30.jpg/200px-Stonehenge2007_07_30.jpg'
   };
   
-  return landmarkImages[poiId] || `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="%23e0e0e0"/><text x="100" y="100" text-anchor="middle" font-size="60" fill="%23666">🏛️</text></svg>`;
+  return landmarkImages[poiId] || createLandmarkSvgFallback(poiId);
 }
+
+// Create SVG fallback with landmark emoji
+function createLandmarkSvgFallback(poiId) {
+  const emojiMap = {
+    'eiffel_tower': '🗼',
+    'statue_of_liberty': '🗽', 
+    'great_wall_china': '🏯',
+    'colosseum': '🏛️',
+    'taj_mahal': '🕌',
+    'machu_picchu': '⛰️',
+    'christ_redeemer': '⛪',
+    'mount_fuji': '🗻',
+    'pyramids_giza': '🏜️',
+    'stonehenge': '🗿'
+  };
+  
+  const emoji = emojiMap[poiId] || '🏛️';
+  return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="%23ff6b6b" stroke="%23fff" stroke-width="3"/><text x="24" y="32" text-anchor="middle" font-size="18">${emoji}</text></svg>`;
+}
+
+// Get landmark visitors (similar to server visitors)
+router.get('/api/map/landmark-visitors', rateLimit(), async (req, res) => {
+  try {
+    const { landmarkId, limit = 10 } = req.query;
+    
+    if (!landmarkId) {
+      return res.status(400).json({ error: 'missing_landmarkId' });
+    }
+    
+    const { getPOIById } = require('../../utils/pois');
+    const landmark = getPOIById(landmarkId);
+    
+    if (!landmark) {
+      return res.status(404).json({ error: 'landmark_not_found' });
+    }
+    
+    // Get users who have visited this landmark
+    const visitors = db.prepare(`
+      SELECT p.userId, p.name, p.avatar, pv.visitedAt
+      FROM poi_visits pv
+      JOIN players p ON p.userId = pv.userId
+      WHERE pv.poiId = ?
+      ORDER BY pv.visitedAt DESC
+      LIMIT ?
+    `).all(landmarkId, parseInt(limit));
+    
+    // Get total count
+    const totalResult = db.prepare('SELECT COUNT(*) as count FROM poi_visits WHERE poiId = ?').get(landmarkId);
+    const total = totalResult?.count || 0;
+    
+    // Format user data
+    const users = visitors.map(visitor => ({
+      id: visitor.userId,
+      name: visitor.name || 'Unknown Traveler',
+      avatar: visitor.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png',
+      visitedAt: visitor.visitedAt
+    }));
+    
+    res.json({
+      landmark: {
+        id: landmark.id,
+        name: landmark.name,
+        emoji: landmark.emoji,
+        country: landmark.country
+      },
+      users,
+      total,
+      limit: parseInt(limit)
+    });
+  } catch (error) {
+    console.error('Landmark visitors error:', error);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// Get detailed landmark information
+router.get('/api/landmark/:landmarkId', rateLimit(), async (req, res) => {
+  try {
+    const landmarkId = req.params.landmarkId?.trim();
+    
+    if (!landmarkId) {
+      return res.status(400).json({ error: 'missing_landmarkId' });
+    }
+    
+    const { getPOIById } = require('../../utils/pois');
+    const landmark = getPOIById(landmarkId);
+    
+    if (!landmark) {
+      return res.status(404).json({ error: 'landmark_not_found' });
+    }
+    
+    // Get visitor statistics
+    const totalVisitors = db.prepare('SELECT COUNT(*) as count FROM poi_visits WHERE poiId = ?').get(landmarkId);
+    const recentVisitors = db.prepare(`
+      SELECT p.userId, p.name, p.avatar, pv.visitedAt
+      FROM poi_visits pv
+      JOIN players p ON p.userId = pv.userId
+      WHERE pv.poiId = ?
+      ORDER BY pv.visitedAt DESC
+      LIMIT 10
+    `).all(landmarkId);
+    
+    // Get visit frequency (visits per day)
+    const visitStats = db.prepare(`
+      SELECT 
+        COUNT(*) as totalVisits,
+        COUNT(DISTINCT userId) as uniqueVisitors,
+        MIN(visitedAt) as firstVisit,
+        MAX(visitedAt) as lastVisit
+      FROM poi_visits 
+      WHERE poiId = ?
+    `).get(landmarkId);
+    
+    const landmarkData = {
+      id: landmark.id,
+      name: landmark.name,
+      description: landmark.description,
+      emoji: landmark.emoji,
+      country: landmark.country,
+      category: landmark.category,
+      lat: landmark.lat,
+      lon: landmark.lon,
+      visitCost: landmark.visitCost,
+      discoveryReward: landmark.discoveryReward,
+      imageUrl: getLandmarkImageUrl(landmark.id),
+      statistics: {
+        totalVisitors: totalVisitors?.count || 0,
+        uniqueVisitors: visitStats?.uniqueVisitors || 0,
+        totalVisits: visitStats?.totalVisits || 0,
+        firstVisit: visitStats?.firstVisit,
+        lastVisit: visitStats?.lastVisit
+      },
+      recentVisitors: recentVisitors.map(visitor => ({
+        id: visitor.userId,
+        name: visitor.name || 'Unknown Traveler',
+        avatar: visitor.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png',
+        visitedAt: visitor.visitedAt
+      }))
+    };
+    
+    res.json({ landmark: landmarkData });
+  } catch (error) {
+    console.error('Landmark details error:', error);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
 
 router.get('/api/bosses', rateLimit(), (_,res)=> res.json({ bosses: activeBosses() }));
 

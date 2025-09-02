@@ -11,7 +11,7 @@ const LANDMARKS = [
     country: 'France',
     category: 'monument',
     emoji: '🗼',
-    discoveryReward: 200,
+    discoveryReward: 0,
     visitCost: 75
   },
   {
@@ -23,7 +23,7 @@ const LANDMARKS = [
     country: 'United States',
     category: 'monument',
     emoji: '🗽',
-    discoveryReward: 200,
+    discoveryReward: 0,
     visitCost: 75
   },
   {
@@ -35,8 +35,8 @@ const LANDMARKS = [
     country: 'China',
     category: 'historical',
     emoji: '🏯',
-    discoveryReward: 300,
-    visitCost: 100
+    discoveryReward: 0,
+    visitCost: 75
   },
   {
     id: 'colosseum',
@@ -47,8 +47,8 @@ const LANDMARKS = [
     country: 'Italy',
     category: 'historical',
     emoji: '🏛️',
-    discoveryReward: 250,
-    visitCost: 90
+    discoveryReward: 0,
+    visitCost: 75
   },
   {
     id: 'taj_mahal',
@@ -59,8 +59,8 @@ const LANDMARKS = [
     country: 'India',
     category: 'monument',
     emoji: '🕌',
-    discoveryReward: 280,
-    visitCost: 95
+    discoveryReward: 0,
+    visitCost: 75
   },
   {
     id: 'machu_picchu',
@@ -71,7 +71,7 @@ const LANDMARKS = [
     country: 'Peru',
     category: 'historical',
     emoji: '⛰️',
-    discoveryReward: 350,
+    discoveryReward: 0,
     visitCost: 120
   },
   {
@@ -83,7 +83,7 @@ const LANDMARKS = [
     country: 'Brazil',
     category: 'monument',
     emoji: '⛪',
-    discoveryReward: 240,
+    discoveryReward: 0,
     visitCost: 80
   },
   {
@@ -95,7 +95,7 @@ const LANDMARKS = [
     country: 'Japan',
     category: 'natural',
     emoji: '🗻',
-    discoveryReward: 260,
+    discoveryReward: 0,
     visitCost: 85
   },
   {
@@ -107,7 +107,7 @@ const LANDMARKS = [
     country: 'Egypt',
     category: 'historical',
     emoji: '🏜️',
-    discoveryReward: 400,
+    discoveryReward: 0,
     visitCost: 150
   },
   {
@@ -119,7 +119,7 @@ const LANDMARKS = [
     country: 'United Kingdom',
     category: 'historical',
     emoji: '🗿',
-    discoveryReward: 320,
+    discoveryReward: 0,
     visitCost: 110
   }
 ];

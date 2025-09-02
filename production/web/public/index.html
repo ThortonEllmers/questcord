@@ -2487,11 +2487,27 @@ async function loadMe(){
       const landmarksData = await landmarksRes.json();
       
       if (landmarksData.landmarks) {
-        landmarksData.landmarks.forEach(landmark => {
+        // Add visitor counts to landmarks
+        const landmarksWithVisitors = await Promise.all(
+          landmarksData.landmarks.map(async (landmark) => {
+            try {
+              const visitorsRes = await fetch(`/api/map/landmark-visitors?landmarkId=${landmark.id}&limit=1`);
+              const visitorsData = await visitorsRes.json();
+              return { ...landmark, visitorCount: visitorsData.total || 0 };
+            } catch (error) {
+              return { ...landmark, visitorCount: 0 };
+            }
+          })
+        );
+        
+        landmarksWithVisitors.forEach(landmark => {
           const landmarkHtml = `
             <div class="server-marker landmark-marker">
-              <div class="visitors">${landmark.visitCost} ${window.config?.currencyName || 'Drakari'} to visit</div>
-              <img src="${landmark.imageUrl}" alt="${landmark.name}" onerror="this.src='${landmark.iconUrl}'"/>
+              <div class="visitors">${landmark.visitCost} Drakari to visit</div>
+              <img src="${landmark.imageUrl}" 
+                   alt="${landmark.name}" 
+                   style="width: 48px; height: 48px; object-fit: cover;"
+                   onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;48&quot; height=&quot;48&quot; viewBox=&quot;0 0 48 48&quot;><circle cx=&quot;24&quot; cy=&quot;24&quot; r=&quot;20&quot; fill=&quot;%23ff6b6b&quot; stroke=&quot;%23fff&quot; stroke-width=&quot;3&quot;/><text x=&quot;24&quot; y=&quot;32&quot; text-anchor=&quot;middle&quot; font-size=&quot;18&quot;>${landmark.emoji}</text></svg>'; console.log('Image failed for ${landmark.name}, using fallback')"/>
               <div class="name">${landmark.emoji} ${landmark.name}</div>
             </div>`;
             
@@ -2510,37 +2526,43 @@ async function loadMe(){
           // Store landmark data for reference
           landmarkMarker._landmarkData = landmark;
           
-          // Create popup with landmark information
-          const landmarkPopup = `
-            <div class="landmark-popup">
-              <div class="landmark-header">
-                <h3>${landmark.emoji} ${landmark.name}</h3>
-                <p><strong>${landmark.country}</strong></p>
-              </div>
-              <div class="landmark-image" style="margin: 8px 0;">
-                <img src="${landmark.imageUrl}" alt="${landmark.name}" 
-                     style="width: 100%; max-width: 200px; height: 120px; object-fit: cover; border-radius: 6px;"
-                     onerror="this.style.display='none'"/>
-              </div>
-              <div class="landmark-description">
-                <p style="font-size: 13px; color: #666; margin: 8px 0;">${landmark.description}</p>
-              </div>
-              <div class="landmark-details" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                  <span style="font-weight: 600;">Travel Cost:</span>
-                  <span style="color: #e74c3c;">${landmark.visitCost} ${window.config?.currencyName || 'Drakari'}</span>
+          landmarkMarker.bindPopup(`<b>${landmark.emoji} ${landmark.name}</b>`);
+          landmarkMarker.on('click', async () => {
+            try {
+              const r = await fetch(`/api/map/landmark-visitors?landmarkId=${encodeURIComponent(landmark.id)}&limit=10`);
+              const j = await r.json();
+              let content = `<div class="vis-list">
+                <div class="vis-title">${landmark.emoji} ${landmark.name} 
+                  <span style="font-size: 11px; font-weight: 400; color: #999;">— Click users to view profiles</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                  <span style="font-weight: 600;">Discovery Reward:</span>
-                  <span style="color: #27ae60;">+${landmark.discoveryReward} ${window.config?.currencyName || 'Drakari'}</span>
+                <div style="margin-bottom: 12px; text-align: center;">
+                  <a href="/landmark/${encodeURIComponent(landmark.id)}" target="_blank" style="display: inline-block; background: #ff6b6b; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 600;">
+                    View Landmark Details
+                  </a>
+                </div>`;
+              if ((j.total||0) > 10){
+                content += `<div class="vis-note">Too many visitors to display (${j.total} total).</div>`;
+              } else if (!j.users || j.users.length === 0){
+                content += `<div class="vis-note">No travelers have visited yet. Be the first!</div>`;
+              } else {
+                content += j.users.map(u => `<a href="/profile/${u.id}" class="vis-user-link" target="_blank" title="Click to view ${u.name || u.id}'s profile"><div class="vis-row"><img src="${u.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png'}"/><span>${u.name || u.id}</span><span class="profile-arrow">→</span></div></a>`).join('');
+              }
+              content += `
+                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee; font-size: 12px; color: #666;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span>🌍 ${landmark.country}</span>
+                    <span>💰 ${landmark.visitCost} Drakari</span>
+                  </div>
+                  <div style="text-align: center; margin-top: 8px;">
+                    <code>/travel landmark ${landmark.name}</code>
+                  </div>
                 </div>
-                <div style="text-align: center; margin-top: 12px;">
-                  <span style="font-size: 11px; color: #999;">Use <code>/travel landmark ${landmark.name}</code> to visit</span>
-                </div>
-              </div>
-            </div>`;
-            
-          landmarkMarker.bindPopup(landmarkPopup, { maxWidth: 280 });
+              </div>`;
+              landmarkMarker.bindPopup(content, { maxWidth: 280 }).openPopup();
+            }catch(e){
+              landmarkMarker.bindPopup(`<b>${landmark.emoji} ${landmark.name}</b><div class="vis-note">Could not load visitor data.</div>`).openPopup();
+            }
+          });
           
           markers.push(landmarkMarker);
         });

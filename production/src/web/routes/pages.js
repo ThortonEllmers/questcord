@@ -32,6 +32,11 @@ router.get('/server/:guildId', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'web', 'public', 'server.html'));
 });
 
+// Landmark information page
+router.get('/landmark/:landmarkId', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'web', 'public', 'landmark.html'));
+});
+
 // Status page for status.questcord.fun subdomain
 router.get('/status', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'web', 'public', 'status.html'));

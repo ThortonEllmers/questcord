@@ -188,10 +188,12 @@ module.exports = {
       // Deduct visit cost
       db.prepare('UPDATE players SET drakari = drakari - ? WHERE userId = ?').run(poi.visitCost, userId);
       
-      // Record the visit and get rewards (only gives reward for first visit)
+      // Record the visit (no rewards given)
       let visitResult;
       if (!alreadyVisited) {
-        visitResult = visitPOI(userId, landmarkId);
+        // Just record the visit without giving rewards
+        db.prepare('INSERT INTO poi_visits (userId, poiId, visitedAt, isFirstVisit) VALUES (?, ?, ?, ?)').run(userId, landmarkId, Date.now(), 1);
+        visitResult = { poi, isFirstVisit: true, reward: 0, visitedAt: Date.now() };
       } else {
         visitResult = { poi, isFirstVisit: false, reward: 0, visitedAt: Date.now() };
       }
@@ -220,15 +222,15 @@ module.exports = {
 
       if (visitResult.isFirstVisit) {
         embed.addFields({
-          name: '💰 **First Visit Bonus**',
-          value: `+${visitResult.reward} ${config.currencyName}\nDiscovery reward!`,
+          name: '🌟 **First Visit**',
+          value: `Welcome to ${poi.name}!\nFirst time visiting`,
           inline: true
         });
-        embed.setDescription(`*🎉 First time visiting ${poi.name}! Discovery bonus awarded!*`);
+        embed.setDescription(`*🎉 Welcome to ${poi.name} for the first time!*`);
       } else {
         embed.addFields({
           name: '✅ **Return Visit**',
-          value: `No bonus reward\nAlready discovered`,
+          value: `Welcome back!\nPreviously visited`,
           inline: true
         });
       }
