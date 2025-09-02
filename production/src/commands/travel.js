@@ -184,71 +184,97 @@ module.exports = {
     // Check if already visited (for first-time bonus)
     const alreadyVisited = hasVisitedPOI(userId, landmarkId);
     
+    // Calculate travel time to landmark (like server travel)
+    const tcfg = config.travel || {};
+    const minS = tcfg.minSeconds ?? 60;
+    const maxS = tcfg.maxSeconds ?? 600;
+    const distMult = tcfg.distanceMultiplier ?? 0.2;
+    const { haversine } = require('../utils/travel');
+    const { vehicleSpeed } = require('../utils/vehicles');
+    
+    // Get current server for distance calculation
+    const currentServer = db.prepare('SELECT * FROM servers WHERE guildId=? AND archived=0').get(player.locationGuildId || interaction.guild?.id);
+    
+    let timeSec = minS;
+    let weatherTimeMultiplier = 1.0;
+    if (currentServer && currentServer.lat != null) {
+      // Calculate distance to landmark
+      const distance = haversine(currentServer.lat, currentServer.lon, poi.lat, poi.lon);
+      const speedMult = await vehicleSpeed(interaction.client, userId);
+      const base = Math.round(distance * distMult * weatherTimeMultiplier / speedMult);
+      
+      // Apply stamina factor for travel time reduction
+      const staminaFactor = 1 - Math.min(0.5, (player.stamina || 0) / 200);
+      timeSec = Math.round(base * staminaFactor);
+      if (timeSec < minS) timeSec = minS;
+      if (timeSec > maxS) timeSec = maxS;
+    }
+    
+    // Set travel arrival time
+    const arrival = Date.now() + timeSec * 1000;
+    
     try {
       // Deduct visit cost in gems
       db.prepare('UPDATE players SET gems = COALESCE(gems, 0) - ? WHERE userId = ?').run(poi.visitCost, userId);
       
-      // Record the visit (no rewards given)
-      let visitResult;
-      if (!alreadyVisited) {
-        // Just record the visit without giving rewards
-        db.prepare('INSERT INTO poi_visits (userId, poiId, visitedAt, isFirstVisit) VALUES (?, ?, ?, ?)').run(userId, landmarkId, Date.now(), 1);
-        visitResult = { poi, isFirstVisit: true, reward: 0, visitedAt: Date.now() };
-      } else {
-        visitResult = { poi, isFirstVisit: false, reward: 0, visitedAt: Date.now() };
-      }
+      // Create a fake "server" entry for the landmark to use existing travel system
+      const landmarkAsServer = {
+        guildId: `landmark_${landmarkId}`,
+        name: poi.name,
+        lat: poi.lat,
+        lon: poi.lon
+      };
       
-      // Create success embed
-      const embed = new EmbedBuilder()
-        .setTitle(`${poi.emoji} **LANDMARK VISIT: ${poi.name.toUpperCase()}**`)
-        .setDescription(`*${alreadyVisited ? 'Welcome back to' : 'Welcome to'} ${poi.name}, ${interaction.user.username}!*`)
-        .setColor(alreadyVisited ? 0xE67E22 : 0x00D26A)
+      // Set travel state using existing travel system
+      db.prepare('UPDATE players SET travelArrivalAt=?, travelStartAt=?, locationGuildId=?, travelFromGuildId=? WHERE userId=?').run(
+        arrival, Date.now(), landmarkAsServer.guildId, currentServer ? currentServer.guildId : null, userId
+      );
+      
+      // Create travel embed (similar to server travel)
+      const travelEmbed = new EmbedBuilder()
+        .setTitle(`${poi.emoji}✈️ **LANDMARK TRAVEL INITIATED** ✈️${poi.emoji}`)
+        .setDescription(`⚡ *Flying to the magnificent ${poi.name}* ⚡`)
+        .setColor(0xFF6B35)
         .setAuthor({
           name: `${userPrefix} - World Explorer`,
           iconURL: interaction.user.displayAvatarURL()
         })
         .addFields(
           {
-            name: '📍 **Location**',
-            value: `${poi.emoji} **${poi.name}**\n${poi.country}`,
+            name: '✈️ **Transport**',
+            value: `**Landmark Express**\n⚡ Direct flight to landmark`,
             inline: true
           },
           {
-            name: '💸 **Travel Cost**',
-            value: `${poi.visitCost} 💎 gems\nFlight expenses`,
+            name: '📍 **Destination**',
+            value: `**${poi.name}**\n📍 ${poi.country}`,
+            inline: true
+          },
+          {
+            name: '💎 **Travel Cost**',
+            value: `**${poi.visitCost} gems**\n💸 Flight expenses`,
+            inline: true
+          },
+          {
+            name: '⏱️ **Estimated Arrival**',
+            value: `**${Math.round(timeSec / 60)} minutes**\n🌍 Distance: ${currentServer ? Math.round(haversine(currentServer.lat, currentServer.lon, poi.lat, poi.lon)) : '???'} km`,
+            inline: true
+          },
+          {
+            name: '🎯 **Mission**',
+            value: alreadyVisited ? 
+              `**Return Visit**\n🏛️ Explore ${poi.name} again` :
+              `**First Discovery**\n✨ Discover ${poi.name}`,
             inline: true
           }
-        );
-
-      if (visitResult.isFirstVisit) {
-        embed.addFields({
-          name: '🌟 **First Visit**',
-          value: `Welcome to ${poi.name}!\nFirst time visiting`,
-          inline: true
-        });
-        embed.setDescription(`*🎉 Welcome to ${poi.name} for the first time!*`);
-      } else {
-        embed.addFields({
-          name: '✅ **Return Visit**',
-          value: `Welcome back!\nPreviously visited`,
-          inline: true
-        });
-      }
+        )
+        .setFooter({
+          text: `🌟 Track your flight progress on the map! ✈️ Landing in ${Math.round(timeSec / 60)}m`,
+          iconURL: interaction.user.displayAvatarURL()
+        })
+        .setTimestamp();
       
-      if (poi.description) {
-        embed.addFields({
-          name: '📖 **About This Landmark**',
-          value: poi.description,
-          inline: false
-        });
-      }
-      
-      embed.setFooter({
-        text: alreadyVisited ? 'Thanks for visiting again! • QuestCord Travel' : 'Landmark discovered! • QuestCord Travel',
-        iconURL: interaction.client.user.displayAvatarURL()
-      }).setTimestamp();
-      
-      await interaction.reply({ embeds: [embed] });
+      await interaction.reply({ embeds: [travelEmbed] });
       
     } catch (error) {
       console.error('Landmark travel error:', error);

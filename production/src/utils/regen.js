@@ -240,6 +240,32 @@ function applyRegenToAll() {
     for (const travel of completedTravels) {
       const travelTime = travel.travelArrivalAt - travel.travelStartAt;
       recordTravel(travel.userId, travel.travelFromGuildId, travel.locationGuildId, travelTime);
+      
+      // Handle landmark arrivals
+      if (travel.locationGuildId && travel.locationGuildId.startsWith('landmark_')) {
+        const landmarkId = travel.locationGuildId.replace('landmark_', '');
+        
+        try {
+          // Get POI info
+          const poi = db.prepare('SELECT * FROM pois WHERE id = ?').get(landmarkId);
+          if (poi) {
+            // Check if already visited
+            const alreadyVisited = db.prepare('SELECT 1 FROM poi_visits WHERE userId = ? AND poiId = ?').get(travel.userId, landmarkId);
+            
+            if (!alreadyVisited) {
+              // Record first visit
+              db.prepare('INSERT INTO poi_visits (userId, poiId, visitedAt, isFirstVisit) VALUES (?, ?, ?, 1)').run(
+                travel.userId, landmarkId, now
+              );
+            }
+          }
+        } catch (error) {
+          console.error('Error processing landmark arrival:', error);
+        }
+        
+        // Set player location back to their origin server (landmarks aren't real locations)
+        db.prepare('UPDATE players SET locationGuildId = ? WHERE userId = ?').run(travel.travelFromGuildId, travel.userId);
+      }
     }
     
     // Clear completed travels
