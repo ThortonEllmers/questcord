@@ -1,72 +1,61 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-# QuestCord Production Deployment Script
-# This script safely deploys the QuestCord bot to production
+  echo "🚀 QuestCord Fixed Deployment Script"
+  echo "===================================="
 
-set -euo pipefail
+  # Go to the actual production directory where files exist
+  cd /root/questcord/production
 
-echo "🚀 Starting QuestCord Production Deployment"
-echo "=============================================="
+  echo "📂 Working directory: $(pwd)"
+  echo "📋 Files in current directory:"
+  ls -la scripts/ 2>/dev/null || echo "No scripts directory"
 
-# Get script directory and navigate to project root
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-cd "$PROJECT_ROOT"
+  # Clear ports
+  echo "🔧 Clearing ports..."
+  fuser -k 3000/tcp 2>/dev/null || echo "Port 3000 clear"
+  fuser -k 3001/tcp 2>/dev/null || echo "Port 3001 clear"
 
-echo "📂 Working directory: $(pwd)"
+  # Stop existing processes
+  echo "🛑 Stopping existing processes..."
+  pm2 stop questcord-bot 2>/dev/null || echo "No bot to stop"
+  pm2 delete questcord-bot 2>/dev/null || echo "No process to delete"
 
-# Check if PM2 is installed
-if ! command -v pm2 &> /dev/null; then
-    echo "❌ PM2 is not installed. Installing..."
-    npm install -g pm2
-fi
+  # Install dependencies
+  echo "📦 Installing dependencies..."
+  npm install
 
-# Create logs directory if it doesn't exist
-mkdir -p logs
+  # Deploy commands from correct location
+  echo "⚡ Deploying slash commands..."
+  if [[ -f "scripts/deploy-commands.js" ]]; then
+      echo "✅ Found deploy-commands.js in production/scripts/"
+      node scripts/deploy-commands.js || echo "❌ Command deployment failed"
+  else
+      echo "❌ No scripts/deploy-commands.js found"
+      echo "📁 Available files:"
+      find . -name "deploy-commands.js" -type f 2>/dev/null || echo "No deploy-commands.js anywhere"
+  fi
 
-# Install dependencies
-echo "📦 Installing production dependencies..."
-npm ci --omit=dev 2>/dev/null || npm install --omit=dev 2>/dev/null || npm install
+  # Start bot directly (don't rely on ecosystem.config.js)
+  echo "🚀 Starting bot..."
+  pm2 start src/index.js --name questcord-bot \
+    --watch false \
+    --max-memory-restart 1G \
+    --restart-delay 5000 \
+    --max-restarts 10 \
+    --log-date-format "YYYY-MM-DD HH:mm:ss Z"
 
-# Kill any processes using port 3001
-echo "🔧 Clearing port 3001..."
-npx kill-port 3001 2>/dev/null || echo "Port 3001 was not in use"
+  # Save PM2 config
+  pm2 save
 
-# Stop existing PM2 processes (if any)
-echo "🛑 Stopping existing processes..."
-pm2 stop questcord-bot 2>/dev/null || echo "No existing processes to stop"
-pm2 delete questcord-bot 2>/dev/null || echo "No existing process to delete"
+  # Show results
+  echo ""
+  echo "📊 PM2 Status:"
+  pm2 status
 
-# Deploy slash commands
-echo "⚡ Deploying slash commands..."
-if [[ -f "scripts/deploy-commands.js" ]]; then
-    node scripts/deploy-commands.js || {
-        echo "❌ Failed to deploy commands, continuing anyway..."
-    }
-else
-    echo "❌ deploy-commands.js not found, skipping command deployment"
-fi
+  echo ""
+  echo "📝 Recent logs:"
+  pm2 logs questcord-bot --lines 10
 
-# Start with PM2 using ecosystem config
-echo "🚀 Starting bot with PM2..."
-if [[ -f "ecosystem.config.js" ]]; then
-    pm2 start ecosystem.config.js
-else
-    echo "❌ ecosystem.config.js not found, starting with direct command..."
-    pm2 start src/index.js --name questcord-bot
-fi
-
-# Save PM2 configuration
-echo "💾 Saving PM2 configuration..."
-pm2 save
-
-# Show status
-echo "📊 Current PM2 status:"
-pm2 status
-
-echo ""
-echo "✅ QuestCord bot deployed successfully!"
-echo "📝 Logs can be viewed with: pm2 logs questcord-bot"
-echo "🔄 Restart with: pm2 restart questcord-bot"  
-echo "🛑 Stop with: pm2 stop questcord-bot"
-echo "🌐 Web interface available on port 3001"
+  echo ""
+  echo "✅ Deployment complete!"
+  echo "🌐 Check web: http://134.199.164.5:3000 or :3001"
