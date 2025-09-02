@@ -395,8 +395,47 @@ router.get('/api/me', rateLimit(180, 60000), async (req, res) => {
     // Travel status + center calculation
     let travel = null;
     if (player && player.travelArrivalAt && player.travelArrivalAt > Date.now()) {
-      const from = db.prepare('SELECT guildId, name, lat, lon FROM servers WHERE guildId=?').get(player.travelFromGuildId);
-      const to   = db.prepare('SELECT guildId, name, lat, lon FROM servers WHERE guildId=?').get(player.locationGuildId);
+      // Handle travel FROM servers or landmarks
+      let from = null;
+      if (player.travelFromGuildId) {
+        if (player.travelFromGuildId.startsWith('landmark_')) {
+          const landmarkId = player.travelFromGuildId.replace('landmark_', '');
+          const landmark = db.prepare('SELECT * FROM pois WHERE id = ?').get(landmarkId);
+          if (landmark) {
+            from = {
+              guildId: player.travelFromGuildId,
+              name: landmark.name,
+              lat: landmark.lat,
+              lon: landmark.lon,
+              isLandmark: true,
+              emoji: landmark.emoji
+            };
+          }
+        } else {
+          from = db.prepare('SELECT guildId, name, lat, lon FROM servers WHERE guildId=?').get(player.travelFromGuildId);
+        }
+      }
+      
+      // Handle travel TO servers or landmarks  
+      let to = null;
+      if (player.locationGuildId) {
+        if (player.locationGuildId.startsWith('landmark_')) {
+          const landmarkId = player.locationGuildId.replace('landmark_', '');
+          const landmark = db.prepare('SELECT * FROM pois WHERE id = ?').get(landmarkId);
+          if (landmark) {
+            to = {
+              guildId: player.locationGuildId,
+              name: landmark.name,
+              lat: landmark.lat,
+              lon: landmark.lon,
+              isLandmark: true,
+              emoji: landmark.emoji
+            };
+          }
+        } else {
+          to = db.prepare('SELECT guildId, name, lat, lon FROM servers WHERE guildId=?').get(player.locationGuildId);
+        }
+      }
       if (from && to) {
         const total = Math.max(1, player.travelArrivalAt - player.travelStartAt);
         const progress = Math.min(1, Math.max(0, (Date.now() - player.travelStartAt) / total));
@@ -2919,9 +2958,27 @@ router.get('/api/profile/:userId', rateLimit(30, 60000), async (req, res) => {
     let currentLocationServer = null;
     if (player.locationGuildId) {
       try {
-        currentLocationServer = db.prepare('SELECT guildId, name, lat, lon FROM servers WHERE guildId = ?').get(player.locationGuildId);
+        if (player.locationGuildId.startsWith('landmark_')) {
+          // Player is at a landmark
+          const landmarkId = player.locationGuildId.replace('landmark_', '');
+          const landmark = db.prepare('SELECT * FROM pois WHERE id = ?').get(landmarkId);
+          if (landmark) {
+            currentLocationServer = {
+              guildId: player.locationGuildId,
+              name: landmark.name,
+              lat: landmark.lat,
+              lon: landmark.lon,
+              isLandmark: true,
+              emoji: landmark.emoji,
+              country: landmark.country
+            };
+          }
+        } else {
+          // Player is at a server
+          currentLocationServer = db.prepare('SELECT guildId, name, lat, lon FROM servers WHERE guildId = ?').get(player.locationGuildId);
+        }
       } catch (e) {
-        // Ignore server lookup errors
+        // Ignore lookup errors
       }
     }
 
