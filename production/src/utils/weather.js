@@ -967,29 +967,21 @@ function createWeatherEvent(type, lat, lon, durationMinutes = 60, customRadius =
 
     // Create weather event in database
     const result = db.prepare(`
-      INSERT INTO weather_events (
-        id, type, name, centerLat, centerLon, radius, 
-        severity, blockTravel, icon, color, 
-        createdAt, endTime, expiresAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO weather_events (type, centerLat, centerLon, radius, severity, startTime, endTime, specialEffects)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
-      eventId,
       type,
-      weatherType.name,
       lat,
       lon,
       radius,
       weatherType.severity,
-      weatherType.blockTravel ? 1 : 0,
-      weatherType.icon,
-      weatherType.color,
       now,
       expiresAt,
-      expiresAt
+      JSON.stringify(weatherType.specialEffects || [])
     );
 
     const weatherEvent = {
-      id: eventId,
+      id: result.lastInsertRowid,
       type,
       name: weatherType.name,
       centerLat: lat,
@@ -999,8 +991,8 @@ function createWeatherEvent(type, lat, lon, durationMinutes = 60, customRadius =
       blockTravel: weatherType.blockTravel,
       icon: weatherType.icon,
       color: weatherType.color,
-      createdAt: now,
-      expiresAt
+      startTime: now,
+      endTime: expiresAt
     };
 
     console.log(`[weather] Created ${weatherType.name} at ${lat}, ${lon} (${radius}km radius, ${durationMinutes}min duration)`);
@@ -1039,7 +1031,7 @@ function removeWeatherEvent(eventId) {
  */
 function clearAllWeatherEvents() {
   try {
-    const result = db.prepare('DELETE FROM weather_events WHERE expiresAt > ?').run(Date.now());
+    const result = db.prepare('DELETE FROM weather_events WHERE endTime > ?').run(Date.now());
     console.log(`[weather] Cleared ${result.changes} active weather events`);
     return result.changes;
   } catch (error) {
