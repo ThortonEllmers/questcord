@@ -153,127 +153,55 @@ module.exports = {
     const target = interaction.options.getString('target');
     
     if (destinationType === 'landmark') {
-      return this.handleLandmarkTravel(interaction, userPrefix, target);
+      return this.handleLandmarkTravelById(interaction, userPrefix, target);
     } else {
       return this.handleServerTravel(interaction, userPrefix, target);
     }
   },
 
-  async handleLandmarkTravel(interaction, userPrefix, landmarkId) {
-    const userId = interaction.user.id;
-    const poi = getPOIById(landmarkId);
-    
-    if (!poi) {
-      return interaction.reply({
-        content: `${userPrefix} Landmark not found.`,
-        ephemeral: true
-      });
-    }
-
-    // Ensure player exists
-    const player = await ensurePlayerWithVehicles(interaction.client, userId, interaction.user.username, interaction.guild?.id);
-    
-    // Check if user has enough gems for visit cost
-    if ((player.gems || 0) < poi.visitCost) {
-      return interaction.reply({
-        content: `${userPrefix} Insufficient gems! You need ${poi.visitCost} 💎 gems to visit ${poi.name}. You have ${player.gems || 0}.`,
-        ephemeral: true
-      });
-    }
-    
-    // Check if already visited (for first-time bonus)
-    const alreadyVisited = hasVisitedPOI(userId, landmarkId);
-    
-    // Calculate travel time to landmark (like server travel)
-    const tcfg = config.travel || {};
-    const minS = tcfg.minSeconds ?? 60;
-    const maxS = tcfg.maxSeconds ?? 600;
-    const distMult = tcfg.distanceMultiplier ?? 0.2;
-    
-    // Get current server for distance calculation
-    const currentServer = db.prepare('SELECT * FROM servers WHERE guildId=? AND archived=0').get(player.locationGuildId || interaction.guild?.id);
-    
-    let timeSec = minS;
-    let weatherTimeMultiplier = 1.0;
-    if (currentServer && currentServer.lat != null) {
-      // Calculate distance to landmark
-      const distance = haversine(currentServer.lat, currentServer.lon, poi.lat, poi.lon);
-      const speedMult = await vehicleSpeed(interaction.client, userId);
-      const base = Math.round(distance * distMult * weatherTimeMultiplier / speedMult);
-      
-      // Apply stamina factor for travel time reduction
-      const staminaFactor = 1 - Math.min(0.5, (player.stamina || 0) / 200);
-      timeSec = Math.round(base * staminaFactor);
-      if (timeSec < minS) timeSec = minS;
-      if (timeSec > maxS) timeSec = maxS;
-    }
-    
-    // Set travel arrival time
-    const arrival = Date.now() + timeSec * 1000;
-    
+  async handleLandmarkTravelById(interaction, userPrefix, landmarkId) {
     try {
-      // Deduct visit cost in gems
-      db.prepare('UPDATE players SET gems = COALESCE(gems, 0) - ? WHERE userId = ?').run(poi.visitCost, userId);
+      const userId = interaction.user.id;
+      const poi = getPOIById(landmarkId);
       
-      // Create a fake "server" entry for the landmark to use existing travel system
-      const landmarkAsServer = {
-        guildId: `landmark_${landmarkId}`,
+      if (!poi) {
+        return interaction.reply({
+          content: `${userPrefix} Landmark not found.`,
+          ephemeral: true
+        });
+      }
+
+      // Ensure player exists
+      const player = await ensurePlayerWithVehicles(interaction.client, userId, interaction.user.username, interaction.guild?.id);
+      
+      // Check if user has enough gems for visit cost
+      if ((player.gems || 0) < poi.visitCost) {
+        return interaction.reply({
+          content: `${userPrefix} Insufficient gems! You need ${poi.visitCost} 💎 gems to visit ${poi.name}. You have ${player.gems || 0}.`,
+          ephemeral: true
+        });
+      }
+      
+      // Check if already visited (for first-time bonus)
+      const alreadyVisited = hasVisitedPOI(userId, landmarkId);
+      
+      // Use the same travel system as servers - call handleLandmarkTravel with landmark as destination
+      const landmarkAsDestination = {
+        guildId: `landmark_${landmarkId}`, 
         name: poi.name,
         lat: poi.lat,
-        lon: poi.lon
+        lon: poi.lon,
+        isLandmark: true,
+        landmarkId: landmarkId,
+        visitCost: poi.visitCost,
+        emoji: poi.emoji,
+        country: poi.country,
+        alreadyVisited: alreadyVisited
       };
       
-      // Set travel state using existing travel system
-      db.prepare('UPDATE players SET travelArrivalAt=?, travelStartAt=?, locationGuildId=?, travelFromGuildId=? WHERE userId=?').run(
-        arrival, Date.now(), landmarkAsServer.guildId, currentServer ? currentServer.guildId : null, userId
-      );
-      
-      // Create travel embed (similar to server travel)
-      const travelEmbed = new EmbedBuilder()
-        .setTitle(`${poi.emoji}✈️ **LANDMARK TRAVEL INITIATED** ✈️${poi.emoji}`)
-        .setDescription(`⚡ *Flying to the magnificent ${poi.name}* ⚡`)
-        .setColor(0xFF6B35)
-        .setAuthor({
-          name: `${userPrefix} - World Explorer`,
-          iconURL: interaction.user.displayAvatarURL()
-        })
-        .addFields(
-          {
-            name: '✈️ **Transport**',
-            value: `**Landmark Express**\n⚡ Direct flight to landmark`,
-            inline: true
-          },
-          {
-            name: '📍 **Destination**',
-            value: `**${poi.name}**\n📍 ${poi.country}`,
-            inline: true
-          },
-          {
-            name: '💎 **Travel Cost**',
-            value: `**${poi.visitCost} gems**\n💸 Flight expenses`,
-            inline: true
-          },
-          {
-            name: '⏱️ **Estimated Arrival**',
-            value: `**${Math.round(timeSec / 60)} minutes**\n🌍 Distance: ${currentServer ? Math.round(haversine(currentServer.lat, currentServer.lon, poi.lat, poi.lon)) : '???'} km`,
-            inline: true
-          },
-          {
-            name: '🎯 **Mission**',
-            value: alreadyVisited ? 
-              `**Return Visit**\n🏛️ Explore ${poi.name} again` :
-              `**First Discovery**\n✨ Discover ${poi.name}`,
-            inline: true
-          }
-        )
-        .setFooter({
-          text: `🌟 Track your flight progress on the map! ✈️ Landing in ${Math.round(timeSec / 60)}m`,
-          iconURL: interaction.user.displayAvatarURL()
-        })
-        .setTimestamp();
-      
-      await interaction.reply({ embeds: [travelEmbed] });
-      
+      // Call the actual landmark travel handler with landmark destination
+      return await this.handleLandmarkTravel(interaction, userPrefix, landmarkAsDestination);
+        
     } catch (error) {
       console.error('Landmark travel error:', error);
       return interaction.reply({
@@ -281,6 +209,155 @@ module.exports = {
         ephemeral: true
       });
     }
+  },
+
+  async handleLandmarkTravel(interaction, userPrefix, dest) {
+    // Exactly like handleServerTravel but for landmarks
+    let p = await ensurePlayerWithVehicles(interaction.client, interaction.user.id, interaction.user.username, interaction.guild?.id);
+    let fromServer = db.prepare('SELECT * FROM servers WHERE guildId=? AND archived=0').get(p.locationGuildId || interaction.guild?.id);
+    
+    // If currently at a landmark, get the actual server they came from
+    if (p.locationGuildId && p.locationGuildId.startsWith('landmark_')) {
+      fromServer = db.prepare('SELECT * FROM servers WHERE guildId=? AND archived=0').get(p.travelFromGuildId || interaction.guild?.id);
+    }
+    
+    if (!fromServer || fromServer.lat == null) {
+      fromServer = db.prepare('SELECT * FROM servers WHERE guildId=? AND archived=0').get(interaction.guild?.id);
+    }
+    
+    const tcfg = config.travel || {};
+    const minS = tcfg.minSeconds ?? 60;
+    const maxS = tcfg.maxSeconds ?? 600;
+    const distMult = tcfg.distanceMultiplier ?? 0.2;
+
+    // Check for weather effects and calculate intelligent route
+    let weatherInfo = null;
+    let weatherMessage = '';
+    let weatherTimeMultiplier = 1.0;
+    
+    try {
+      const { getWeatherEffectsForTravel, recordWeatherEncounter } = require('../utils/weather');
+      if (fromServer && fromServer.lat != null) {
+        weatherInfo = getWeatherEffectsForTravel(fromServer.lat, fromServer.lon, dest.lat, dest.lon);
+        weatherTimeMultiplier = weatherInfo.timeMultiplier || 1.0;
+        
+        if (weatherInfo.detourRequired) {
+          weatherMessage = `\n🌪️ **Weather Alert:** Route adjusted to avoid ${weatherInfo.weatherAvoided}`;
+        } else if (weatherInfo.weatherDescription !== 'Clear skies') {
+          weatherMessage = `\n⛅ **Weather:** ${weatherInfo.weatherDescription} (${Math.round((weatherTimeMultiplier - 1) * 100)}% slower)`;
+        }
+      }
+    } catch (error) {
+      console.warn('[landmark travel] Weather system unavailable:', error.message);
+    }
+
+    let timeSec = minS;
+    if (fromServer && fromServer.lat != null) {
+      const d = weatherInfo ? weatherInfo.totalDistance : haversine(fromServer.lat, fromServer.lon, dest.lat, dest.lon);
+      const mult = await vehicleSpeed(interaction.client, interaction.user.id);
+      let base = minS + (d * distMult) / mult;
+      base = Math.round(base * weatherTimeMultiplier);
+
+      const staminaRow = db.prepare('SELECT stamina FROM players WHERE userId=?').get(interaction.user.id);
+      const stamina = staminaRow?.stamina || 0;
+      const maxReduction = (config.stamina?.travelMaxReductionPct ?? 50) / 100;
+      const staminaFactor = 1 - Math.min(maxReduction, stamina / 200);
+      timeSec = Math.round(base * staminaFactor);
+      if (timeSec < minS) timeSec = minS;
+      if (timeSec > maxS) timeSec = maxS;
+      
+      const spend = config.stamina?.travelCost ?? 10;
+      const newSt = Math.max(0, stamina - spend);
+      db.prepare('UPDATE players SET stamina=?, staminaUpdatedAt=? WHERE userId=?').run(newSt, Date.now(), interaction.user.id);
+    }
+    
+    const arrival = Date.now() + timeSec * 1000;
+    
+    // Deduct gem cost for landmark travel
+    db.prepare('UPDATE players SET gems = COALESCE(gems, 0) - ? WHERE userId = ?').run(dest.visitCost, interaction.user.id);
+    
+    // Set travel state (same as server travel)
+    db.prepare('UPDATE players SET travelArrivalAt=?, travelStartAt=?, locationGuildId=?, travelFromGuildId=? WHERE userId=?').run(
+      arrival, Date.now(), dest.guildId, fromServer ? fromServer.guildId : null, interaction.user.id
+    );
+    
+    const base = (config.web && config.web.publicBaseUrl || '').replace(/\/$/, '');
+    const isPremiumUser = await isPremium(interaction.client, interaction.user.id);
+    const speedMult = await vehicleSpeed(interaction.client, interaction.user.id);
+    
+    // Calculate distance for display
+    const distance = fromServer && fromServer.lat != null ? 
+      haversine(fromServer.lat, fromServer.lon, dest.lat, dest.lon) : 0;
+    
+    // Create landmark travel embed
+    const travelEmbed = new EmbedBuilder()
+      .setTitle(`${dest.emoji}✈️ **LANDMARK JOURNEY INITIATED** ✈️${dest.emoji}`)
+      .setDescription(`⚡ *Quantum jump to ${dest.name} activated* ⚡`)
+      .setColor(isPremiumUser ? 0xFFD700 : 0xFF6B35)
+      .setAuthor({ 
+        name: `${userPrefix} - World Explorer`,
+        iconURL: interaction.user.displayAvatarURL() 
+      });
+
+    const vehicleEmoji = isPremiumUser ? '🚀' : '✈️';
+    const vehicleName = isPremiumUser ? 'Quantum Starship' : 'Landmark Express';
+    const vehicleDesc = isPremiumUser ? 
+      '✨ Luxurious quantum-enhanced cabin' : 
+      '⚡ Direct flight to landmark';
+
+    travelEmbed.addFields(
+      {
+        name: `${vehicleEmoji} **Transport Vessel**`,
+        value: `**${vehicleName}**\n${vehicleDesc}`,
+        inline: true
+      },
+      {
+        name: `${dest.emoji} **Destination**`,
+        value: `**${dest.name}**\n📍 ${dest.country}`,
+        inline: true
+      },
+      {
+        name: '🗺️ **Journey Details**',
+        value: `**Distance:** ${Math.round(distance)} km\n**ETA:** ${Math.round(timeSec / 60)} minutes`,
+        inline: true
+      },
+      {
+        name: '💎 **Travel Cost**',
+        value: `**${dest.visitCost} gems**\n💸 Landmark access fee`,
+        inline: true
+      },
+      {
+        name: '🎯 **Mission Status**',
+        value: dest.alreadyVisited ? 
+          `**Return Visit**\n🏛️ Exploring again` :
+          `**First Discovery**\n✨ New landmark!`,
+        inline: true
+      },
+      {
+        name: '⚡ **Vehicle Performance**',
+        value: `**Speed Multiplier:** ${speedMult}x\n**Stamina Used:** ${config.stamina?.travelCost ?? 10}`,
+        inline: true
+      }
+    );
+
+    if (weatherMessage) {
+      travelEmbed.setDescription(`⚡ *Quantum jump to ${dest.name} activated* ⚡${weatherMessage}`);
+    }
+
+    travelEmbed.setFooter({
+      text: `🌟 Track your flight on the map! Landing in ${Math.round(timeSec / 60)} minutes`,
+      iconURL: interaction.client.user.displayAvatarURL()
+    }).setTimestamp();
+
+    if (base) {
+      travelEmbed.addFields({
+        name: '🌐 **Live Tracking**',
+        value: `[View on Map](${base}) • Track your flight in real-time!`,
+        inline: false
+      });
+    }
+
+    await interaction.reply({ embeds: [travelEmbed] });
   },
 
   async handleServerTravel(interaction, userPrefix, target) {
