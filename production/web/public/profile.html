@@ -588,7 +588,7 @@
     <!-- User Search Section -->
     <div class="user-search-section" id="userSearchSection" style="display: none;">
       <h3>
-        <span>🔍</span>
+        <span>Search</span>
         Find Other User Profiles
       </h3>
       <div class="search-form">
@@ -618,10 +618,10 @@
         <div class="content">
           <div class="section-grid">
             <div class="info-card">
-              <h3>📊 Player Stats</h3>
+              <h3>Player Stats</h3>
               <div class="stat-item">
                 <div class="stat-label">
-                  <span>❤️</span>
+                  <span>Health</span>
                   Health
                 </div>
                 <div class="stat-value" id="healthValue">0/100</div>
@@ -632,7 +632,7 @@
               
               <div class="stat-item">
                 <div class="stat-label">
-                  <span>⚡</span>
+                  <span>Stamina</span>
                   Stamina
                 </div>
                 <div class="stat-value" id="staminaValue">0/100</div>
@@ -643,7 +643,7 @@
               
               <div class="stat-item">
                 <div class="stat-label">
-                  <span>💎</span>
+                  <span>Gems</span>
                   Gems
                 </div>
                 <div class="stat-value" id="gemsValue">0</div>
@@ -651,10 +651,10 @@
             </div>
             
             <div class="info-card">
-              <h3>🌍 Adventure Stats</h3>
+              <h3>Adventure Stats</h3>
               <div class="stat-item">
                 <div class="stat-label">
-                  <span>🏰</span>
+                  <span>Locations</span>
                   Servers Visited
                 </div>
                 <div class="stat-value" id="serversVisited">0</div>
@@ -662,7 +662,7 @@
               
               <div class="stat-item">
                 <div class="stat-label">
-                  <span>🛣️</span>
+                  <span>Distance</span>
                   Total Distance
                 </div>
                 <div class="stat-value" id="totalDistance">0 km</div>
@@ -670,7 +670,7 @@
               
               <div class="stat-item">
                 <div class="stat-label">
-                  <span>⏰</span>
+                  <span>Time</span>
                   Time Traveled
                 </div>
                 <div class="stat-value" id="timeTraveled">0 hours</div>
@@ -678,10 +678,10 @@
             </div>
             
             <div class="info-card">
-              <h3>⚔️ Combat Stats</h3>
+              <h3>Combat Stats</h3>
               <div class="stat-item">
                 <div class="stat-label">
-                  <span>👹</span>
+                  <span>Bosses</span>
                   Bosses Defeated
                 </div>
                 <div class="stat-value" id="bossesKilled">0</div>
@@ -689,7 +689,7 @@
               
               <div class="stat-item">
                 <div class="stat-label">
-                  <span>🏆</span>
+                  <span>Wins</span>
                   Win Rate
                 </div>
                 <div class="stat-value" id="winRate">0%</div>
@@ -697,7 +697,7 @@
               
               <div class="stat-item">
                 <div class="stat-label">
-                  <span>⚔️</span>
+                  <span>Weapon</span>
                   Best Weapon
                 </div>
                 <div class="stat-value" id="bestWeapon">None</div>
@@ -706,14 +706,14 @@
           </div>
           
           <div class="info-card full-width">
-            <h3>🏅 Achievements</h3>
+            <h3>Achievements</h3>
             <div id="achievementsList" class="achievements-grid">
               <!-- Achievements will be populated here -->
             </div>
           </div>
           
           <div class="info-card full-width">
-            <h3>🎒 Inventory</h3>
+            <h3>Inventory</h3>
             <div id="inventoryList" class="inventory-grid">
               <!-- Inventory items will be populated here -->
             </div>
@@ -861,10 +861,10 @@
       container.innerHTML = '';
       
       const defaultAchievements = [
-        { id: 'first_travel', name: 'First Journey', description: 'Complete your first travel', icon: '🚀', unlocked: false },
-        { id: 'explorer', name: 'Explorer', description: 'Visit 10 different servers', icon: '🗺️', unlocked: false },
-        { id: 'boss_slayer', name: 'Boss Slayer', description: 'Defeat your first boss', icon: '⚔️', unlocked: false },
-        { id: 'collector', name: 'Collector', description: 'Collect 50 items', icon: '🎒', unlocked: false }
+        { id: 'first_travel', name: 'First Journey', description: 'Complete your first travel', icon: 'Travel', unlocked: false },
+        { id: 'explorer', name: 'Explorer', description: 'Visit 10 different servers', icon: 'Map', unlocked: false },
+        { id: 'boss_slayer', name: 'Boss Slayer', description: 'Defeat your first boss', icon: 'Sword', unlocked: false },
+        { id: 'collector', name: 'Collector', description: 'Collect 50 items', icon: 'Bag', unlocked: false }
       ];
       
       const achievementList = achievements?.achievements || defaultAchievements;
@@ -886,41 +886,41 @@
       // Dictionary of item translations and images
       const itemData = {
         // Equipment
-        'equipment_flaming_sword_1': { name: 'Flaming Sword', image: '🗡️', rarity: 'rare' },
-        'equipment_ice_staff_1': { name: 'Ice Staff', image: '🪄', rarity: 'rare' },
-        'equipment_dragon_shield_1': { name: 'Dragon Shield', image: '🛡️', rarity: 'epic' },
-        'equipment_mystic_bow_1': { name: 'Mystic Bow', image: '🏹', rarity: 'rare' },
-        'equipment_healing_potion_1': { name: 'Healing Potion', image: '🧪', rarity: 'common' },
-        'equipment_mana_potion_1': { name: 'Mana Potion', image: '🔮', rarity: 'common' },
-        'equipment_steel_sword_1': { name: 'Steel Sword', image: '⚔️', rarity: 'common' },
-        'equipment_leather_armor_1': { name: 'Leather Armor', image: '🥼', rarity: 'common' },
-        'equipment_iron_helmet_1': { name: 'Iron Helmet', image: '⛑️', rarity: 'common' },
+        'equipment_flaming_sword_1': { name: 'Flaming Sword', image: '[Sword]', rarity: 'rare' },
+        'equipment_ice_staff_1': { name: 'Ice Staff', image: '[Staff]', rarity: 'rare' },
+        'equipment_dragon_shield_1': { name: 'Dragon Shield', image: '[Shield]', rarity: 'epic' },
+        'equipment_mystic_bow_1': { name: 'Mystic Bow', image: '[Bow]', rarity: 'rare' },
+        'equipment_healing_potion_1': { name: 'Healing Potion', image: '[Potion]', rarity: 'common' },
+        'equipment_mana_potion_1': { name: 'Mana Potion', image: '[Mana]', rarity: 'common' },
+        'equipment_steel_sword_1': { name: 'Steel Sword', image: '[Sword]', rarity: 'common' },
+        'equipment_leather_armor_1': { name: 'Leather Armor', image: '[Armor]', rarity: 'common' },
+        'equipment_iron_helmet_1': { name: 'Iron Helmet', image: '[Helmet]', rarity: 'common' },
         
         // Resources
-        'resource_wood': { name: 'Wood', image: '🪵', rarity: 'common' },
-        'resource_stone': { name: 'Stone', image: '🪨', rarity: 'common' },
-        'resource_iron_ore': { name: 'Iron Ore', image: '⛏️', rarity: 'common' },
-        'resource_gold_ore': { name: 'Gold Ore', image: '🥇', rarity: 'rare' },
-        'resource_crystal': { name: 'Crystal', image: '💎', rarity: 'epic' },
-        'resource_herbs': { name: 'Herbs', image: '🌿', rarity: 'common' },
+        'resource_wood': { name: 'Wood', image: '[Wood]', rarity: 'common' },
+        'resource_stone': { name: 'Stone', image: '[Stone]', rarity: 'common' },
+        'resource_iron_ore': { name: 'Iron Ore', image: '[Ore]', rarity: 'common' },
+        'resource_gold_ore': { name: 'Gold Ore', image: '[Gold]', rarity: 'rare' },
+        'resource_crystal': { name: 'Crystal', image: '[Crystal]', rarity: 'epic' },
+        'resource_herbs': { name: 'Herbs', image: '[Herbs]', rarity: 'common' },
         
         // Consumables
-        'consumable_bread': { name: 'Bread', image: '🍞', rarity: 'common' },
+        'consumable_bread': { name: 'Bread', image: '[BREAD]', rarity: 'common' },
         'consumable_meat': { name: 'Meat', image: '🥩', rarity: 'common' },
-        'consumable_apple': { name: 'Apple', image: '🍎', rarity: 'common' },
+        'consumable_apple': { name: 'Apple', image: '[APPLE]', rarity: 'common' },
         'consumable_cheese': { name: 'Cheese', image: '🧀', rarity: 'common' },
         
         // Special items
-        'special_treasure_map': { name: 'Treasure Map', image: '🗺️', rarity: 'rare' },
-        'special_golden_key': { name: 'Golden Key', image: '🗝️', rarity: 'epic' },
-        'special_ancient_scroll': { name: 'Ancient Scroll', image: '📜', rarity: 'legendary' },
-        'special_magic_gem': { name: 'Magic Gem', image: '💎', rarity: 'epic' },
+        'special_treasure_map': { name: 'Treasure Map', image: '[MAP]', rarity: 'rare' },
+        'special_golden_key': { name: 'Golden Key', image: '[KEY]', rarity: 'epic' },
+        'special_ancient_scroll': { name: 'Ancient Scroll', image: '[SCROLL]', rarity: 'legendary' },
+        'special_magic_gem': { name: 'Magic Gem', image: '[GEM]', rarity: 'epic' },
         
         // Boss drops
-        'boss_dragon_scale': { name: 'Dragon Scale', image: '🐲', rarity: 'legendary' },
-        'boss_phoenix_feather': { name: 'Phoenix Feather', image: '🔥', rarity: 'legendary' },
-        'boss_demon_horn': { name: 'Demon Horn', image: '👹', rarity: 'legendary' },
-        'boss_kraken_tentacle': { name: 'Kraken Tentacle', image: '🐙', rarity: 'legendary' }
+        'boss_dragon_scale': { name: 'Dragon Scale', image: '[DRAGON]', rarity: 'legendary' },
+        'boss_phoenix_feather': { name: 'Phoenix Feather', image: '[FIRE]', rarity: 'legendary' },
+        'boss_demon_horn': { name: 'Demon Horn', image: '[DEMON]', rarity: 'legendary' },
+        'boss_kraken_tentacle': { name: 'Kraken Tentacle', image: '[KRAKEN]', rarity: 'legendary' }
       };
       
       const item = itemData[itemId];
@@ -938,14 +938,14 @@
       name = name.replace(/\s\d+$/, '');
       
       // Default image based on item type
-      let image = '📦'; // Default box
+      let image = '[BOX]'; // Default box
       let rarity = 'common';
       
       if (itemId.startsWith('equipment_')) {
-        if (itemId.includes('sword') || itemId.includes('blade')) image = '⚔️';
-        else if (itemId.includes('bow') || itemId.includes('arrow')) image = '🏹';
+        if (itemId.includes('sword') || itemId.includes('blade')) image = '[SWORD]';
+        else if (itemId.includes('bow') || itemId.includes('arrow')) image = '[BOW]';
         else if (itemId.includes('staff') || itemId.includes('wand')) image = '🪄';
-        else if (itemId.includes('shield')) image = '🛡️';
+        else if (itemId.includes('shield')) image = '[SHIELD]';
         else if (itemId.includes('armor') || itemId.includes('chestplate')) image = '🥼';
         else if (itemId.includes('helmet') || itemId.includes('hat')) image = '⛑️';
         else if (itemId.includes('potion')) image = '🧪';
@@ -955,17 +955,17 @@
         if (itemId.includes('wood')) image = '🪵';
         else if (itemId.includes('stone') || itemId.includes('rock')) image = '🪨';
         else if (itemId.includes('ore')) image = '⛏️';
-        else if (itemId.includes('crystal') || itemId.includes('gem')) image = '💎';
-        else if (itemId.includes('herb') || itemId.includes('plant')) image = '🌿';
+        else if (itemId.includes('crystal') || itemId.includes('gem')) image = '[GEM]';
+        else if (itemId.includes('herb') || itemId.includes('plant')) image = '[HERBS]';
         else image = '🪨';
       } else if (itemId.startsWith('consumable_')) {
-        if (itemId.includes('bread')) image = '🍞';
+        if (itemId.includes('bread')) image = '[BREAD]';
         else if (itemId.includes('meat')) image = '🥩';
-        else if (itemId.includes('fruit') || itemId.includes('apple')) image = '🍎';
+        else if (itemId.includes('fruit') || itemId.includes('apple')) image = '[APPLE]';
         else if (itemId.includes('cheese')) image = '🧀';
-        else image = '🍎';
+        else image = '[APPLE]';
       } else if (itemId.startsWith('boss_')) {
-        image = '👑';
+        image = '[BOSS]';
         rarity = 'legendary';
       }
       

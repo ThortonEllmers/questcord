@@ -45,17 +45,162 @@
     }
     .map-controls { 
       position: absolute; 
-      top: 35px; 
-      left: 35px; 
-      width: 200px;
-      z-index: 999; 
+      top: 25px; 
+      left: 25px; 
+      width: 240px;
+      z-index: 1001;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      isolation: isolate;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    
+    /* Professional Map Controls Styling */
+    .map-controls .heading {
+      color: #2d3748 !important;
+      font-weight: 600 !important;
+      font-size: 12px;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e2e8f0;
+      text-transform: uppercase;
+      letter-spacing: 0.75px;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .map-controls .heading:first-child {
+      margin-top: 0;
+    }
+    
+    .map-controls label {
+      display: flex !important;
+      align-items: center;
+      margin-bottom: 8px !important;
+      color: #4a5568 !important;
+      font-weight: 500 !important;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      padding: 6px 0;
+      position: relative;
+      z-index: 1;
+      border-radius: 6px;
+    }
+    
+    .map-controls label:hover {
+      color: #2d3748 !important;
+      background: rgba(74, 85, 104, 0.05);
+      padding-left: 8px;
+      padding-right: 8px;
+    }
+    
+    .map-controls label:last-child {
+      margin-bottom: 0 !important;
+    }
+    
+    .map-controls input[type="radio"],
+    .map-controls input[type="checkbox"] {
+      margin-right: 8px !important;
+      accent-color: #4299e1;
+      transform: scale(1.0);
+      cursor: pointer;
+    }
+    
+    .map-controls input[type="radio"]:checked,
+    .map-controls input[type="checkbox"]:checked {
+      accent-color: #3182ce;
+    }
+    
+    #centerName {
+      color: #2d3748 !important;
+      font-weight: 500 !important;
+      font-size: 11px !important;
+      padding: 8px 10px !important;
+      background: rgba(247, 250, 252, 0.8) !important;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 6px !important;
+      margin-top: 8px !important;
+      position: relative;
+      z-index: 1;
+      transition: all 0.2s ease;
+    }
+    
+    #centerName:hover {
+      background: rgba(247, 250, 252, 1) !important;
+      border-color: #cbd5e0 !important;
+    }
+    
+    #adminMapControls {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #e2e8f0;
+      position: relative;
+      z-index: 1;
+    }
+    
+    #toggleEditMapBtn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+      color: white !important;
+      border: none !important;
+      padding: 12px 18px !important;
+      border-radius: 10px !important;
+      font-weight: 600 !important;
+      font-size: 12px !important;
+      cursor: pointer !important;
+      transition: all 0.2s ease !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.75px !important;
+      width: 100% !important;
+      box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2) !important;
+    }
+    
+    #toggleEditMapBtn:hover {
+      transform: translateY(-2px) !important;
+      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4) !important;
+    }
+    
+    /* Override any conflicting styles */
+    .map-controls * {
+      color: inherit;
     }
     .panel { 
-      background: white;
-      padding: 15px;
-      border-radius: 15px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-      color: #333;
+      background: rgba(255, 255, 255, 0.96);
+      padding: 14px;
+      border-radius: 12px;
+      box-shadow: 
+        0 20px 25px -5px rgba(0, 0, 0, 0.1),
+        0 10px 10px -5px rgba(0, 0, 0, 0.04),
+        0 0 0 1px rgba(255, 255, 255, 0.05);
+      color: #1a202c;
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(24px) saturate(200%);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+    
+    .panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.1) 0%, 
+        rgba(255, 255, 255, 0) 50%, 
+        rgba(255, 255, 255, 0.05) 100%);
+      border-radius: 12px;
+      pointer-events: none;
+    }
+    
+    .panel:hover {
+      box-shadow: 
+        0 25px 50px -12px rgba(0, 0, 0, 0.18),
+        0 15px 20px -8px rgba(0, 0, 0, 0.08),
+        0 0 0 1px rgba(255, 255, 255, 0.08);
+      transform: translateY(-2px) scale(1.02);
+      background: rgba(255, 255, 255, 0.98);
     }
     .server-marker { position:relative; width:48px; height:48px; transform:none; }
     .server-marker.archived { filter: grayscale(1) opacity(0.7); }
@@ -320,6 +465,11 @@
     /* Make all text white and bold */
     * {
       color: white !important;
+    }
+    
+    /* Exception for map controls - force black text */
+    .map-controls, .map-controls * {
+      color: black !important;
     }
     
     h1, h2, h3, h4, h5, h6, .heading, .title {
@@ -631,21 +781,21 @@
       
       .map-controls {
         position: fixed;
-        top: 20px;
+        top: 80px;
         right: 20px;
         left: 20px;
         width: auto;
         z-index: 1000;
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(20px);
-        padding: 10px;
-        border-radius: 10px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        max-height: 40vh;
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(20px) saturate(180%);
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        max-height: 60vh;
         overflow-y: auto;
         transform: translateY(-100%);
-        transition: transform 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
       
       .map-controls.show {
@@ -654,27 +804,30 @@
       
       .mobile-controls-toggle {
         position: fixed;
-        top: 10px;
-        right: 10px;
+        top: 20px;
+        left: 20px;
         z-index: 1001;
-        background: rgba(52, 152, 219, 0.9);
-        color: white;
-        border: none;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        font-size: 16px;
+        background: rgba(255, 255, 255, 0.95);
+        color: #4a5568;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        width: 44px;
+        height: 44px;
+        font-size: 18px;
         cursor: pointer;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         transition: all 0.2s ease;
         display: flex;
         align-items: center;
         justify-content: center;
+        backdrop-filter: blur(10px);
       }
       
       .mobile-controls-toggle:hover {
-        background: rgba(41, 128, 185, 0.9);
-        transform: scale(1.1);
+        background: rgba(255, 255, 255, 1);
+        color: #2d3748;
+        transform: scale(1.05);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
       }
       
       .map-controls .heading {
@@ -685,6 +838,12 @@
       .map-controls label {
         font-size: 12px;
         margin: 4px 0;
+        color: #000000 !important;
+      }
+      
+      .map-controls input,
+      .map-controls #centerName {
+        color: #000000 !important;
       }
       
       .logo-text {
@@ -1267,7 +1426,6 @@
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(4px);
-}
   font-weight: 600 !important;
 }
 
@@ -1462,7 +1620,28 @@
   0% { opacity: 0.7; }
   50% { opacity: 0.3; }
   100% { opacity: 0.7; }
-}\n</style>
+}
+
+/* FINAL OVERRIDE - Map Controls Must Be Black Text on White Background */
+.map-controls {
+  background: white !important;
+}
+
+.map-controls .panel {
+  background: white !important;
+  color: black !important;
+}
+
+.map-controls *,
+.map-controls label,
+.map-controls input,
+.map-controls div,
+.map-controls span,
+.map-controls .heading,
+#centerName {
+  color: black !important;
+}
+</style>
 </head>
 <body>
 <div id="app">
@@ -1521,6 +1700,7 @@
   </div>
 </div>
 
+
 <!-- Mobile controls toggle button -->
 <button class="mobile-controls-toggle" id="mobileControlsToggle" style="display: none;">⚙️</button>
 
@@ -1533,7 +1713,7 @@
     <label style="display:block"><input type="checkbox" id="bossActiveOnly"> Only Boss-Active</label>
     <div id="adminMapControls" style="display:none;">
       <div class="heading">Admin Controls</div>
-      <button id="toggleEditMapBtn" style="display:block; width:100%; margin:5px 0; padding:8px; background:#5865F2; color:white; border:none; border-radius:4px; cursor:pointer;">Toggle Edit Map</button>
+      <button id="toggleEditMapBtn" style="display:block; width:100%; margin:5px 0; padding:8px; background:#5865F2; color:white; border:none; border-radius:4px; cursor:pointer;">Toggle - Edit Map</button>
       <label style="display:block"><input type="checkbox" id="showArchivedMap"> Show Archived</label>
     </div>
     <div class="heading">Center</div>
@@ -1872,7 +2052,7 @@
     } else if (data.currentLocationServer) {
       // User is at a server
       centerNameEl.textContent = `Player location: ${data.currentLocationServer.name}`;
-      centerNameEl.style.color = '#333';
+      centerNameEl.style.color = '#000000';
       
       // Center on server location with consistent zoom
       if (data.currentLocationServer.lat != null && data.currentLocationServer.lon != null) {
@@ -1882,7 +2062,7 @@
       }
     } else {
       centerNameEl.textContent = 'Player location unknown';
-      centerNameEl.style.color = '#666';
+      centerNameEl.style.color = '#000000';
     }
 
     __didInitialCenter = true;
@@ -1924,27 +2104,27 @@
               ? `${Math.floor(timeRemaining / 60)}h ${timeRemaining % 60}m`
               : `${timeRemaining}m`;
             
-            // Weather popup - styled to work with dark theme
+            // Weather popup - styled for light background
             const popupContent = `
-              <div style="text-align: center; min-width: 180px; color: #e5e7eb !important; padding: 12px;">
+              <div style="text-align: center; min-width: 180px; color: #374151 !important; padding: 12px;">
                 <div style="font-size: 2.5rem; margin-bottom: 8px; filter: drop-shadow(0 0 4px ${weather.color});">${weather.icon}</div>
-                <div style="font-weight: bold; font-size: 1.2rem; margin-bottom: 6px; color: #f9fafb !important; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">${weather.name}</div>
-                <div style="color: #d1d5db !important; font-size: 0.9rem; margin-bottom: 10px; font-style: italic;">${weather.description}</div>
-                <div style="background: ${weather.blockTravel ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)'}; padding: 6px 10px; border-radius: 6px; margin-bottom: 8px; color: ${weather.blockTravel ? '#fca5a5 !important' : '#86efac !important'}; border: 1px solid ${weather.blockTravel ? 'rgba(239, 68, 68, 0.4)' : 'rgba(34, 197, 94, 0.4)'};">
+                <div style="font-weight: bold; font-size: 1.2rem; margin-bottom: 6px; color: #1f2937 !important; text-shadow: none;">${weather.name}</div>
+                <div style="color: #4b5563 !important; font-size: 0.9rem; margin-bottom: 10px; font-style: italic;">${weather.description}</div>
+                <div style="background: ${weather.blockTravel ? 'rgba(239, 68, 68, 0.15)' : 'rgba(34, 197, 94, 0.15)'}; padding: 6px 10px; border-radius: 6px; margin-bottom: 8px; color: ${weather.blockTravel ? '#dc2626 !important' : '#16a34a !important'}; border: 1px solid ${weather.blockTravel ? 'rgba(239, 68, 68, 0.3)' : 'rgba(34, 197, 94, 0.3)'};">
                   <strong>${weather.blockTravel ? 'BLOCKS TRAVEL' : 'Affects Travel'}</strong>
                 </div>
-                <div style="font-size: 0.85rem; color: #c4c7d0 !important; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px;">
+                <div style="font-size: 0.85rem; color: #374151 !important; background: rgba(0,0,0,0.05); padding: 8px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.1);">
                   <div style="margin: 3px 0; display: flex; justify-content: space-between; align-items: center;">
                     <span>Duration:</span>
-                    <strong style="color: #fbbf24 !important;">${timeText} remaining</strong>
+                    <strong style="color: #d97706 !important;">${timeText} remaining</strong>
                   </div>
                   <div style="margin: 3px 0; display: flex; justify-content: space-between; align-items: center;">
                     <span>Radius:</span>
-                    <strong style="color: #60a5fa !important;">${weather.radius}km</strong>
+                    <strong style="color: #2563eb !important;">${weather.radius}km</strong>
                   </div>
                   <div style="margin: 3px 0; display: flex; justify-content: space-between; align-items: center;">
                     <span>Severity:</span>
-                    <strong style="color: #f87171 !important;">${weather.severity}/5</strong>
+                    <strong style="color: #dc2626 !important;">${weather.severity}/5</strong>
                   </div>
                 </div>
               </div>
@@ -2081,7 +2261,7 @@ async function loadMe(){
       // Current location
       const locationSpan = document.createElement('span');
       locationSpan.style.fontSize = '12px';
-      locationSpan.style.color = '#666';
+      locationSpan.style.color = '#000000';
       
       // Check if user is traveling
       if (data.travel && data.travel.arrivalAt && Date.now() < data.travel.arrivalAt) {
@@ -2123,7 +2303,11 @@ async function loadMe(){
         // Wire up toggle edit map button
         const toggleEditBtn = document.getElementById('toggleEditMapBtn');
         if (toggleEditBtn) {
-          toggleEditBtn.onclick = () => { editMode = !editMode; debouncedLoadMap(); };
+          toggleEditBtn.onclick = () => { 
+            editMode = !editMode; 
+            toggleEditBtn.textContent = editMode ? 'Toggle - Editing' : 'Toggle - Edit Map';
+            debouncedLoadMap(); 
+          };
         }
         
         // Wire up show archived checkbox
@@ -2243,7 +2427,7 @@ async function loadMe(){
   document.getElementById('addBotBtn').addEventListener('click', function(e) {
     e.preventDefault();
     // Discord bot invite URL with necessary permissions
-    const botInviteUrl = 'https://discord.com/oauth2/authorize?client_id=1403949996868374558&permissions=2147863552&integration_type=0&scope=bot+applications.commands';
+    const botInviteUrl = 'https://discord.com/oauth2/authorize?client_id=1411793854235021322&permissions=2147863552&integration_type=0&scope=bot+applications.commands';
     window.open(botInviteUrl, '_blank');
   });
   
@@ -2413,7 +2597,7 @@ async function loadMe(){
       // Current location
       const locationSpan = document.createElement('span');
       locationSpan.style.fontSize = '12px';
-      locationSpan.style.color = '#666';
+      locationSpan.style.color = '#000000';
       
       // Check if user is traveling
       if (data.travel && data.travel.arrivalAt && Date.now() < data.travel.arrivalAt) {

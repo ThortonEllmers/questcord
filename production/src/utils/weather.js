@@ -364,6 +364,19 @@ const WEATHER_TYPES = {
     specialEffects: ['hypothermia_risk', 'infrastructure_freeze'],
     duration: { min: 480, max: 1440 }
   },
+  'wildfire_complex': {
+    name: 'Burnt Chicken Nugget Maker',
+    severity: 3,
+    icon: '🔥',
+    color: '#FF4500',
+    radius: 200,
+    blockTravel: false,
+    travelTimeMultiplier: 1.8,
+    description: 'An Actual Way To Beat Emus',
+    rarity: 0.008,
+    specialEffects: ['smoke_hazard', 'air_quality_danger', 'heat_exposure'],
+    duration: { min: 360, max: 2160 }
+  },
 
   // MODERATE WEATHER (Severity 2) - Moderate Travel Delays
   'gravity_wave_storm': {
@@ -967,8 +980,10 @@ function createWeatherEvent(type, lat, lon, durationMinutes = 60, customRadius =
 
     // Create weather event in database
     const result = db.prepare(`
-      INSERT INTO weather_events (type, centerLat, centerLon, radius, severity, startTime, endTime, specialEffects)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO weather_events (
+        type, centerLat, centerLon, radius, 
+        severity, startTime, endTime, specialEffects
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       type,
       lat,
@@ -988,9 +1003,6 @@ function createWeatherEvent(type, lat, lon, durationMinutes = 60, customRadius =
       centerLon: lon,
       radius,
       severity: weatherType.severity,
-      blockTravel: weatherType.blockTravel,
-      icon: weatherType.icon,
-      color: weatherType.color,
       startTime: now,
       endTime: expiresAt
     };
@@ -1031,7 +1043,7 @@ function removeWeatherEvent(eventId) {
  */
 function clearAllWeatherEvents() {
   try {
-    const result = db.prepare('DELETE FROM weather_events WHERE endTime > ?').run(Date.now());
+    const result = db.prepare('DELETE FROM weather_events WHERE expiresAt > ?').run(Date.now());
     console.log(`[weather] Cleared ${result.changes} active weather events`);
     return result.changes;
   } catch (error) {

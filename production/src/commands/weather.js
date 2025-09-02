@@ -137,8 +137,7 @@ module.exports = {
       createWeatherEvent, 
       removeWeatherEvent, 
       clearAllWeatherEvents,
-      createWeatherInCountry,
-      WEATHER_TYPES
+      createWeatherInCountry 
     } = require('../utils/weather');
 
     try {
@@ -181,7 +180,7 @@ module.exports = {
               },
               {
                 name: '⏰ **Duration**',
-                value: `**${duration} minutes**\nExpires: <t:${Math.floor(weatherEvent.endTime/1000)}:R>`,
+                value: `**${duration} minutes**\nExpires: <t:${Math.floor(weatherEvent.expiresAt/1000)}:R>`,
                 inline: true
               },
               {
@@ -251,7 +250,7 @@ module.exports = {
         }
 
         case 'list': {
-          const activeWeather = db.prepare('SELECT * FROM weather_events WHERE endTime > ? ORDER BY created_at DESC')
+          const activeWeather = db.prepare('SELECT * FROM weather_events WHERE expiresAt > ? ORDER BY createdAt DESC')
             .all(Date.now());
 
           if (activeWeather.length === 0) {
@@ -278,15 +277,12 @@ module.exports = {
             if (fieldCount >= 25) break; // Discord embed field limit
             
             const eventList = events.map(event => {
-              const timeLeft = Math.round((event.endTime - Date.now()) / 1000 / 60);
+              const timeLeft = Math.round((event.expiresAt - Date.now()) / 1000 / 60);
               return `\`${event.id}\` - ${event.centerLat.toFixed(1)}°, ${event.centerLon.toFixed(1)}° (${timeLeft}m left)`;
             }).join('\n');
 
-            const weatherType = WEATHER_TYPES[type];
-            const icon = weatherType ? weatherType.icon : '🌦️';
-            
             embed.addFields({
-              name: `${icon} **${type.toUpperCase().replace('_', ' ')}** (${events.length})`,
+              name: `${events[0].icon} **${type.toUpperCase().replace('_', ' ')}** (${events.length})`,
               value: eventList.substring(0, 1024), // Discord field value limit
               inline: false
             });

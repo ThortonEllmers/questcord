@@ -244,9 +244,12 @@ router.post('/api/admin/weather/regional', rateLimit(10, 60000), ensureCsrf, asy
     }
     
     const { createWeatherInCountry } = require('../../utils/weather');
-    const result = await createWeatherInCountry(type, country, req.client);
+    console.log(`[API] Creating regional weather: type=${type}, country=${country}`);
+    const result = await createWeatherInCountry(type, country, null);
+    console.log(`[API] Weather creation result:`, result);
     
     if (!result.success) {
+      console.error(`[API] Weather creation failed:`, result.message);
       return res.status(400).json({ error: 'bad_request', message: result.message });
     }
     

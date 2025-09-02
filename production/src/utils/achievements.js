@@ -8,7 +8,7 @@ const ACHIEVEMENTS = {
     name: 'Globe Trotter',
     description: 'Complete your first travel to another server',
     reward: { gems: 10, premiumTime: 0 },
-    icon: '🚀'
+    icon: 'AIRPLANE'
   },
   
   VISIT_5_SERVERS: {
@@ -16,7 +16,7 @@ const ACHIEVEMENTS = {
     name: 'Explorer',
     description: 'Visit 5 different servers',
     reward: { gems: 25, premiumTime: 24 }, // 1-day premium trial
-    icon: '🗺️'
+    icon: 'COMPASS'
   },
   
   VISIT_25_SERVERS: {
@@ -24,7 +24,7 @@ const ACHIEVEMENTS = {
     name: 'World Traveler', 
     description: 'Visit 25 different servers',
     reward: { gems: 50, premiumTime: 72 }, // 3-day premium trial
-    icon: '🌍'
+    icon: 'GLOBE'
   },
   
   FIRST_BOSS_KILL: {
@@ -32,7 +32,7 @@ const ACHIEVEMENTS = {
     name: 'Boss Slayer',
     description: 'Participate in defeating your first boss',
     reward: { gems: 15, premiumTime: 24 }, // 1-day premium trial
-    icon: '⚔️'
+    icon: 'DEMON'
   },
   
   BOSS_KILLER_10: {
@@ -40,7 +40,7 @@ const ACHIEVEMENTS = {
     name: 'Monster Hunter',
     description: 'Participate in defeating 10 bosses',
     reward: { gems: 40, premiumTime: 72 }, // 3-day premium trial
-    icon: '🏹'
+    icon: 'BOW'
   },
   
   BOSS_KILLER_50: {
@@ -48,7 +48,7 @@ const ACHIEVEMENTS = {
     name: 'Legendary Warrior',
     description: 'Participate in defeating 50 bosses',
     reward: { gems: 100, premiumTime: 168 }, // 7-day premium trial
-    icon: '⚡'
+    icon: 'LIGHTNING'
   },
   
   CRAFT_MASTER: {
@@ -56,7 +56,7 @@ const ACHIEVEMENTS = {
     name: 'Master Crafter',
     description: 'Craft 100 items',
     reward: { gems: 75, premiumTime: 72 }, // 3-day premium trial
-    icon: '🔨'
+    icon: 'HAMMER'
   },
   
   MILLIONAIRE: {
@@ -64,7 +64,7 @@ const ACHIEVEMENTS = {
     name: 'Millionaire',
     description: 'Accumulate 1,000,000 Drakari',
     reward: { gems: 150, premiumTime: 168 }, // 7-day premium trial
-    icon: '💎'
+    icon: 'DIAMOND'
   },
   
   MARKET_TRADER: {
@@ -72,7 +72,7 @@ const ACHIEVEMENTS = {
     name: 'Market Mogul',
     description: 'Complete 100 market transactions',
     reward: { gems: 60, premiumTime: 48 }, // 2-day premium trial
-    icon: '📈'
+    icon: 'CHART'
   },
   
   DAILY_GRINDER: {
@@ -80,7 +80,7 @@ const ACHIEVEMENTS = {
     name: 'Daily Grinder',
     description: 'Maintain a 7-day login streak',
     reward: { gems: 35, premiumTime: 24 }, // 1-day premium trial
-    icon: '📅'
+    icon: 'CALENDAR'
   },
   
   SOCIAL_BUTTERFLY: {
@@ -88,7 +88,7 @@ const ACHIEVEMENTS = {
     name: 'Social Butterfly',
     description: 'Visit 10 different servers in one week',
     reward: { gems: 45, premiumTime: 48 }, // 2-day premium trial
-    icon: '🦋'
+    icon: 'GROUP'
   },
   
   EQUIPMENT_COLLECTOR: {
@@ -96,7 +96,7 @@ const ACHIEVEMENTS = {
     name: 'Equipment Collector',
     description: 'Own 50 different weapons or armor pieces',
     reward: { gems: 55, premiumTime: 48 }, // 2-day premium trial  
-    icon: '🎒'
+    icon: 'SHIELD'
   }
 };
 
