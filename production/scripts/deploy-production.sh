@@ -34,8 +34,8 @@ npx kill-port 3001 2>/dev/null || echo "Port 3001 was not in use"
 
 # Stop existing PM2 processes (if any)
 echo "🛑 Stopping existing processes..."
-pm2 stop questcord-bot 2>/dev/null || echo "No existing processes to stop"
-pm2 delete questcord-bot 2>/dev/null || echo "No existing process to delete"
+pm2 stop questcord-bot 2>/dev/null || echo "No existing bot processes to stop"
+pm2 delete questcord-bot 2>/dev/null || echo "No existing processes to delete"
 
 # Deploy slash commands
 echo "⚡ Deploying slash commands..."
@@ -66,7 +66,10 @@ pm2 status
 
 echo ""
 echo "✅ QuestCord bot deployed successfully!"
-echo "📝 Logs can be viewed with: pm2 logs questcord-bot"
-echo "🔄 Restart with: pm2 restart questcord-bot"  
-echo "🛑 Stop with: pm2 stop questcord-bot"
-echo "🌐 Web interface available on port 3001"
+echo ""
+echo "📝 View logs: pm2 logs questcord-bot"
+echo "🔄 Restart: pm2 restart questcord-bot"  
+echo "🛑 Stop: pm2 stop questcord-bot"
+echo "🌐 Web interface: http://your-server-ip:3001"
+echo ""
+echo "ℹ️  Note: All background processes (boss spawning, stamina regen, events) run in the main bot"
