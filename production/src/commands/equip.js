@@ -97,12 +97,12 @@ module.exports = {
     Object.keys(slotGroups).sort().forEach(slot => {
       slotGroups[slot].forEach(item => {
         const slotIcon = {
-          weapon: 'SWORD',
-          armor: 'SHIELD', 
-          vehicle: 'CAR',
-          accessory: 'RING',
-          tool: 'HAMMER'
-        }[slot] || 'BOX';
+          weapon: '⚔️',
+          armor: '🛡️', 
+          vehicle: '🚗',
+          accessory: '💍',
+          tool: '🔨'
+        }[slot] || '📦';
         
         options.push({
           label: `${item.name}`,
@@ -125,12 +125,12 @@ module.exports = {
     const equipmentSummary = currentEquipment.map(eq => {
       const item = itemById(eq.itemId);
       const slotIcon = {
-        weapon: 'SWORD',
-        armor: 'SHIELD', 
-        vehicle: 'CAR',
-        accessory: 'RING',
-        tool: 'HAMMER'
-      }[eq.slot] || 'BOX';
+        weapon: '⚔️',
+        armor: '🛡️', 
+        vehicle: '🚗',
+        accessory: '💍',
+        tool: '🔨'
+      }[eq.slot] || '📦';
       return `${slotIcon} **${eq.slot}:** ${item?.name || 'Unknown'}`;
     }).join('\n') || 'No equipment currently equipped';
 
