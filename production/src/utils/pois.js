@@ -12,7 +12,7 @@ const LANDMARKS = [
     category: 'monument',
     emoji: '🗼',
     discoveryReward: 0,
-    visitCost: 500
+    visitCost: 25
   },
   {
     id: 'statue_of_liberty',
@@ -24,7 +24,7 @@ const LANDMARKS = [
     category: 'monument',
     emoji: '🗽',
     discoveryReward: 0,
-    visitCost: 600
+    visitCost: 30
   },
   {
     id: 'great_wall_china',
@@ -36,7 +36,7 @@ const LANDMARKS = [
     category: 'historical',
     emoji: '🏯',
     discoveryReward: 0,
-    visitCost: 800
+    visitCost: 40
   },
   {
     id: 'colosseum',
@@ -48,7 +48,7 @@ const LANDMARKS = [
     category: 'historical',
     emoji: '🏛️',
     discoveryReward: 0,
-    visitCost: 700
+    visitCost: 35
   },
   {
     id: 'taj_mahal',
@@ -60,7 +60,7 @@ const LANDMARKS = [
     category: 'monument',
     emoji: '🕌',
     discoveryReward: 0,
-    visitCost: 650
+    visitCost: 35
   },
   {
     id: 'machu_picchu',
@@ -72,7 +72,7 @@ const LANDMARKS = [
     category: 'historical',
     emoji: '⛰️',
     discoveryReward: 0,
-    visitCost: 900
+    visitCost: 45
   },
   {
     id: 'christ_redeemer',
@@ -84,7 +84,7 @@ const LANDMARKS = [
     category: 'monument',
     emoji: '⛪',
     discoveryReward: 0,
-    visitCost: 550
+    visitCost: 30
   },
   {
     id: 'mount_fuji',
@@ -96,7 +96,7 @@ const LANDMARKS = [
     category: 'natural',
     emoji: '🗻',
     discoveryReward: 0,
-    visitCost: 750
+    visitCost: 40
   },
   {
     id: 'pyramids_giza',
@@ -108,7 +108,7 @@ const LANDMARKS = [
     category: 'historical',
     emoji: '🏜️',
     discoveryReward: 0,
-    visitCost: 1200
+    visitCost: 60
   },
   {
     id: 'stonehenge',
@@ -120,7 +120,7 @@ const LANDMARKS = [
     category: 'historical',
     emoji: '🗿',
     discoveryReward: 0,
-    visitCost: 800
+    visitCost: 40
   }
 ];
 

@@ -735,7 +735,7 @@ router.get('/api/landmark/:landmarkId', rateLimit(), async (req, res) => {
     // Get visitor statistics
     const totalVisitors = db.prepare('SELECT COUNT(*) as count FROM poi_visits WHERE poiId = ?').get(landmarkId);
     const recentVisitors = db.prepare(`
-      SELECT p.userId, p.name, p.avatar, pv.visitedAt
+      SELECT p.userId, p.name, pv.visitedAt
       FROM poi_visits pv
       JOIN players p ON p.userId = pv.userId
       WHERE pv.poiId = ?
@@ -776,7 +776,7 @@ router.get('/api/landmark/:landmarkId', rateLimit(), async (req, res) => {
       recentVisitors: recentVisitors.map(visitor => ({
         id: visitor.userId,
         name: visitor.name || 'Unknown Traveler',
-        avatar: visitor.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png',
+        avatar: 'https://cdn.discordapp.com/embed/avatars/0.png',
         visitedAt: visitor.visitedAt
       }))
     };

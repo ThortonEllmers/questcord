@@ -77,7 +77,7 @@ module.exports = {
           }
           
           const visited = hasVisitedPOI(userId, poi.id);
-          const status = visited ? '✅' : '💰' + poi.visitCost;
+          const status = visited ? '✅' : '💎' + poi.visitCost;
           
           return {
             name: `${poi.emoji} ${poi.name} (${poi.country}) • ${distance}km • ${status}`,
@@ -173,10 +173,10 @@ module.exports = {
     // Ensure player exists
     const player = await ensurePlayerWithVehicles(interaction.client, userId, interaction.user.username, interaction.guild?.id);
     
-    // Check if user has enough currency for visit cost
-    if (player.drakari < poi.visitCost) {
+    // Check if user has enough gems for visit cost
+    if ((player.gems || 0) < poi.visitCost) {
       return interaction.reply({
-        content: `${userPrefix} Insufficient funds! You need ${poi.visitCost} ${config.currencyName} to visit ${poi.name}. You have ${player.drakari}.`,
+        content: `${userPrefix} Insufficient gems! You need ${poi.visitCost} 💎 gems to visit ${poi.name}. You have ${player.gems || 0}.`,
         ephemeral: true
       });
     }
@@ -185,8 +185,8 @@ module.exports = {
     const alreadyVisited = hasVisitedPOI(userId, landmarkId);
     
     try {
-      // Deduct visit cost
-      db.prepare('UPDATE players SET drakari = drakari - ? WHERE userId = ?').run(poi.visitCost, userId);
+      // Deduct visit cost in gems
+      db.prepare('UPDATE players SET gems = COALESCE(gems, 0) - ? WHERE userId = ?').run(poi.visitCost, userId);
       
       // Record the visit (no rewards given)
       let visitResult;
@@ -215,7 +215,7 @@ module.exports = {
           },
           {
             name: '💸 **Travel Cost**',
-            value: `${poi.visitCost} ${config.currencyName}\nFlight expenses`,
+            value: `${poi.visitCost} 💎 gems\nFlight expenses`,
             inline: true
           }
         );
