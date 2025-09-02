@@ -482,7 +482,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       log: (event, data) => logger.info('cmd_%s: %s', event, JSON.stringify(data))
     };
     
-    await cmd.execute(interaction, ctx);
+    await cmd.execute(interaction);
     logger.info('cmd: %s by %s in %s', interaction.commandName, interaction.user.id, interaction.guildId);
   } catch (e) {
     console.error(e);
