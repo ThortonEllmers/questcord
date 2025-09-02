@@ -189,8 +189,6 @@ module.exports = {
     const minS = tcfg.minSeconds ?? 60;
     const maxS = tcfg.maxSeconds ?? 600;
     const distMult = tcfg.distanceMultiplier ?? 0.2;
-    const { haversine } = require('../utils/travel');
-    const { vehicleSpeed } = require('../utils/vehicles');
     
     // Get current server for distance calculation
     const currentServer = db.prepare('SELECT * FROM servers WHERE guildId=? AND archived=0').get(player.locationGuildId || interaction.guild?.id);
