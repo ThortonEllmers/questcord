@@ -2506,7 +2506,7 @@ async function loadMe(){
         landmarksWithVisitors.forEach(landmark => {
           const landmarkHtml = `
             <div class="server-marker landmark-marker">
-              <div class="visitors">${landmark.visitCost} Drakari to visit</div>
+              <div class="visitors">${landmark.visitCost} 💎 gems to visit</div>
               <img src="${landmark.imageUrl}" 
                    alt="${landmark.name}" 
                    style="width: 48px; height: 48px; object-fit: cover;"
@@ -2554,7 +2554,7 @@ async function loadMe(){
                 <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee; font-size: 12px; color: #666;">
                   <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                     <span>🌍 ${landmark.country}</span>
-                    <span>💰 ${landmark.visitCost} Drakari</span>
+                    <span>💎 ${landmark.visitCost} gems</span>
                   </div>
                   <div style="text-align: center; margin-top: 8px;">
                     <code>/travel landmark ${landmark.name}</code>
