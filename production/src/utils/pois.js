@@ -1,6 +1,6 @@
 const { db } = require('./store_sqlite');
 
-// Famous landmarks data - Top 10 world landmarks
+// Famous landmarks data - Top 10 world landmarks (expensive to visit!)
 const LANDMARKS = [
   {
     id: 'eiffel_tower',
@@ -12,7 +12,7 @@ const LANDMARKS = [
     category: 'monument',
     emoji: '🗼',
     discoveryReward: 0,
-    visitCost: 75
+    visitCost: 500
   },
   {
     id: 'statue_of_liberty',
@@ -24,7 +24,7 @@ const LANDMARKS = [
     category: 'monument',
     emoji: '🗽',
     discoveryReward: 0,
-    visitCost: 75
+    visitCost: 600
   },
   {
     id: 'great_wall_china',
@@ -36,7 +36,7 @@ const LANDMARKS = [
     category: 'historical',
     emoji: '🏯',
     discoveryReward: 0,
-    visitCost: 75
+    visitCost: 800
   },
   {
     id: 'colosseum',
@@ -48,7 +48,7 @@ const LANDMARKS = [
     category: 'historical',
     emoji: '🏛️',
     discoveryReward: 0,
-    visitCost: 75
+    visitCost: 700
   },
   {
     id: 'taj_mahal',
@@ -60,7 +60,7 @@ const LANDMARKS = [
     category: 'monument',
     emoji: '🕌',
     discoveryReward: 0,
-    visitCost: 75
+    visitCost: 650
   },
   {
     id: 'machu_picchu',
@@ -72,7 +72,7 @@ const LANDMARKS = [
     category: 'historical',
     emoji: '⛰️',
     discoveryReward: 0,
-    visitCost: 120
+    visitCost: 900
   },
   {
     id: 'christ_redeemer',
@@ -84,7 +84,7 @@ const LANDMARKS = [
     category: 'monument',
     emoji: '⛪',
     discoveryReward: 0,
-    visitCost: 80
+    visitCost: 550
   },
   {
     id: 'mount_fuji',
@@ -96,7 +96,7 @@ const LANDMARKS = [
     category: 'natural',
     emoji: '🗻',
     discoveryReward: 0,
-    visitCost: 85
+    visitCost: 750
   },
   {
     id: 'pyramids_giza',
@@ -108,7 +108,7 @@ const LANDMARKS = [
     category: 'historical',
     emoji: '🏜️',
     discoveryReward: 0,
-    visitCost: 150
+    visitCost: 1200
   },
   {
     id: 'stonehenge',
@@ -120,7 +120,7 @@ const LANDMARKS = [
     category: 'historical',
     emoji: '🗿',
     discoveryReward: 0,
-    visitCost: 110
+    visitCost: 800
   }
 ];
 

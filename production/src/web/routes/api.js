@@ -724,10 +724,11 @@ router.get('/api/landmark/:landmarkId', rateLimit(), async (req, res) => {
       return res.status(400).json({ error: 'missing_landmarkId' });
     }
     
-    const { getPOIById } = require('../../utils/pois');
-    const landmark = getPOIById(landmarkId);
+    // Get POI directly from database  
+    const landmark = db.prepare('SELECT * FROM pois WHERE id = ?').get(landmarkId);
     
     if (!landmark) {
+      console.error(`Landmark not found: ${landmarkId}`);
       return res.status(404).json({ error: 'landmark_not_found' });
     }
     

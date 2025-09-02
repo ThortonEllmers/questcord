@@ -1784,6 +1784,7 @@
     <label style="display:block"><input type="radio" name="mode" value="global"> Global</label>
     <label style="display:block"><input type="checkbox" id="discoverableOnly" checked> Only Discoverable</label>
     <label style="display:block"><input type="checkbox" id="bossActiveOnly"> Only Boss-Active</label>
+    <label style="display:block"><input type="checkbox" id="showLandmarks" checked> Show Landmarks</label>
     <div id="adminMapControls" style="display:none;">
       <div class="heading">Admin Controls</div>
       <button id="toggleEditMapBtn" style="display:block; width:100%; margin:5px 0; padding:8px; background:#5865F2; color:white; border:none; border-radius:4px; cursor:pointer;">Toggle - Edit Map</button>
@@ -1810,6 +1811,7 @@
   const modeRadios = [...document.querySelectorAll('input[name="mode"]')];
   const discoverableOnly = document.getElementById('discoverableOnly');
   const bossActiveOnly = document.getElementById('bossActiveOnly');
+  const showLandmarks = document.getElementById('showLandmarks');
 
   // Configure map for mobile and desktop
   const isMobile = window.innerWidth <= 768;
@@ -2481,12 +2483,13 @@ async function loadMe(){
       markers.push(m);
     });
     
-    // Load and display landmarks
-    try {
-      const landmarksRes = await fetch('/api/map/landmarks');
-      const landmarksData = await landmarksRes.json();
-      
-      if (landmarksData.landmarks) {
+    // Load and display landmarks (only if enabled)
+    if (showLandmarks.checked) {
+      try {
+        const landmarksRes = await fetch('/api/map/landmarks');
+        const landmarksData = await landmarksRes.json();
+        
+        if (landmarksData.landmarks) {
         // Add visitor counts to landmarks
         const landmarksWithVisitors = await Promise.all(
           landmarksData.landmarks.map(async (landmark) => {
@@ -2566,9 +2569,10 @@ async function loadMe(){
           
           markers.push(landmarkMarker);
         });
+        }
+      } catch (error) {
+        console.warn('Failed to load landmarks:', error);
       }
-    } catch (error) {
-      console.warn('Failed to load landmarks:', error);
     }
     
     // Update global markers reference for particle system
@@ -2585,6 +2589,7 @@ async function loadMe(){
   modeRadios.forEach(r=>r.addEventListener('change', debouncedLoadMap));
   discoverableOnly.addEventListener('change', debouncedLoadMap);
   bossActiveOnly.addEventListener('change', debouncedLoadMap);
+  showLandmarks.addEventListener('change', debouncedLoadMap);
   
   // Bot buttons event handlers
   document.getElementById('addBotBtn').addEventListener('click', function(e) {
