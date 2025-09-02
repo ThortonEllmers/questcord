@@ -1313,19 +1313,25 @@
  }
  .travel-pin .eta{ 
    position:absolute; 
-   top:36px; 
+   top:38px; 
    left:50%; 
    transform:translateX(-50%); 
-   background:rgba(0,0,0,0.8); 
+   background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); 
    color:#fff; 
-   font:bold 11px/1.2 'Segoe UI', sans-serif; 
-   padding:3px 8px; 
-   border-radius:12px; 
+   font:bold 12px/1.2 'Segoe UI', sans-serif; 
+   padding:6px 10px; 
+   border-radius:15px; 
    opacity:1; 
    white-space:nowrap; 
-   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-   border: 1px solid rgba(255,255,255,0.2);
+   box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+   border: 2px solid rgba(255,255,255,0.3);
    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+   animation: etaPulse 2s ease-in-out infinite;
+ }
+ 
+ @keyframes etaPulse {
+   0%, 100% { transform: translateX(-50%) scale(1); }
+   50% { transform: translateX(-50%) scale(1.05); }
  }
  .travel-pin .plane-indicator{ 
    position:absolute; 
@@ -1335,8 +1341,15 @@
    text-shadow: 1px 1px 2px rgba(0,0,0,0.8); 
    z-index: 10;
    animation: fly 2s ease-in-out infinite alternate;
+   transform-origin: center;
+   transition: transform 0.5s ease;
  }
  @keyframes fly {
+   0% { transform: translateY(0px) rotate(var(--plane-rotation, 0deg)); }
+   100% { transform: translateY(-2px) rotate(var(--plane-rotation, 0deg)); }
+ }
+ 
+ @keyframes flyDirectional {
    0% { transform: translateY(0px); }
    100% { transform: translateY(-2px); }
  }
@@ -1931,9 +1944,26 @@
         const planeIcon = isPremiumPlus ? '✈️' : '✈️'; // Always use plane emoji
         const planeColor = isPremiumPlus ? '#FFD700' : '#87CEEB';
         
+        // Calculate direction of travel for plane rotation
+        let planeRotation = 0;
+        if (meData.travel.from && meData.travel.to) {
+          const fromLat = meData.travel.from.lat * Math.PI / 180;
+          const fromLon = meData.travel.from.lon * Math.PI / 180;
+          const toLat = meData.travel.to.lat * Math.PI / 180;
+          const toLon = meData.travel.to.lon * Math.PI / 180;
+          
+          const dLon = toLon - fromLon;
+          const y = Math.sin(dLon) * Math.cos(toLat);
+          const x = Math.cos(fromLat) * Math.sin(toLat) - Math.sin(fromLat) * Math.cos(toLat) * Math.cos(dLon);
+          
+          planeRotation = Math.atan2(y, x) * 180 / Math.PI;
+        }
+        
         const htmlPin = `<div class="travel-pin">
           <img src="${avatarUrl}" alt="me"/>
-          <div class="plane-indicator" style="filter: drop-shadow(0 0 3px ${planeColor});">${planeIcon}</div>
+          <div class="plane-indicator" style="filter: drop-shadow(0 0 3px ${planeColor}); animation: flyDirectional 2s ease-in-out infinite alternate;">
+            <div style="transform: rotate(${planeRotation}deg);">${planeIcon}</div>
+          </div>
           <div class="eta">ETA: ${etaMin}m</div>
         </div>`;
         
@@ -2001,9 +2031,26 @@
       const planeIcon = isPremiumPlus ? '✈️' : '✈️'; // Always use plane emoji
       const planeColor = isPremiumPlus ? '#FFD700' : '#87CEEB';
       
+      // Calculate direction of travel for plane rotation
+      let planeRotation = 0;
+      if (meData.travel.from && meData.travel.to) {
+        const fromLat = meData.travel.from.lat * Math.PI / 180;
+        const fromLon = meData.travel.from.lon * Math.PI / 180;
+        const toLat = meData.travel.to.lat * Math.PI / 180;
+        const toLon = meData.travel.to.lon * Math.PI / 180;
+        
+        const dLon = toLon - fromLon;
+        const y = Math.sin(dLon) * Math.cos(toLat);
+        const x = Math.cos(fromLat) * Math.sin(toLat) - Math.sin(fromLat) * Math.cos(toLat) * Math.cos(dLon);
+        
+        planeRotation = Math.atan2(y, x) * 180 / Math.PI;
+      }
+      
       const htmlPin = `<div class="travel-pin">
         <img src="${avatarUrl}" alt="me"/>
-        <div class="plane-indicator" style="filter: drop-shadow(0 0 3px ${planeColor});">${planeIcon}</div>
+        <div class="plane-indicator" style="filter: drop-shadow(0 0 3px ${planeColor}); animation: flyDirectional 2s ease-in-out infinite alternate;">
+          <div style="transform: rotate(${planeRotation}deg);">${planeIcon}</div>
+        </div>
         <div class="eta">ETA: ${etaMin}m</div>
       </div>`;
       
@@ -2115,11 +2162,19 @@
     const userMoveTimeout = 300000; // 5 minutes in milliseconds
     const periodicCenterInterval = 300000; // 5 minutes in milliseconds
     
+    // For debugging - log when we're preventing auto-center
     if (!isTraveling && __userMovedMap && (now - __lastUserMoveTime < userMoveTimeout)) {
       // User recently moved the map - don't auto-center unless it's been 5+ minutes since last center
       if (now - __lastAutoCenterTime < periodicCenterInterval) {
+        console.log('[Map] Preventing auto-center: user moved', Math.round((now - __lastUserMoveTime) / 1000), 'seconds ago');
         return;
       }
+    }
+    
+    // Additional check: don't center too frequently even if conditions are met
+    if (!isTraveling && (now - __lastAutoCenterTime < 30000)) { // Minimum 30 seconds between centers
+      console.log('[Map] Preventing auto-center: too frequent, last center was', Math.round((now - __lastAutoCenterTime) / 1000), 'seconds ago');
+      return;
     }
 
     // Update center name based on user status
@@ -2127,8 +2182,10 @@
     
     if (data.travel && data.travel.arrivalAt && Date.now() < data.travel.arrivalAt) {
       // User is traveling - update display and center on current travel position
-      centerNameEl.textContent = `Traveling: ${data.travel.from.name} → ${data.travel.to.name}`;
-      centerNameEl.style.color = '#ff6b35';
+      const etaMs = (data.travel.arrivalAt || 0) - Date.now();
+      const etaMin = Math.max(0, Math.ceil(etaMs / 60000));
+      centerNameEl.innerHTML = `<span style="color: #ff6b35;">✈️ Traveling:</span> ${data.travel.from.name} → ${data.travel.to.name}<br><span style="color: #ff6b35; font-weight: bold;">ETA: ${etaMin}m</span>`;
+      centerNameEl.style.color = '#333';
       
       // Center on current travel position to follow player movement
       if (data.travel.position) {
@@ -2136,6 +2193,7 @@
         
         // Use panTo for smooth following without jarring movement
         map.panTo([data.travel.position.lat, data.travel.position.lon]);
+        console.log('[Map] Auto-centered during travel to:', data.travel.position.lat, data.travel.position.lon);
         
         // Adjust zoom if needed
         if (currentZoom < 6) {
@@ -2155,6 +2213,7 @@
         const currentZoom = map.getZoom();
         const targetZoom = currentZoom < 4 ? 6 : currentZoom; // Keep zoom if already zoomed in
         map.setView([data.currentLocationServer.lat, data.currentLocationServer.lon], targetZoom);
+        console.log('[Map] Auto-centered to server:', data.currentLocationServer.name, 'at', data.currentLocationServer.lat, data.currentLocationServer.lon);
         
         // Update last auto-center time
         __lastAutoCenterTime = Date.now();
