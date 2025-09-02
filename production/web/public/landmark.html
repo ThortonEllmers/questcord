@@ -192,7 +192,17 @@
         document.getElementById('landmark-title').textContent = `${landmark.emoji} ${landmark.name}`;
         document.getElementById('landmark-country').textContent = landmark.country;
         document.getElementById('landmark-description').textContent = landmark.description;
-        document.getElementById('landmark-image').src = landmark.imageUrl;
+        const imageElement = document.getElementById('landmark-image');
+        imageElement.src = landmark.imageUrl;
+        imageElement.onerror = function() {
+          console.error('Failed to load image:', landmark.imageUrl);
+          // Try a fallback SVG with the landmark emoji
+          this.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><circle cx="100" cy="100" r="90" fill="%23ff6b6b" stroke="%23fff" stroke-width="6"/><text x="100" y="120" text-anchor="middle" font-size="60">${landmark.emoji}</text></svg>`;
+          this.onerror = null; // Prevent infinite loop
+        };
+        imageElement.onload = function() {
+          console.log('Image loaded successfully:', landmark.imageUrl);
+        };
         
         // Update stats
         document.getElementById('total-visitors').textContent = landmark.statistics.totalVisitors;
