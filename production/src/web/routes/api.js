@@ -5,7 +5,7 @@ const { haversine, isOnLand, findLandPosition } = require('../../utils/geo');
 const { rateLimit, ensureCsrf, setCsrf } = require('../security');
 const { createAutoPlacementIfMissing, getSpawnServer, ensurePlayerRow, fetchRoleLevel, getMemberRoleIds } = require('../util');
 const logger = require('../../utils/logger');
-const { logAdminAction } = require('../../utils/webhook');
+const { logAdminAction } = require('../../utils/webhook_safe');
 
 const router = express.Router();
 // Safe fetch helper for Node: use global fetch when available

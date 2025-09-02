@@ -1,20 +1,55 @@
 #!/usr/bin/env bash
+
+# QuestCord Production Deployment Script
+# This script safely deploys the QuestCord bot to production
+
 set -euo pipefail
-cd ~/questcord
-git fetch --all --prune
-git reset --hard origin/main
-cd production
+
+echo "🚀 Starting QuestCord Production Deployment"
+echo "=============================================="
+
+# Check if PM2 is installed
+if ! command -v pm2 &> /dev/null; then
+    echo "❌ PM2 is not installed. Installing..."
+    npm install -g pm2
+fi
+
+# Create logs directory if it doesn't exist
+mkdir -p logs
 
 # Install dependencies
+echo "📦 Installing production dependencies..."
 npm ci --only=production || npm install --only=production
 
-# Deploy bot commands
-echo "Deploying Discord bot commands..."
-npm run deploy || node scripts/deploy-commands.js
+# Kill any processes using port 3001
+echo "🔧 Clearing port 3001..."
+npx kill-port 3001 2>/dev/null || echo "Port 3001 was not in use"
 
-# Restart services
-pm2 restart questcord-bot    || pm2 start src/index.js      --name questcord-bot
-pm2 restart questcord-worker || pm2 start worker/spawner.js --name questcord-worker
+# Stop existing PM2 processes (if any)
+echo "🛑 Stopping existing processes..."
+pm2 stop ecosystem.config.js 2>/dev/null || echo "No existing processes to stop"
+
+# Deploy slash commands
+echo "⚡ Deploying slash commands..."
+node scripts/deploy-commands.js || {
+    echo "❌ Failed to deploy commands, continuing anyway..."
+}
+
+# Start with PM2 using ecosystem config
+echo "🚀 Starting bot with PM2..."
+pm2 start ecosystem.config.js
+
+# Save PM2 configuration
+echo "💾 Saving PM2 configuration..."
 pm2 save
 
-echo "Production deployment completed successfully!"
+# Show status
+echo "📊 Current PM2 status:"
+pm2 status
+
+echo ""
+echo "✅ QuestCord bot deployed successfully!"
+echo "📝 Logs can be viewed with: pm2 logs questcord-bot"
+echo "🔄 Restart with: pm2 restart questcord-bot"  
+echo "🛑 Stop with: pm2 stop questcord-bot"
+echo "🌐 Web interface available on port 3001"

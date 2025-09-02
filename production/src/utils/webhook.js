@@ -1,5 +1,19 @@
-const fetch = require('node-fetch');
 const os = require('os');
+
+// Safe fetch helper
+async function fetchSafe(...args) {
+  try {
+    if (typeof globalThis.fetch === 'function') {
+      return globalThis.fetch(...args);
+    }
+    // Try to use node-fetch if available
+    const fetch = require('node-fetch');
+    return fetch(...args);
+  } catch (error) {
+    console.warn('Fetch not available:', error.message);
+    return null;
+  }
+}
 
 const WEBHOOK_URL = 'https://discord.com/api/webhooks/1405273988615245885/Gnyfuy4TZDCwkCq3HeYLtZoh4uQj6kWdhmfHQV_CIhh9kx3gOSIKDl6kCVP3FH839K97';
 
@@ -7,54 +21,66 @@ const WEBHOOK_URL = 'https://discord.com/api/webhooks/1405273988615245885/Gnyfuy
  * Send a message to Discord webhook
  */
 async function sendWebhookMessage(content, embeds = null, retries = 3) {
-  if (!WEBHOOK_URL) return;
+  if (!WEBHOOK_URL) return false;
+  
+  // Don't let webhook failures crash the bot
+  try {
+    const payload = {
+      content,
+      username: 'QuestCord Bot Monitor',
+      avatar_url: 'https://cdn.discordapp.com/app-icons/1404523107544469545/e3f7e9d4f9a5b2c8d1f3e6a9b2c5d8f1.png'
+    };
 
-  const payload = {
-    content,
-    username: 'QuestCord Bot Monitor',
-    avatar_url: 'https://cdn.discordapp.com/app-icons/1404523107544469545/e3f7e9d4f9a5b2c8d1f3e6a9b2c5d8f1.png'
-  };
-
-  if (embeds) {
-    payload.embeds = embeds;
-  }
-
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      const response = await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (response.ok) {
-        return true;
-      } else if (response.status === 429) {
-        // Rate limited, wait and retry
-        const retryAfter = response.headers.get('retry-after') || 1;
-        await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
-        continue;
-      } else {
-        console.warn(`Webhook failed with status ${response.status}: ${response.statusText}`);
-        return false;
-      }
-    } catch (error) {
-      console.warn(`Webhook attempt ${attempt} failed:`, error.message);
-      if (attempt === retries) return false;
-      
-      // Wait before retrying
-      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+    if (embeds) {
+      payload.embeds = embeds;
     }
+
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const response = await fetchSafe(WEBHOOK_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response) {
+          console.warn('Webhook failed: fetch not available');
+          return false;
+        }
+
+        if (response.ok) {
+          return true;
+        } else if (response.status === 429) {
+          // Rate limited, wait and retry
+          const retryAfter = response.headers.get('retry-after') || 1;
+          await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+          continue;
+        } else {
+          console.warn(`Webhook failed with status ${response.status}: ${response.statusText}`);
+          return false;
+        }
+      } catch (error) {
+        console.warn(`Webhook attempt ${attempt} failed:`, error.message);
+        if (attempt === retries) return false;
+        
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      }
+    }
+    return false;
+  } catch (webhookError) {
+    console.warn('Webhook system error:', webhookError.message);
+    return false;
   }
-  return false;
 }
 
 /**
  * Log bot startup to webhook
  */
 async function logBotStartup() {
+  try {
   const startTime = new Date().toISOString();
   const environment = process.env.NODE_ENV || 'production';
   const nodeVersion = process.version;
