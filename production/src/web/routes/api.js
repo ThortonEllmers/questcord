@@ -230,6 +230,15 @@ router.post('/api/admin/weather/create', rateLimit(10, 60000), ensureCsrf, async
       return res.status(400).json({ error: 'bad_request', message: 'Invalid weather type or failed to create event' });
     }
     
+    // Log to webhook
+    await logAdminActionFromReq(req, 'Weather Event Created', weatherEvent.id, weatherEvent.name, {
+      'Event Type': weatherEvent.name,
+      'Location': `${lat}°, ${lon}°`,
+      'Duration': `${duration} minutes`,
+      'Radius': `${radius || 'default'} km`,
+      'Event ID': weatherEvent.id
+    });
+    
     res.json({
       success: true,
       weatherEvent,
@@ -265,6 +274,15 @@ router.post('/api/admin/weather/regional', rateLimit(10, 60000), ensureCsrf, asy
       return res.status(400).json({ error: 'bad_request', message: result.message });
     }
     
+    // Log to webhook
+    await logAdminActionFromReq(req, 'Regional Weather Event Created', result.weatherEvent.id, result.weatherEvent.name, {
+      'Event Type': result.weatherEvent.name,
+      'Country/Region': result.region,
+      'Coordinates': `${result.coordinates.lat}°, ${result.coordinates.lon}°`,
+      'Duration': `${result.weatherEvent.duration} minutes`,
+      'Event ID': result.weatherEvent.id
+    });
+    
     res.json({
       success: true,
       weatherEvent: result.weatherEvent,
@@ -299,6 +317,12 @@ router.post('/api/admin/weather/remove', rateLimit(10, 60000), ensureCsrf, async
       return res.status(404).json({ error: 'not_found', message: 'Weather event not found or already expired' });
     }
     
+    // Log to webhook
+    await logAdminActionFromReq(req, 'Weather Event Removed', eventId, null, {
+      'Action': 'Weather event manually removed',
+      'Event ID': eventId
+    });
+    
     res.json({
       success: true,
       message: `Removed weather event ${eventId}`
@@ -319,6 +343,12 @@ router.post('/api/admin/weather/clear', rateLimit(10, 60000), ensureCsrf, async 
     
     const { clearAllWeatherEvents } = require('../../utils/weather');
     const count = clearAllWeatherEvents();
+    
+    // Log to webhook
+    await logAdminActionFromReq(req, 'All Weather Events Cleared', null, null, {
+      'Action': 'Cleared all active weather events',
+      'Events Cleared': `${count} events`
+    });
     
     res.json({
       success: true,
@@ -561,6 +591,55 @@ router.get('/api/map/servers', rateLimit(), (req,res)=>{
 
   res.json(payload);
 });
+
+// POI landmarks endpoint for map display
+router.get('/api/map/landmarks', rateLimit(), (req, res) => {
+  try {
+    const { getAllPOIs } = require('../../utils/pois');
+    const pois = getAllPOIs();
+    
+    // Transform POI data for map display with landmark images
+    const landmarks = pois.map(poi => ({
+      id: poi.id,
+      name: poi.name,
+      description: poi.description,
+      lat: parseFloat(poi.lat),
+      lon: parseFloat(poi.lon),
+      country: poi.country,
+      category: poi.category,
+      emoji: poi.emoji,
+      visitCost: poi.visitCost,
+      discoveryReward: poi.discoveryReward,
+      // Map landmark images to actual photos
+      imageUrl: getLandmarkImageUrl(poi.id),
+      iconUrl: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="%23ff6b6b" stroke="%23fff" stroke-width="3"/><text x="24" y="30" text-anchor="middle" font-size="16" fill="white">${poi.emoji}</text></svg>`
+    }));
+    
+    res.json({ landmarks });
+  } catch (error) {
+    console.error('POI endpoint error:', error);
+    res.json({ landmarks: [] });
+  }
+});
+
+// Helper function to get real landmark images
+function getLandmarkImageUrl(poiId) {
+  const landmarkImages = {
+    'eiffel_tower': 'https://images.unsplash.com/photo-1511739001486-6bfe10ce785f?w=200&h=200&fit=crop',
+    'statue_of_liberty': 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=200&h=200&fit=crop',
+    'great_wall_china': 'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=200&h=200&fit=crop',
+    'colosseum': 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=200&h=200&fit=crop',
+    'taj_mahal': 'https://images.unsplash.com/photo-1564507592333-c60657eea523?w=200&h=200&fit=crop',
+    'machu_picchu': 'https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=200&h=200&fit=crop',
+    'christ_redeemer': 'https://images.unsplash.com/photo-1483729558449-99ef09a8c325?w=200&h=200&fit=crop',
+    'mount_fuji': 'https://images.unsplash.com/photo-1570459027562-4a916cc6113f?w=200&h=200&fit=crop',
+    'pyramids_giza': 'https://images.unsplash.com/photo-1539650116574-75c0c6d73c6c?w=200&h=200&fit=crop',
+    'stonehenge': 'https://images.unsplash.com/photo-1599833975787-5351f8ccb3d5?w=200&h=200&fit=crop'
+  };
+  
+  return landmarkImages[poiId] || `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="%23e0e0e0"/><text x="100" y="100" text-anchor="middle" font-size="60" fill="%23666">🏛️</text></svg>`;
+}
+
 router.get('/api/bosses', rateLimit(), (_,res)=> res.json({ bosses: activeBosses() }));
 
 // Get detailed server information

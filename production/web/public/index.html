@@ -423,6 +423,79 @@
       }
     }
     .server-marker.me img { border-color: #00aaff; }
+    
+    /* Landmark Marker Styles */
+    .server-marker.landmark-marker img {
+      border: 3px solid #ff6b6b !important;
+      box-shadow: 0 0 15px rgba(255, 107, 107, 0.6), 0 4px 12px rgba(0,0,0,0.4) !important;
+      animation: landmark-glow 3s ease-in-out infinite;
+    }
+    
+    .server-marker.landmark-marker .name {
+      background: rgba(255, 107, 107, 0.95) !important;
+      border: 1px solid rgba(255, 107, 107, 0.8) !important;
+      color: white !important;
+      font-weight: 600;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    }
+    
+    .server-marker.landmark-marker .visitors {
+      background: rgba(255, 107, 107, 0.95) !important;
+      border: 1px solid rgba(255, 107, 107, 0.8) !important;
+      color: white !important;
+      font-weight: 600;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    }
+    
+    .server-marker.landmark-marker::before {
+      content: '🌟';
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      font-size: 16px;
+      animation: landmark-star 2s ease-in-out infinite;
+      z-index: 10;
+    }
+    
+    @keyframes landmark-glow {
+      0%, 100% { 
+        box-shadow: 0 0 15px rgba(255, 107, 107, 0.6), 0 4px 12px rgba(0,0,0,0.4) !important;
+      }
+      50% { 
+        box-shadow: 0 0 25px rgba(255, 107, 107, 0.9), 0 4px 15px rgba(0,0,0,0.5) !important;
+      }
+    }
+    
+    @keyframes landmark-star {
+      0%, 100% { 
+        transform: scale(1) rotate(0deg);
+        opacity: 0.8;
+      }
+      50% { 
+        transform: scale(1.2) rotate(180deg);
+        opacity: 1;
+      }
+    }
+    
+    /* Landmark popup styles */
+    .landmark-popup {
+      font-family: 'Inter', sans-serif;
+    }
+    
+    .landmark-popup .landmark-header h3 {
+      margin: 0 0 4px 0;
+      color: #ff6b6b;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    
+    .landmark-popup .landmark-header p {
+      margin: 0;
+      color: #666;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    
     .heading { 
       font-family: 'Inter', sans-serif;
       font-size: 16px;
@@ -2407,6 +2480,74 @@ async function loadMe(){
       }
       markers.push(m);
     });
+    
+    // Load and display landmarks
+    try {
+      const landmarksRes = await fetch('/api/map/landmarks');
+      const landmarksData = await landmarksRes.json();
+      
+      if (landmarksData.landmarks) {
+        landmarksData.landmarks.forEach(landmark => {
+          const landmarkHtml = `
+            <div class="server-marker landmark-marker">
+              <div class="visitors">${landmark.visitCost} ${window.config?.currencyName || 'Drakari'} to visit</div>
+              <img src="${landmark.imageUrl}" alt="${landmark.name}" onerror="this.src='${landmark.iconUrl}'"/>
+              <div class="name">${landmark.emoji} ${landmark.name}</div>
+            </div>`;
+            
+          const landmarkIcon = L.divIcon({ 
+            html: landmarkHtml, 
+            className: '', 
+            iconSize: [48, 48], 
+            iconAnchor: [24, 24] 
+          });
+          
+          const landmarkMarker = L.marker([landmark.lat, landmark.lon], { 
+            icon: landmarkIcon,
+            draggable: false
+          }).addTo(map);
+          
+          // Store landmark data for reference
+          landmarkMarker._landmarkData = landmark;
+          
+          // Create popup with landmark information
+          const landmarkPopup = `
+            <div class="landmark-popup">
+              <div class="landmark-header">
+                <h3>${landmark.emoji} ${landmark.name}</h3>
+                <p><strong>${landmark.country}</strong></p>
+              </div>
+              <div class="landmark-image" style="margin: 8px 0;">
+                <img src="${landmark.imageUrl}" alt="${landmark.name}" 
+                     style="width: 100%; max-width: 200px; height: 120px; object-fit: cover; border-radius: 6px;"
+                     onerror="this.style.display='none'"/>
+              </div>
+              <div class="landmark-description">
+                <p style="font-size: 13px; color: #666; margin: 8px 0;">${landmark.description}</p>
+              </div>
+              <div class="landmark-details" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                  <span style="font-weight: 600;">Travel Cost:</span>
+                  <span style="color: #e74c3c;">${landmark.visitCost} ${window.config?.currencyName || 'Drakari'}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                  <span style="font-weight: 600;">Discovery Reward:</span>
+                  <span style="color: #27ae60;">+${landmark.discoveryReward} ${window.config?.currencyName || 'Drakari'}</span>
+                </div>
+                <div style="text-align: center; margin-top: 12px;">
+                  <span style="font-size: 11px; color: #999;">Use <code>/travel landmark ${landmark.name}</code> to visit</span>
+                </div>
+              </div>
+            </div>`;
+            
+          landmarkMarker.bindPopup(landmarkPopup, { maxWidth: 280 });
+          
+          markers.push(landmarkMarker);
+        });
+      }
+    } catch (error) {
+      console.warn('Failed to load landmarks:', error);
+    }
     
     // Update global markers reference for particle system
     window.markers = markers;
