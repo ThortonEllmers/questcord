@@ -263,8 +263,8 @@ function applyRegenToAll() {
           console.error('Error processing landmark arrival:', error);
         }
         
-        // Set player location back to their origin server (landmarks aren't real locations)
-        db.prepare('UPDATE players SET locationGuildId = ? WHERE userId = ?').run(travel.travelFromGuildId, travel.userId);
+        // Keep player at landmark (they are now "at" the landmark, not back at origin)
+        // This allows them to travel FROM landmarks to other destinations
       }
     }
     
