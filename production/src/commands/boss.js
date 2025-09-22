@@ -11,8 +11,8 @@ const { checkBossAchievements } = require('../utils/achievements');
 const BOSS_FIGHTER_ROLE_ID = '1411043105830076497';
 const BOSS_NOTIFICATION_CHANNEL_ID = '1411045103921004554';
 
-function choose(arr) { 
-  return arr[Math.floor(Math.random() * arr.length)]; 
+function choose(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
 function nameForBiome(biome) {
@@ -24,8 +24,7 @@ function nameForBiome(biome) {
 function randomTier() {
   const chances = config.boss?.tierChances || { 1: 40, 2: 25, 3: 20, 4: 10, 5: 5 };
   const maxTier = config.boss?.maxTier || 5;
-  
-  // Create weighted array
+
   const weighted = [];
   for (let tier = 1; tier <= maxTier; tier++) {
     const chance = chances[tier] || 0;
@@ -34,30 +33,50 @@ function randomTier() {
     }
   }
   
+  // Select random tier from weighted array
   return weighted[Math.floor(Math.random() * weighted.length)] || 1;
 }
 
+/**
+ * Retrieves the player's currently equipped weapon from the database
+ * Used to calculate attack damage and display weapon info in embeds
+ * 
+ * @param {string} userId - Discord user ID to check equipment for
+ * @returns {Object|null} Weapon item object with stats or null if no weapon equipped
+ */
 function equippedWeapon(userId) {
+  // Query database for equipped weapon in the 'weapon' slot
   const row = db.prepare('SELECT itemId FROM equipment WHERE userId=? AND slot=?').get(userId, 'weapon');
   if (!row) return null;
+  // Fetch full item details from items system
   const it = itemById(row.itemId);
   return it || null;
 }
 
+/**
+ * Assigns the boss fighter role to a user when they participate in boss battles
+ * This role is used for notifications and to track active boss participants
+ * 
+ * @param {CommandInteraction} interaction - Discord interaction for guild context
+ * @param {string} userId - Discord user ID to assign the role to
+ */
 async function assignBossFighterRole(interaction, userId) {
   try {
     const guild = interaction.guild;
     if (!guild) return;
     
+    // Fetch the guild member to modify their roles
     const member = await guild.members.fetch(userId);
     if (!member) return;
     
+    // Get the boss fighter role object
     const role = guild.roles.cache.get(BOSS_FIGHTER_ROLE_ID);
     if (!role) {
       console.warn('[boss] Boss fighter role not found:', BOSS_FIGHTER_ROLE_ID);
       return;
     }
     
+    // Only add role if user doesn't already have it
     if (!member.roles.cache.has(BOSS_FIGHTER_ROLE_ID)) {
       await member.roles.add(role);
       logger.info('boss_role: Added boss fighter role to user %s in guild %s', userId, guild.id);
@@ -67,19 +86,33 @@ async function assignBossFighterRole(interaction, userId) {
   }
 }
 
+/**
+ * Intelligently removes the boss fighter role from a user
+ * Only removes role if user has no active boss participations remaining across ALL servers
+ * This prevents role flapping and ensures users keep notifications for ongoing battles
+ * 
+ * @param {Client} client - Discord client for guild/member fetching
+ * @param {string} userId - Discord user ID to potentially remove role from
+ * @param {string} guildId - Guild ID where the role removal was triggered
+ */
 async function removeBossFighterRole(client, userId, guildId) {
   try {
+    // Fetch the guild where this role removal was triggered
     const guild = await client.guilds.fetch(guildId);
     if (!guild) return;
     
+    // Fetch the user as a guild member
     const member = await guild.members.fetch(userId);
     if (!member) return;
     
+    // Get the boss fighter role object
     const role = guild.roles.cache.get(BOSS_FIGHTER_ROLE_ID);
     if (!role) return;
     
+    // Only process if user currently has the role
     if (member.roles.cache.has(BOSS_FIGHTER_ROLE_ID)) {
-      // Check if user still has active boss participations in ANY guild
+      // Check if user still has active boss participations in ANY guild worldwide
+      // This prevents removing role if they're fighting bosses in other servers
       const activeParticipations = db.prepare(`
         SELECT COUNT(*) as count 
         FROM boss_participants bp 
@@ -87,7 +120,7 @@ async function removeBossFighterRole(client, userId, guildId) {
         WHERE bp.userId = ? AND b.active = 1 AND b.expiresAt > ?
       `).get(userId, Date.now());
       
-      // Only remove role if user has no active boss fights remaining
+      // Only remove role if user has no active boss fights remaining anywhere
       if (activeParticipations.count === 0) {
         await member.roles.remove(role);
         logger.info('boss_role: Removed boss fighter role from user %s in guild %s (no active fights)', userId, guildId);
@@ -100,8 +133,18 @@ async function removeBossFighterRole(client, userId, guildId) {
   }
 }
 
+/**
+ * Sends a cross-server notification when a boss spawns
+ * Posts to a dedicated Discord channel to alert all players network-wide
+ * 
+ * @param {Client} client - Discord client for channel access
+ * @param {Object} bossData - Boss information (name, tier, HP, etc.)
+ * @param {Object} serverData - Server where boss spawned
+ * @param {User} spawnerUser - User who triggered the boss spawn
+ */
 async function sendBossSpawnNotification(client, bossData, serverData, spawnerUser) {
   try {
+    // Fetch the dedicated boss notification channel
     const channel = await client.channels.fetch(BOSS_NOTIFICATION_CHANNEL_ID);
     if (!channel) {
       console.warn('[boss] Boss notification channel not found:', BOSS_NOTIFICATION_CHANNEL_ID);
@@ -117,8 +160,8 @@ async function sendBossSpawnNotification(client, bossData, serverData, spawnerUs
     };
     
     const spawnEmbed = new EmbedBuilder()
-      .setTitle('🚨 **BOSS SPAWNED** 🚨')
-      .setDescription(`${tierEmojis[bossData.tier]} **${bossData.name}** has emerged from the shadows!`)
+      .setTitle('👹 Boss Spawned')
+      .setDescription(`${tierEmojis[bossData.tier]} ${bossData.name} has appeared!`)
       .setColor(bossData.tier >= 5 ? 0x8b0000 : bossData.tier >= 3 ? 0xff4444 : bossData.tier >= 2 ? 0xff8c00 : 0xff6b35)
       .addFields(
         {
@@ -159,8 +202,19 @@ async function sendBossSpawnNotification(client, bossData, serverData, spawnerUs
   }
 }
 
+/**
+ * Sends a cross-server notification when a boss is defeated
+ * Celebrates victory and shows battle statistics to the entire network
+ * 
+ * @param {Client} client - Discord client for channel access
+ * @param {Object} bossData - Defeated boss information
+ * @param {Object} serverData - Server where boss was defeated
+ * @param {Array} participants - Array of participant objects with damage stats
+ * @param {number} battleDuration - How long the battle lasted in milliseconds
+ */
 async function sendBossDefeatNotification(client, bossData, serverData, participants, battleDuration) {
   try {
+    // Fetch the dedicated boss notification channel
     const channel = await client.channels.fetch(BOSS_NOTIFICATION_CHANNEL_ID);
     if (!channel) return;
     
@@ -181,8 +235,8 @@ async function sendBossDefeatNotification(client, bossData, serverData, particip
       .slice(0, 3);
     
     const victoryEmbed = new EmbedBuilder()
-      .setTitle('🏆 **BOSS DEFEATED** 🏆')
-      .setDescription(`${tierEmojis[bossData.tier]} **${bossData.name}** has been vanquished by ${participants.length} brave warriors!`)
+      .setTitle('🏆 Boss Defeated')
+      .setDescription(`${tierEmojis[bossData.tier]} ${bossData.name} defeated by ${participants.length} players!`)
       .setColor(0xFFD700)
       .addFields(
         {
@@ -211,7 +265,7 @@ async function sendBossDefeatNotification(client, bossData, serverData, particip
         }
       )
       .setFooter({ 
-        text: '🌟 Victory achieved through teamwork! • QuestCord Boss Victory',
+        text: 'Victory! Check your rewards • QuestCord',
         iconURL: client.user.displayAvatarURL()
       })
       .setTimestamp();
@@ -234,22 +288,39 @@ async function sendBossDefeatNotification(client, bossData, serverData, particip
 }
 
 module.exports = {
+  // Define slash command structure with three subcommands
   data: new SlashCommandBuilder()
     .setName('boss')
     .setDescription('Boss actions')
+    // Subcommand 1: Check current boss status at player's location
     .addSubcommand(sc => sc.setName('status').setDescription('Show active boss at your location'))
+    // Subcommand 2: Attack the active boss (requires presence at server)
     .addSubcommand(sc => sc.setName('attack').setDescription('Attack the boss at your location (must be visiting)'))
+    // Subcommand 3: Force spawn a boss (staff/developer only with optional target server)
     .addSubcommand(sc => sc.setName('spawn').setDescription('Force spawn a boss (staff/dev only)')
       .addStringOption(option => option.setName('serverid').setDescription('Server ID (optional - defaults to current server)').setRequired(false))),
+  
+  /**
+   * Main execution handler for boss command
+   * Routes to appropriate subcommand handler after security and validation checks
+   * 
+   * @param {CommandInteraction} interaction - Discord slash command interaction
+   */
   async execute(interaction) {
+    // Get user's display prefix (premium users get special prefixes)
     const userPrefix = await getUserPrefix(interaction.client, interaction.user);
+    // Security check: prevent banned users from using boss commands
     if (isBanned(interaction.user.id)) return interaction.reply({ content: `${userPrefix} You are banned from using this bot.`, flags: 64 });
+    // Regenerate stamina based on time elapsed since last update
     regenStamina(interaction.user.id);
+    // Extract which subcommand was used
     const sub = interaction.options.getSubcommand();
     const userId = interaction.user.id;
 
+    // Determine player's current location for boss interactions
     const player = db.prepare('SELECT * FROM players WHERE userId=?').get(userId);
     const location = (player && player.locationGuildId) || interaction.guild.id;
+    // Get server data for current location
     const here = db.prepare('SELECT * FROM servers WHERE guildId=? AND archived=0').get(location);
 
     if (sub === 'spawn') {
@@ -282,13 +353,10 @@ module.exports = {
         });
       }
 
-      // Check server eligibility (1 in 3 servers can have bosses based on guild ID hash)
-      const serverHash = parseInt(targetServer.guildId.slice(-8), 16); // Use last 8 chars of guild ID as hash
-      const serverEligible = (serverHash % 3) === 0; // 1 in 3 servers eligible
-
-      if (!serverEligible) {
+      // Check server eligibility (all servers except main spawn can host bosses)
+      if (process.env.SPAWN_GUILD_ID && targetServer.guildId === process.env.SPAWN_GUILD_ID) {
         return interaction.reply({ 
-          content: `${userPrefix} **Target server is not eligible for boss spawns.** Only 1 in 3 servers can host bosses to maintain balanced distribution across the network.`, 
+          content: `${userPrefix} **Bosses cannot spawn in the main spawn server.** This server is reserved for new players and safe activities.`, 
           flags: 64 
         });
       }
@@ -307,42 +375,42 @@ module.exports = {
       logger.info('boss_spawn: %s in %s name=%s hp=%s', userId, targetServer.guildId, name, hp);
       
       const spawnEmbed = new EmbedBuilder()
-        .setTitle('🔥⚔️ **BOSS SUMMONED** ⚔️🔥')
-        .setDescription('🌪️ *A mighty foe emerges from the shadows...* 🌪️')
+        .setTitle('Boss Spawned')
+        .setDescription(`${name} has appeared!`)
         .setColor(0xFF4500)
-        .setAuthor({ 
-          name: `${userPrefix} - Boss Master`,
-          iconURL: interaction.user.displayAvatarURL() 
+        .setAuthor({
+          name: `${userPrefix}`,
+          iconURL: interaction.user.displayAvatarURL()
         })
         .addFields(
           {
-            name: '👹 **Boss**',
-            value: `**${name}**\n🏮 Tier ${tier} Threat`,
+            name: 'Boss',
+            value: `${name}\nTier ${tier}`,
             inline: true
           },
           {
-            name: '❤️ **Health**',
-            value: `**${hp.toLocaleString()}** HP\n💀 Maximum threat level`,
+            name: 'Health',
+            value: `${hp.toLocaleString()} HP`,
             inline: true
           },
           {
-            name: '📍 **Location**',
-            value: `**${targetServer.name || targetServer.guildId}**\n🗺️ Server: ${targetServer.guildId}`,
+            name: 'Location',
+            value: targetServer.name || targetServer.guildId,
             inline: true
           },
           {
-            name: '⚔️ **Combat Instructions**',
-            value: '• Use `/boss attack` to engage\n• Must be visiting this server\n• Bring your best equipment!',
+            name: 'Instructions',
+            value: '• Use `/boss attack` to engage\n• Must be visiting this server\n• Equip weapons for more damage',
             inline: false
           },
           {
-            name: '⏰ **Battle Window**',
-            value: `**${Math.floor((config.boss?.ttlSeconds||3600)/60)} minutes** remaining\nBoss will vanish if not defeated!`,
+            name: 'Time Limit',
+            value: `${Math.floor((config.boss?.ttlSeconds||3600)/60)} minutes remaining`,
             inline: false
           }
         )
-        .setFooter({ 
-          text: `⚔️ Rally your allies and claim victory! • QuestCord Boss Battle`,
+        .setFooter({
+          text: `QuestCord`,
           iconURL: interaction.client.user.displayAvatarURL()
         })
         .setTimestamp();
@@ -385,7 +453,7 @@ module.exports = {
     if (sub === 'status') {
       if (!boss) {
         const noBossEmbed = new EmbedBuilder()
-          .setTitle('🔍❌ **NO ACTIVE BOSS** ❌🔍')
+          .setTitle('❌ No Active Boss')
           .setDescription('This server is currently peaceful... for now.')
           .setColor(0x95A5A6)
           .setAuthor({ 
@@ -440,8 +508,8 @@ module.exports = {
         }
         
         const vanishedEmbed = new EmbedBuilder()
-          .setTitle('💨👻 **BOSS VANISHED** 👻💨')
-          .setDescription('The mighty foe has retreated into the shadows...')
+          .setTitle('💨 Boss Vanished')
+          .setDescription('The boss has disappeared.')
           .setColor(0x95A5A6)
           .setAuthor({ 
             name: `${userPrefix} - Battle Report`,
@@ -471,8 +539,8 @@ module.exports = {
       healthBar = '█'.repeat(filledBars) + '░'.repeat(barLength - filledBars);
       
       const statusEmbed = new EmbedBuilder()
-        .setTitle(`👹⚔️ **${boss.name.toUpperCase()}** ⚔️👹`)
-        .setDescription(`🏮 *Tier ${boss.tier||1} Boss Battle in Progress* 🏮`)
+        .setTitle(`👹 ${boss.name}`)
+        .setDescription(`Tier ${boss.tier||1} Boss Battle`)
         .setColor(healthPercent > 75 ? 0xFF0000 : healthPercent > 50 ? 0xFF8C00 : healthPercent > 25 ? 0xFFD700 : 0x00FF00)
         .setAuthor({ 
           name: `${userPrefix} - Battle Status`,
@@ -501,7 +569,7 @@ module.exports = {
           }
         )
         .addFields({
-          name: '🎯 **Combat Tips**',
+          name: '🎯 Combat Tips',
           value: '• Use `/boss attack` to deal damage\n• Higher rarity weapons deal more damage\n• Coordinate with other players for maximum effect!',
           inline: false
         })
@@ -656,37 +724,37 @@ module.exports = {
         }
         
         const victoryEmbed = new EmbedBuilder()
-          .setTitle('🎉👑 **VICTORY ACHIEVED** 👑🎉')
-          .setDescription(`🏆 *The ${boss.name} has been vanquished!* 🏆`)
+          .setTitle('Victory!')
+          .setDescription(`${boss.name} has been defeated!`)
           .setColor(0xFFD700)
-          .setAuthor({ 
-            name: `${userPrefix} - Champion`,
-            iconURL: interaction.user.displayAvatarURL() 
+          .setAuthor({
+            name: `${userPrefix}`,
+            iconURL: interaction.user.displayAvatarURL()
           })
           .addFields(
             {
-              name: '👹 **Defeated Boss**',
-              value: `**${boss.name}**\n🏮 Tier ${boss.tier || 1} Threat Eliminated`,
+              name: 'Defeated Boss',
+              value: `${boss.name}\nTier ${boss.tier || 1}`,
               inline: true
             },
             {
-              name: '👥 **Heroes**',
-              value: `**${parts.length}** brave warriors\n⚔️ United in victory`,
+              name: 'Participants',
+              value: `${parts.length} players`,
               inline: true
             },
             {
-              name: '💰 **Rewards**',
-              value: `**${50 * (boss.tier || 1)} ${config.currencyName}**\n💎 Plus Tier ${boss.tier || 1} loot`,
+              name: 'Rewards',
+              value: `${50 * (boss.tier || 1)} ${config.currencyName}\nTier ${boss.tier || 1} loot`,
               inline: true
             },
             {
-              name: '🎁 **Loot Distribution**',
-              value: `• **3-5 items** per participant\n• Tier ${boss.tier || 1} quality guaranteed\n• Rare items possible\n• Premium users get enhanced drops`,
+              name: 'Loot Distribution',
+              value: `• 3-5 items per participant\n• Tier ${boss.tier || 1} quality guaranteed\n• Premium users get enhanced drops`,
               inline: false
             }
           )
-          .setFooter({ 
-            text: `🌟 Glory to the victorious heroes! Check your inventory • QuestCord Victory`,
+          .setFooter({
+            text: `Check your inventory for rewards • QuestCord`,
             iconURL: interaction.client.user.displayAvatarURL()
           })
           .setTimestamp();
@@ -729,34 +797,33 @@ module.exports = {
         const weaponText = weapon ? `**${weapon.name}** (${weapon.rarity})` : 'bare fists';
         
         const attackEmbed = new EmbedBuilder()
-          .setTitle('⚔️💥 **COMBAT STRIKE** 💥⚔️')
-          .setDescription(`🎯 *Your attack finds its mark!* ⚡`)
+          .setTitle('Attack Successful')
           .setColor(dmg >= 300 ? 0xFF0000 : dmg >= 200 ? 0xFF8C00 : dmg >= 100 ? 0xFFD700 : 0x00AE86)
-          .setAuthor({ 
-            name: `${userPrefix} - Warrior`,
-            iconURL: interaction.user.displayAvatarURL() 
+          .setAuthor({
+            name: `${userPrefix}`,
+            iconURL: interaction.user.displayAvatarURL()
           })
           .addFields(
             {
-              name: '💥 **Damage Dealt**',
-              value: `**${dmg.toLocaleString()}** damage\n⚔️ Using ${weaponText}`,
+              name: 'Damage Dealt',
+              value: `${dmg.toLocaleString()} damage\nUsing ${weaponText}`,
               inline: true
             },
             {
-              name: '❤️ **Boss Health**',
-              value: `**${current.toLocaleString()}** / **${boss.maxHp.toLocaleString()}** HP\n📊 ${healthPercent}% remaining`,
+              name: 'Boss Health',
+              value: `${current.toLocaleString()} / ${boss.maxHp.toLocaleString()} HP\n${healthPercent}% remaining`,
               inline: true
             },
             {
-              name: '🎯 **Attack Rating**',
-              value: dmg >= 300 ? '🔥 **DEVASTATING**' : 
-                     dmg >= 200 ? '💪 **POWERFUL**' : 
-                     dmg >= 100 ? '⚔️ **SOLID**' : '🗡️ **DECENT**',
+              name: 'Attack Rating',
+              value: dmg >= 300 ? 'Devastating' :
+                     dmg >= 200 ? 'Powerful' :
+                     dmg >= 100 ? 'Solid' : 'Decent',
               inline: true
             }
           )
-          .setFooter({ 
-            text: `🏹 Keep fighting! Victory is within reach • QuestCord Battle`,
+          .setFooter({
+            text: `QuestCord`,
             iconURL: interaction.client.user.displayAvatarURL()
           })
           .setTimestamp();

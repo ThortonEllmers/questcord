@@ -1,9 +1,46 @@
+/**
+ * QuestCord Authentication Routes
+ * ===============================
+ * Handles Discord OAuth authentication and user session management.
+ * This module provides a complete authentication system including:
+ * 
+ * **Core Authentication Features:**
+ * - Discord OAuth 2.0 flow implementation
+ * - Secure session management with CSRF protection
+ * - State parameter validation for OAuth security
+ * - User profile and game data integration
+ * 
+ * **API Endpoints:**
+ * - /auth/discord - Initiate OAuth flow
+ * - /auth/discord/callback - Process OAuth callback
+ * - /api/whoami - Get current user session data
+ * - /auth/logout - End user session
+ * 
+ * **Game Integration:**
+ * - Player database record management
+ * - Travel status tracking with real-time position
+ * - Inventory and game state synchronization
+ * - Role-based permissions and member status
+ * 
+ * **Security Features:**
+ * - CSRF state parameter validation
+ * - Session expiration management
+ * - Rate limiting on authentication endpoints
+ * - Secure cookie configuration
+ */
+
+// Import Express framework for creating authentication routes
 const express = require('express');
+// Import session middleware for secure session management
 const session = require('express-session');
+// Import crypto module for generating secure random tokens
 const crypto = require('crypto');
+// Import logger for authentication event tracking
 const logger = require('../../utils/logger');
+// Import rate limiting middleware for authentication endpoints
 const { rateLimit } = require('../security');
 
+// Create Express router instance for authentication routes
 const router = express.Router();
 
 // Session middleware - exactly like the working version
@@ -44,7 +81,7 @@ router.get('/auth/discord', (req, res) => {
     state: state
   });
 
-  console.log('Starting OAuth with state:', state);
+  // OAuth flow started
   res.redirect(authUrl);
 });
 
@@ -52,18 +89,18 @@ router.get('/auth/discord', (req, res) => {
 router.get('/auth/discord/callback', async (req, res) => {
   const { code, state } = req.query;
 
-  console.log('OAuth callback - code:', !!code, 'state:', state);
+  // OAuth callback received
 
   // Validate state
   if (!state || !pendingStates.has(state)) {
-    console.log('Invalid state:', state);
+    // Invalid OAuth state
     return res.status(400).send('Invalid state');
   }
   
   pendingStates.delete(state);
 
   if (!code) {
-    console.log('No authorization code');
+    // Missing authorization code
     return res.status(400).send('No authorization code');
   }
 
@@ -82,12 +119,12 @@ router.get('/auth/discord/callback', async (req, res) => {
     });
 
     if (!tokenResponse.ok) {
-      console.log('Token exchange failed:', tokenResponse.status);
+      // Token exchange failed
       return res.status(500).send('Token exchange failed');
     }
 
     const tokens = await tokenResponse.json();
-    console.log('Got tokens, fetching user...');
+    // Tokens obtained, fetching user
 
     // Get user info
     const userResponse = await fetch('https://discord.com/api/users/@me', {
@@ -95,12 +132,12 @@ router.get('/auth/discord/callback', async (req, res) => {
     });
 
     if (!userResponse.ok) {
-      console.log('User fetch failed:', userResponse.status);
+      // User fetch failed
       return res.status(500).send('User fetch failed');
     }
 
     const user = await userResponse.json();
-    console.log('User logged in:', user.username, user.id);
+    // User authentication successful
 
     // Store in session
     req.session.user = {
@@ -157,8 +194,36 @@ router.get('/api/whoami', rateLimit(60, 60000), async (req, res) => {
     // Travel status
     let travel = null;
     if (player && player.travelArrivalAt && player.travelArrivalAt > Date.now()) {
-      const from = db.prepare('SELECT guildId, name, lat, lon FROM servers WHERE guildId=?').get(player.travelFromGuildId);
-      const to   = db.prepare('SELECT guildId, name, lat, lon FROM servers WHERE guildId=?').get(player.locationGuildId);
+      // Handle travel origin (could be server or landmark)
+      let from = null;
+      if (player.travelFromGuildId && player.travelFromGuildId.startsWith('landmark_')) {
+        // Origin is a landmark
+        const landmarkId = player.travelFromGuildId.replace('landmark_', '');
+        const { getPOIById } = require('../../utils/pois');
+        const poi = getPOIById(landmarkId);
+        if (poi) {
+          from = { guildId: player.travelFromGuildId, name: poi.name, lat: poi.lat, lon: poi.lon };
+        }
+      } else {
+        // Origin is a server
+        from = db.prepare('SELECT guildId, name, lat, lon FROM servers WHERE guildId=?').get(player.travelFromGuildId);
+      }
+      
+      // Handle travel destination (could be server or landmark)
+      let to = null;
+      if (player.locationGuildId && player.locationGuildId.startsWith('landmark_')) {
+        // Destination is a landmark
+        const landmarkId = player.locationGuildId.replace('landmark_', '');
+        const { getPOIById } = require('../../utils/pois');
+        const poi = getPOIById(landmarkId);
+        if (poi) {
+          to = { guildId: player.locationGuildId, name: poi.name, lat: poi.lat, lon: poi.lon };
+        }
+      } else {
+        // Destination is a server
+        to = db.prepare('SELECT guildId, name, lat, lon FROM servers WHERE guildId=?').get(player.locationGuildId);
+      }
+      
       if (from && to) {
         const total = Math.max(1, player.travelArrivalAt - player.travelStartAt);
         const progress = Math.min(1, Math.max(0, (Date.now() - player.travelStartAt) / total));

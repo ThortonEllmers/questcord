@@ -25,20 +25,20 @@ module.exports = {
     
     if (!inventory || inventory.length === 0) {
       const emptyEmbed = new EmbedBuilder()
-        .setTitle('**INVENTORY EMPTY**')
+        .setTitle('Inventory Empty')
         .setDescription('Your inventory contains no items to equip')
         .setColor(0xFF6B6B)
-        .setAuthor({ 
+        .setAuthor({
           name: `${userPrefix}`,
-          iconURL: interaction.user.displayAvatarURL() 
+          iconURL: interaction.user.displayAvatarURL()
         })
         .addFields({
-          name: '**Get Started**',
+          name: 'Get Started',
           value: '• Visit the /market to buy equipment\n• Complete quests to earn items\n• Craft items with /craft\n• Trade with other players',
           inline: false
         })
-        .setFooter({ 
-          text: `Build your arsenal and become a legendary adventurer • QuestCord`,
+        .setFooter({
+          text: `QuestCord Equipment`,
           iconURL: interaction.client.user.displayAvatarURL()
         })
         .setTimestamp();

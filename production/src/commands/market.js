@@ -6,23 +6,45 @@ const { isBanned, regenStamina } = require('./_guard');
 const logger = require('../utils/logger');
 const { itemById, isTradable } = require('../utils/items');
 
+/**
+ * Checks if an item is blocked from trading
+ * @param {string} itemId - The item ID to check
+ * @returns {boolean} True if item cannot be traded
+ */
 function blocked(itemId){ return !isTradable(itemId); }
 
 module.exports = {
+  // Define slash command structure with four main subcommands
   data: new SlashCommandBuilder()
     .setName('market').setDescription('Player market')
+    // Subcommand 1: Buy a specific listing by ID
     .addSubcommand(sc=>sc.setName('buy').setDescription('Buy a listing')
       .addIntegerOption(o=>o.setName('listing').setDescription('Listing ID').setRequired(true)))
+    // Subcommand 2: Cancel user's own listing and return items
     .addSubcommand(sc=>sc.setName('cancel').setDescription('Cancel your listing')
       .addIntegerOption(o=>o.setName('listing').setDescription('Listing ID').setRequired(true)))
+    // Subcommand 3: Browse all active listings with interactive buttons
     .addSubcommand(sc=>sc.setName('browse').setDescription('Browse top listings'))
+    // Subcommand 4: Sell items from inventory with quick-sell interface
     .addSubcommand(sc=>sc.setName('sell').setDescription('Sell items from your inventory')),
+  
+  /**
+   * Main execution handler for market command
+   * Routes to appropriate subcommand handler after security and player setup
+   * 
+   * @param {CommandInteraction} interaction - Discord slash command interaction
+   */
   async execute(interaction){
+    // Get user's display prefix (premium users get special prefixes)
     const userPrefix = await getUserPrefix(interaction.client, interaction.user);
+    // Security check: prevent banned users from using market
     if (isBanned(interaction.user.id)) return interaction.reply({ content: `${userPrefix} You are banned from using this bot.`, ephemeral: true });
+    // Regenerate stamina based on time elapsed since last update
     regenStamina(interaction.user.id);
+    // Extract which subcommand was used
     const sub = interaction.options.getSubcommand();
     const userId = interaction.user.id;
+    // Ensure player record exists in database for market transactions
     const ensure = db.prepare('SELECT * FROM players WHERE userId=?').get(userId);
     if (!ensure) db.prepare('INSERT INTO players(userId, name) VALUES(?,?)').run(userId, interaction.user.username);
 
@@ -155,26 +177,39 @@ module.exports = {
       return interaction.reply({ embeds: [listingEmbed] });
     }
 
+    // Handle buy subcommand - purchase a specific marketplace listing
     if (sub === 'buy'){
+      // Extract the listing ID from command parameters
       const id = interaction.options.getInteger('listing');
+      // Fetch the listing data from database
       const row = db.prepare('SELECT * FROM market_listings WHERE id=?').get(id);
       if (!row) return interaction.reply({ content:`${userPrefix} Listing not found.`, ephemeral: true });
+      // Check if listing has expired
       if (row.expiresAt < Date.now()) return interaction.reply({ content:`${userPrefix} Listing expired.`, ephemeral: true });
+      // Verify item is still tradable (policies may have changed)
       if (!isTradable(row.itemId)) return interaction.reply({ content:`${userPrefix} This item is no longer tradable.`, ephemeral: true });
+      // Get full item data for premium requirement checks
       const item = itemById(row.itemId);
+      // Check if premium-only item requires premium status
       if (item?.premiumNeeded && !(await isPremium(interaction.client, userId))){
         return interaction.reply({ content:`${userPrefix} This listing is Premium-only.`, ephemeral: true });
       }
+      // Prevent users from buying their own listings
       if (row.sellerId === userId) return interaction.reply({ content:`${userPrefix} Cannot buy your own listing.`, ephemeral: true });
+      // Check if buyer has sufficient funds
       const buyer = db.prepare('SELECT drakari FROM players WHERE userId=?').get(userId);
       if (buyer.drakari < row.price) return interaction.reply({ content:`${userPrefix} Not enough funds.`, ephemeral: true });
+      // Calculate market tax and net amount for seller
       const tax = Math.floor(row.price * (config.marketTaxPct/100));
       const net = row.price - tax;
+      // Process payment: deduct from buyer, credit seller (minus tax)
       db.prepare('UPDATE players SET drakari=drakari-? WHERE userId=?').run(row.price, userId);
       db.prepare('UPDATE players SET drakari=drakari+? WHERE userId=?').run(net, row.sellerId);
+      // Transfer items to buyer's inventory
       const inv = db.prepare('SELECT qty FROM inventory WHERE userId=? AND itemId=?').get(userId, row.itemId);
       if (!inv) db.prepare('INSERT INTO inventory(userId,itemId,qty) VALUES(?,?,?)').run(userId, row.itemId, row.qty);
       else db.prepare('UPDATE inventory SET qty=qty+? WHERE userId=? AND itemId=?').run(row.qty, userId, row.itemId);
+      // Remove completed listing from marketplace
       db.prepare('DELETE FROM market_listings WHERE id=?').run(id);
       logger.info('market_buy: user %s bought listing %s', userId, id);
       const purchaseEmbed = new EmbedBuilder()
@@ -226,12 +261,18 @@ module.exports = {
       return interaction.reply({ embeds: [purchaseEmbed] });
     }
 
+    // Handle cancel subcommand - remove user's own listing and return items
     if (sub === 'cancel'){
+      // Extract the listing ID from command parameters
       const id = interaction.options.getInteger('listing');
+      // Fetch the listing data from database
       const row = db.prepare('SELECT * FROM market_listings WHERE id=?').get(id);
       if (!row) return interaction.reply({ content:`${userPrefix} Listing not found.`, ephemeral: true });
+      // Security check: only allow users to cancel their own listings
       if (row.sellerId !== userId) return interaction.reply({ content:`${userPrefix} Not your listing.`, ephemeral: true });
+      // Remove the listing from the marketplace
       db.prepare('DELETE FROM market_listings WHERE id=?').run(id);
+      // Return the items to the seller's inventory
       const inv = db.prepare('SELECT qty FROM inventory WHERE userId=? AND itemId=?').get(userId, row.itemId);
       if (!inv) db.prepare('INSERT INTO inventory(userId,itemId,qty) VALUES(?,?,?)').run(userId, row.itemId, row.qty);
       else db.prepare('UPDATE inventory SET qty=qty+? WHERE userId=? AND itemId=?').run(row.qty, userId, row.itemId);
@@ -270,8 +311,10 @@ module.exports = {
       return interaction.reply({ embeds: [cancelEmbed] });
     }
 
+    // Handle browse subcommand - display all active marketplace listings with interactive buttons
     if (sub === 'browse'){
-      // Premium users get priority listing (their items appear first, then regular listings)
+      // Premium priority system: Premium sellers' listings appear first
+      // Fetch premium listings (from premium users) sorted by price
       const premiumListings = db.prepare(`
         SELECT ml.*, p.isPremium 
         FROM market_listings ml
@@ -281,6 +324,7 @@ module.exports = {
         LIMIT 6
       `).all(Date.now());
       
+      // Fetch regular listings to fill remaining slots (up to 10 total)
       const regularListings = db.prepare(`
         SELECT ml.*, p.isPremium 
         FROM market_listings ml
@@ -290,30 +334,23 @@ module.exports = {
         LIMIT ?
       `).all(Date.now(), 10 - premiumListings.length);
       
-      // Combine premium listings first, then regular listings
+      // Combine listings with premium priority (premium first, then regular)
       const rows = [...premiumListings, ...regularListings];
       if (!rows.length) return interaction.reply({ content: `${userPrefix} No active listings found.`, ephemeral: true });
       
-      // Create stunning market header
       const totalValue = rows.reduce((sum, r) => sum + (r.price * r.qty), 0);
       const uniqueItems = new Set(rows.map(r => r.itemId)).size;
-      
+
       const embed = new EmbedBuilder()
-        .setTitle('🏪✨ **QUESTCORD MARKETPLACE** ✨🏪')
-        .setDescription('🌟 *Your server\'s premier trading destination* 🌟\n\n' +
-                       `📊 **Market Statistics:**\n` +
-                       `• ${rows.length} active listings (⭐ Premium priority)\n` +
-                       `• ${uniqueItems} unique items\n` +
-                       `• ${totalValue.toLocaleString()} ${config.currencyName} total value\n` +
-                       `• ${config.marketTaxPct}% transaction tax\n` +
-                       `• Premium sellers get priority display`)
+        .setTitle('Marketplace')
+        .setDescription(`Market Statistics:\n• ${rows.length} active listings\n• ${uniqueItems} unique items\n• ${totalValue.toLocaleString()} ${config.currencyName} total value\n• ${config.marketTaxPct}% transaction tax\n• Premium sellers get priority display`)
         .setColor(0x00AE86)
-        .setAuthor({ 
-          name: `${userPrefix} - Market Browser`,
-          iconURL: interaction.user.displayAvatarURL() 
+        .setAuthor({
+          name: `${userPrefix}`,
+          iconURL: interaction.user.displayAvatarURL()
         })
-        .setFooter({ 
-          text: `💎 Discover rare items from traders around the world • QuestCord Marketplace`,
+        .setFooter({
+          text: `QuestCord`,
           iconURL: interaction.client.user.displayAvatarURL()
         })
         .setTimestamp();
@@ -376,11 +413,10 @@ module.exports = {
         if (components.length === 5) break;
       }
       
-      // Add market tips
       if (rows.length > 0) {
         embed.addFields({
-          name: '💡 **Trading Tips**',
-          value: '• Compare prices before buying\n• Check item rarity and effects\n• 👑 Premium items require Premium status\n• Consider bulk discounts on large quantities',
+          name: 'Trading Tips',
+          value: '• Compare prices before buying\n• Check item rarity and effects\n• Premium items require Premium status\n• Consider bulk discounts on large quantities',
           inline: false
         });
       }
@@ -388,8 +424,9 @@ module.exports = {
       return interaction.reply({ embeds: [embed], components, ephemeral: true });
     }
 
+    // Handle sell subcommand - display user's tradable inventory with quick-sell interface
     if (sub === 'sell') {
-      // Get user's basic inventory
+      // Get user's complete inventory with quantity > 0
       const rawInventory = db.prepare(`
         SELECT itemId, qty 
         FROM inventory 
@@ -397,7 +434,7 @@ module.exports = {
         ORDER BY itemId
       `).all(userId);
 
-      // Filter and enrich with item data
+      // Filter and enrich inventory data with item details and tradability
       const inventory = rawInventory.map(inv => {
         const item = itemById(inv.itemId);
         return item ? {
@@ -407,10 +444,11 @@ module.exports = {
           rarity: item.rarity || 'common',
           description: item.description,
           category: item.category,
-          tradable: item.tradable !== false
+          tradable: item.tradable !== false  // Only include tradable items
         } : null;
       }).filter(item => item && item.tradable);
 
+      // Check if user has any tradable items
       if (inventory.length === 0) {
         return interaction.reply({
           content: `${userPrefix} You don't have any tradable items to sell. Complete quests and defeat bosses to earn items!`,
@@ -418,19 +456,18 @@ module.exports = {
         });
       }
 
-      // Get current listing count for the user
+      // Check current listing usage and limits
       const isPremiumUser = await isPremium(interaction.client, userId);
-      const maxListings = isPremiumUser ? 5 : 2;
+      const maxListings = isPremiumUser ? 5 : 2;  // Premium users get more listing slots
       const currentListings = db.prepare('SELECT COUNT(*) as count FROM market_listings WHERE sellerId = ? AND expiresAt > ?')
         .get(userId, Date.now());
       
-      // Create sell interface embed
       const sellEmbed = new EmbedBuilder()
-        .setTitle('🛒💰 **SELL YOUR ITEMS** 💰🛒')
-        .setDescription(`🎯 *Choose items from your inventory to list on the market* 🎯\n\n📊 **Listing Slots:** ${currentListings.count}/${maxListings} used ${isPremiumUser ? '👑' : ''}`)
+        .setTitle('Sell Items')
+        .setDescription(`Choose items from your inventory to list on the market\n\nListing Slots: ${currentListings.count}/${maxListings} used${isPremiumUser ? ' (Premium)' : ''}`)
         .setColor(0xFFD700)
         .setAuthor({
-          name: `${userPrefix} - Market Seller`,
+          name: `${userPrefix}`,
           iconURL: interaction.user.displayAvatarURL()
         });
 
@@ -471,18 +508,18 @@ module.exports = {
 
       sellEmbed.addFields(
         {
-          name: '📦 **Your Tradable Inventory**',
+          name: 'Your Tradable Inventory',
           value: inventoryText.length > 0 ? inventoryText : 'No items to display',
           inline: false
         },
         {
-          name: '💡 **How to Sell Items**',
+          name: 'How to Sell Items',
           value: '1. Click any item button below for quick selling\n2. Fill in price, quantity, and duration in the popup\n3. Choose duration: 10m, 1h, 6h, 12h, or 24h\n4. Your item will be listed on the market instantly!',
           inline: false
         },
         {
-          name: '🎯 **Selling Tips**',
-          value: '• Check `/market browse` to see current prices\n• Price competitively for faster sales\n• Higher rarity items sell for more\n• 📊 Listing limits: 2 slots (5 for 👑 Premium)\n• 👑 Premium users get 2x listing duration\n• Market tax: ' + (config.marketTaxPct || 5) + '% of sale price',
+          name: 'Selling Tips',
+          value: `• Check \`/market browse\` to see current prices\n• Price competitively for faster sales\n• Higher rarity items sell for more\n• Listing limits: 2 slots (5 for Premium)\n• Premium users get 2x listing duration\n• Market tax: ${config.marketTaxPct || 5}% of sale price`,
           inline: false
         }
       );
@@ -518,7 +555,7 @@ module.exports = {
       }
 
       sellEmbed.setFooter({
-        text: `💼 ${inventory.length} different tradable items in inventory • QuestCord Market`,
+        text: `${inventory.length} tradable items • QuestCord`,
         iconURL: interaction.client.user.displayAvatarURL()
       });
 

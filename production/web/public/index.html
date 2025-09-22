@@ -477,6 +477,56 @@
       }
     }
     
+    /* User Current Landmark Styles */
+    .server-marker.landmark-marker.user-current-landmark img {
+      border: 3px solid #00aaff !important;
+      box-shadow: 0 0 20px rgba(0, 170, 255, 0.8), 0 4px 12px rgba(0,0,0,0.4) !important;
+      animation: user-landmark-pulse 2s ease-in-out infinite;
+    }
+    
+    .server-marker.landmark-marker.user-current-landmark .name {
+      background: rgba(0, 170, 255, 0.95) !important;
+      border: 1px solid rgba(0, 170, 255, 0.8) !important;
+      color: white !important;
+      font-weight: 700;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+    }
+    
+    .server-marker.landmark-marker.user-current-landmark .visitors {
+      background: rgba(0, 170, 255, 0.95) !important;
+      border: 1px solid rgba(0, 170, 255, 0.8) !important;
+      color: white !important;
+      font-weight: 700;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+    }
+    
+    .current-location-badge {
+      position: absolute;
+      top: -45px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 170, 255, 0.95);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+      white-space: nowrap;
+      border: 1px solid rgba(0, 170, 255, 0.8);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+      z-index: 20;
+    }
+    
+    @keyframes user-landmark-pulse {
+      0%, 100% { 
+        box-shadow: 0 0 20px rgba(0, 170, 255, 0.8), 0 4px 12px rgba(0,0,0,0.4) !important;
+      }
+      50% { 
+        box-shadow: 0 0 30px rgba(0, 170, 255, 1), 0 4px 15px rgba(0,0,0,0.5) !important;
+      }
+    }
+    
     /* Landmark popup styles */
     .landmark-popup {
       font-family: 'Inter', sans-serif;
@@ -943,7 +993,7 @@
       
       .logo-text .version,
       .logo-text .developer {
-        font-size: 9px;
+        font-size: 12px;
         line-height: 1.0;
         margin: 1px 0;
       }
@@ -1013,14 +1063,14 @@
       .auth > div {
         min-width: 0;
         flex: 1;
-        font-size: 11px;
+        font-size: 12px;
         line-height: 1.2;
       }
       
       /* Mobile logout button styling */
       .auth a[href="/auth/logout"] {
         padding: 4px 8px;
-        font-size: 10px;
+        font-size: 12px;
         border-radius: 4px;
         margin-left: 6px;
       }
@@ -1647,7 +1697,7 @@
   }
   
   .day-night-indicator {
-    font-size: 7px;
+    font-size: 10px;
   }
 }
 
@@ -1668,7 +1718,7 @@
   }
   
   .day-night-indicator {
-    font-size: 6px;
+    font-size: 9px;
   }
 }
 
@@ -1797,7 +1847,7 @@
     <label style="display:block"><input type="radio" name="mode" value="global"> Global</label>
     <label style="display:block"><input type="checkbox" id="discoverableOnly" checked> Only Discoverable</label>
     <label style="display:block"><input type="checkbox" id="bossActiveOnly"> Only Boss-Active</label>
-    <label style="display:block"><input type="checkbox" id="showLandmarks" checked> Show Landmarks</label>
+    <label style="display:block"><input type="checkbox" id="showLandmarks"> Show Landmarks</label>
     <div id="adminMapControls" style="display:none;">
       <div class="heading">Admin Controls</div>
       <button id="toggleEditMapBtn" style="display:block; width:100%; margin:5px 0; padding:8px; background:#5865F2; color:white; border:none; border-radius:4px; cursor:pointer;">Toggle - Edit Map</button>
@@ -2150,30 +2200,41 @@
     }
   });
 
+  function updateCenterDisplay(data) {
+    // Update center name display without any map centering
+    const centerNameEl = document.getElementById('centerName');
+    
+    if (data.currentLocationServer) {
+      // User is at a server or landmark - display only
+      if (data.currentLocationServer.guildId && data.currentLocationServer.guildId.startsWith('landmark_')) {
+        const landmarkName = data.currentLocationServer.name.replace(/^landmark_/, '').replace(/_/g, ' ')
+          .replace(/\b\w/g, l => l.toUpperCase()); // Convert to Title Case
+        centerNameEl.textContent = `Player location: Landmark ${landmarkName}`;
+      } else {
+        centerNameEl.textContent = `Player location: Server ${data.currentLocationServer.name}`;
+      }
+      centerNameEl.style.color = '#000000';
+    } else {
+      centerNameEl.textContent = 'Player location unknown';
+      centerNameEl.style.color = '#000000';
+    }
+  }
+
   function centerMapFromMe(data) {
-    // During travel, always center regardless of user movement to track progress
+    // Travel-only centering: Only auto-center during active travel
     const isTraveling = data.travel && data.travel.arrivalAt && Date.now() < data.travel.arrivalAt;
     
-    // Smart auto-centering: Only auto-center if:
-    // 1. User is traveling (always center during travel)
-    // 2. User hasn't moved map in last 5 minutes AND it's been 5+ minutes since last auto-center
-    // 3. Or it's been more than 5 minutes since any auto-center (periodic re-center)
-    const now = Date.now();
-    const userMoveTimeout = 300000; // 5 minutes in milliseconds
-    const periodicCenterInterval = 300000; // 5 minutes in milliseconds
-    
-    // For debugging - log when we're preventing auto-center
-    if (!isTraveling && __userMovedMap && (now - __lastUserMoveTime < userMoveTimeout)) {
-      // User recently moved the map - don't auto-center unless it's been 5+ minutes since last center
-      if (now - __lastAutoCenterTime < periodicCenterInterval) {
-        console.log('[Map] Preventing auto-center: user moved', Math.round((now - __lastUserMoveTime) / 1000), 'seconds ago');
-        return;
-      }
+    // Only center the map if user is actively traveling
+    if (!isTraveling) {
+      // Still update the display, but no map centering for static locations
+      updateCenterDisplay(data);
+      return;
     }
     
-    // Additional check: don't center too frequently even if conditions are met
-    if (!isTraveling && (now - __lastAutoCenterTime < 30000)) { // Minimum 30 seconds between centers
-      console.log('[Map] Preventing auto-center: too frequent, last center was', Math.round((now - __lastAutoCenterTime) / 1000), 'seconds ago');
+    // During travel, ensure smooth centering without being too frequent
+    const now = Date.now();
+    if (now - __lastAutoCenterTime < 2000) { // Minimum 2 seconds between travel centers
+      console.log('[Map] Preventing travel auto-center: too frequent');
       return;
     }
 
@@ -2203,24 +2264,6 @@
         // Update last auto-center time
         __lastAutoCenterTime = Date.now();
       }
-    } else if (data.currentLocationServer) {
-      // User is at a server
-      centerNameEl.textContent = `Player location: ${data.currentLocationServer.name}`;
-      centerNameEl.style.color = '#000000';
-      
-      // Center on server location with consistent zoom
-      if (data.currentLocationServer.lat != null && data.currentLocationServer.lon != null) {
-        const currentZoom = map.getZoom();
-        const targetZoom = currentZoom < 4 ? 6 : currentZoom; // Keep zoom if already zoomed in
-        map.setView([data.currentLocationServer.lat, data.currentLocationServer.lon], targetZoom);
-        console.log('[Map] Auto-centered to server:', data.currentLocationServer.name, 'at', data.currentLocationServer.lat, data.currentLocationServer.lon);
-        
-        // Update last auto-center time
-        __lastAutoCenterTime = Date.now();
-      }
-    } else {
-      centerNameEl.textContent = 'Player location unknown';
-      centerNameEl.style.color = '#000000';
     }
 
     __didInitialCenter = true;
@@ -2426,9 +2469,23 @@ async function loadMe(){
         locationSpan.textContent = `Traveling: ${data.travel.from.name} → ${data.travel.to.name}`;
         locationSpan.style.color = '#ff6b35'; // Orange for traveling
       } else if (data.currentLocationServer) {
-        locationSpan.textContent = `Current location: ${data.currentLocationServer.name}`;
+        // Check if current location is a landmark
+        if (data.currentLocationServer.guildId && data.currentLocationServer.guildId.startsWith('landmark_')) {
+          const landmarkName = data.currentLocationServer.name.replace(/^landmark_/, '').replace(/_/g, ' ')
+            .replace(/\b\w/g, l => l.toUpperCase()); // Convert to Title Case
+          locationSpan.textContent = `Current location: Landmark ${landmarkName}`;
+        } else {
+          locationSpan.textContent = `Current location: Server ${data.currentLocationServer.name}`;
+        }
       } else if (data.player && data.player.locationGuildId) {
-        locationSpan.textContent = `Current location: Server (${data.player.locationGuildId})`;
+        // Check if locationGuildId is a landmark
+        if (data.player.locationGuildId.startsWith('landmark_')) {
+          const landmarkName = data.player.locationGuildId.replace(/^landmark_/, '').replace(/_/g, ' ')
+            .replace(/\b\w/g, l => l.toUpperCase()); // Convert to Title Case
+          locationSpan.textContent = `Current location: Landmark ${landmarkName}`;
+        } else {
+          locationSpan.textContent = `Current location: Server (${data.player.locationGuildId})`;
+        }
       } else {
         locationSpan.textContent = 'Current location: Unknown';
       }
@@ -2513,7 +2570,7 @@ async function loadMe(){
       const html = `
         <div class="server-marker ${isMe ? 'me' : ''} ${s.archived? 'archived' : ''} ${bossClasses}">
           <div class="visitors">${s.visitors || 0} Users Visiting</div>
-          <img src="${s.iconUrl || 'https://cdn.discordapp.com/embed/avatars/0.png'}" alt="icon"/>
+          <img src="${s.iconUrl || 'https://cdn.discordapp.com/embed/avatars/0.png'}" alt="icon" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'"/>
           <div class="name">${s.name || s.guildId}${s.archived ? ' (archived)' : ''}${bossIndicator}</div>
         </div>`;
       const icon = L.divIcon({ html, className: '', iconSize: [48,48], iconAnchor:[24,24] });
@@ -2544,7 +2601,7 @@ async function loadMe(){
           } else if (!j.users || j.users.length === 0){
             content += `<div class="vis-note">No visitors right now.</div>`;
           } else {
-            content += j.users.map(u => `<a href="/profile/${u.id}" class="vis-user-link" target="_blank" title="Click to view ${u.name || u.id}'s profile"><div class="vis-row"><img src="${u.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png'}"/><span>${u.name || u.id}</span><span class="profile-arrow">→</span></div></a>`).join('');
+            content += j.users.map(u => `<a href="/profile/${u.id}" class="vis-user-link" target="_blank" title="Click to view ${u.name || u.id}'s profile"><div class="vis-row"><img src="${u.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png'}" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'"/><span>${u.name || u.id}</span><span class="profile-arrow">→</span></div></a>`).join('');
           }
           content += `</div>`;
           m.bindPopup(content, { maxWidth: 280 }).openPopup();
@@ -2566,36 +2623,60 @@ async function loadMe(){
       markers.push(m);
     });
     
-    // Load and display landmarks (only if enabled)
-    if (showLandmarks.checked) {
-      try {
-        const landmarksRes = await fetch('/api/map/landmarks');
-        const landmarksData = await landmarksRes.json();
+    // Load and display landmarks (always show user's current landmark, optionally show others)
+    try {
+      const landmarksRes = await fetch('/api/map/landmarks');
+      const landmarksData = await landmarksRes.json();
+      
+      if (landmarksData.landmarks) {
+        // Get current user's location to check if they're at a landmark
+        let userCurrentLandmark = null;
+        if (meData && meData.locationGuildId && meData.locationGuildId.startsWith('landmark_')) {
+          const landmarkId = meData.locationGuildId.replace('landmark_', '');
+          userCurrentLandmark = landmarksData.landmarks.find(l => l.id === landmarkId);
+        }
         
-        if (landmarksData.landmarks) {
-        // Add visitor counts to landmarks
-        const landmarksWithVisitors = await Promise.all(
-          landmarksData.landmarks.map(async (landmark) => {
-            try {
-              const visitorsRes = await fetch(`/api/map/landmark-visitors?landmarkId=${landmark.id}&limit=1`);
-              const visitorsData = await visitorsRes.json();
-              return { ...landmark, visitorCount: visitorsData.total || 0 };
-            } catch (error) {
-              return { ...landmark, visitorCount: 0 };
-            }
-          })
-        );
+        // Filter landmarks based on settings and user location
+        let landmarksToShow = [];
+        if (showLandmarks.checked) {
+          // Show all landmarks if checkbox is enabled
+          landmarksToShow = landmarksData.landmarks;
+        } else if (userCurrentLandmark) {
+          // Only show the landmark the user is currently visiting
+          landmarksToShow = [userCurrentLandmark];
+        }
         
-        landmarksWithVisitors.forEach(landmark => {
-          const landmarkHtml = `
-            <div class="server-marker landmark-marker">
-              <div class="visitors">${landmark.visitCost} 💎 gems to visit</div>
-              <img src="${landmark.imageUrl}" 
-                   alt="${landmark.name}" 
-                   style="width: 48px; height: 48px; object-fit: cover;"
-                   onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;48&quot; height=&quot;48&quot; viewBox=&quot;0 0 48 48&quot;><circle cx=&quot;24&quot; cy=&quot;24&quot; r=&quot;20&quot; fill=&quot;%23ff6b6b&quot; stroke=&quot;%23fff&quot; stroke-width=&quot;3&quot;/><text x=&quot;24&quot; y=&quot;32&quot; text-anchor=&quot;middle&quot; font-size=&quot;18&quot;>${landmark.emoji}</text></svg>'; console.log('Image failed for ${landmark.name}, using fallback')"/>
-              <div class="name">${landmark.emoji} ${landmark.name}</div>
-            </div>`;
+        if (landmarksToShow.length > 0) {
+          // Add visitor counts to landmarks
+          const landmarksWithVisitors = await Promise.all(
+            landmarksToShow.map(async (landmark) => {
+              try {
+                const visitorsRes = await fetch(`/api/map/landmark-visitors?landmarkId=${landmark.id}&limit=1`);
+                const visitorsData = await visitorsRes.json();
+                const isUserLocation = userCurrentLandmark && landmark.id === userCurrentLandmark.id;
+                return { ...landmark, visitorCount: visitorsData.total || 0, isUserLocation };
+              } catch (error) {
+                const isUserLocation = userCurrentLandmark && landmark.id === userCurrentLandmark.id;
+                return { ...landmark, visitorCount: 0, isUserLocation };
+              }
+            })
+          );
+          
+          landmarksWithVisitors.forEach(landmark => {
+            // Add special styling for user's current landmark
+            const userLocationClass = landmark.isUserLocation ? ' user-current-landmark' : '';
+            const userLocationBadge = landmark.isUserLocation ? '<div class="current-location-badge">📍 You are here</div>' : '';
+            const gemCost = landmark.isUserLocation ? 'Currently visiting' : `${landmark.visitCost} 💎 gems to visit`;
+            const landmarkHtml = `
+              <div class="server-marker landmark-marker${userLocationClass}">
+                ${userLocationBadge}
+                <div class="visitors">${gemCost}</div>
+                <img src="${landmark.imageUrl}" 
+                     alt="${landmark.name}" 
+                     style="width: 48px; height: 48px; object-fit: cover;"
+                     onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;48&quot; height=&quot;48&quot; viewBox=&quot;0 0 48 48&quot;><circle cx=&quot;24&quot; cy=&quot;24&quot; r=&quot;20&quot; fill=&quot;%23ff6b6b&quot; stroke=&quot;%23fff&quot; stroke-width=&quot;3&quot;/><text x=&quot;24&quot; y=&quot;32&quot; text-anchor=&quot;middle&quot; font-size=&quot;18&quot;>${landmark.emoji}</text></svg>'; console.log('Landmark image failed for ${landmark.name}, using emoji fallback')"/>
+                <div class="name">${landmark.emoji} ${landmark.name}</div>
+              </div>`;
             
           const landmarkIcon = L.divIcon({ 
             html: landmarkHtml, 
@@ -2631,7 +2712,7 @@ async function loadMe(){
               } else if (!j.users || j.users.length === 0){
                 content += `<div class="vis-note">No travelers have visited yet. Be the first!</div>`;
               } else {
-                content += j.users.map(u => `<a href="/profile/${u.id}" class="vis-user-link" target="_blank" title="Click to view ${u.name || u.id}'s profile"><div class="vis-row"><img src="${u.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png'}"/><span>${u.name || u.id}</span><span class="profile-arrow">→</span></div></a>`).join('');
+                content += j.users.map(u => `<a href="/profile/${u.id}" class="vis-user-link" target="_blank" title="Click to view ${u.name || u.id}'s profile"><div class="vis-row"><img src="${u.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png'}" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'"/><span>${u.name || u.id}</span><span class="profile-arrow">→</span></div></a>`).join('');
               }
               content += `
                 <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee; font-size: 12px; color: #666;">
@@ -2855,9 +2936,23 @@ async function loadMe(){
         locationSpan.textContent = `Traveling: ${data.travel.from.name} → ${data.travel.to.name}`;
         locationSpan.style.color = '#ff6b35'; // Orange for traveling
       } else if (data.currentLocationServer) {
-        locationSpan.textContent = `Current location: ${data.currentLocationServer.name}`;
+        // Check if current location is a landmark
+        if (data.currentLocationServer.guildId && data.currentLocationServer.guildId.startsWith('landmark_')) {
+          const landmarkName = data.currentLocationServer.name.replace(/^landmark_/, '').replace(/_/g, ' ')
+            .replace(/\b\w/g, l => l.toUpperCase()); // Convert to Title Case
+          locationSpan.textContent = `Current location: Landmark ${landmarkName}`;
+        } else {
+          locationSpan.textContent = `Current location: Server ${data.currentLocationServer.name}`;
+        }
       } else if (data.player && data.player.locationGuildId) {
-        locationSpan.textContent = `Current location: Server (${data.player.locationGuildId})`;
+        // Check if locationGuildId is a landmark
+        if (data.player.locationGuildId.startsWith('landmark_')) {
+          const landmarkName = data.player.locationGuildId.replace(/^landmark_/, '').replace(/_/g, ' ')
+            .replace(/\b\w/g, l => l.toUpperCase()); // Convert to Title Case
+          locationSpan.textContent = `Current location: Landmark ${landmarkName}`;
+        } else {
+          locationSpan.textContent = `Current location: Server (${data.player.locationGuildId})`;
+        }
       } else {
         locationSpan.textContent = 'Current location: Unknown';
       }

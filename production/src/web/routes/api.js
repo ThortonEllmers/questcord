@@ -1,97 +1,193 @@
+// QuestCord API Routes
+
+// Import Express framework for creating API routes
 const express = require('express');
+// Import path utilities for file system operations
 const path = require('path');
+// Import SQLite database connection for server and player data storage
 const { db } = require('../../utils/store_sqlite');
+// Import geographic utilities for distance calculations and land detection
 const { haversine, isOnLand, findLandPosition } = require('../../utils/geo');
+// Import security middleware for rate limiting and CSRF protection
 const { rateLimit, ensureCsrf, setCsrf } = require('../security');
+// Import web utility functions for player management and server operations
 const { createAutoPlacementIfMissing, getSpawnServer, ensurePlayerRow, fetchRoleLevel, getMemberRoleIds } = require('../util');
+// Import logger for consistent logging across the application
 const logger = require('../../utils/logger');
+// Import safe webhook logging utility for admin action tracking
 const { logAdminAction } = require('../../utils/webhook_safe');
 
+// Create Express router instance for mounting API routes
 const router = express.Router();
-// Safe fetch helper for Node: use global fetch when available
+
+/**
+ * Cross-platform fetch helper for Node.js environments
+ * Uses global fetch when available (Node 18+), falls back to node-fetch for older versions
+ * @param {...any} args - Arguments to pass to the fetch function
+ * @returns {Promise} - Fetch response promise
+ */
 async function fetchSafe(...args){
+  // Check if global fetch is available (Node 18+ or browser environments)
   if (typeof globalThis.fetch === 'function') return globalThis.fetch(...args);
+  // Dynamically import node-fetch for older Node versions
   const mod = await import('node-fetch');
   return mod.default(...args);
 }
 
+// ===============================================
+// HELPER FUNCTIONS
+// ===============================================
 
-// ---------------- Helpers ----------------
+/**
+ * Retrieves the role level for the current user from session or database
+ * Handles role level caching in session for performance optimization
+ * @param {Object} req - Express request object containing session data
+ * @returns {Promise<string>} - Role level ('User', 'Moderator', 'Admin', etc.)
+ */
 async function getRoleLevel(req) {
-  // Get roleLevel from session or fetch it dynamically
+  // Get cached role level from session, default to 'User' if not present
   let roleLevel = req.session?.roleLevel || 'User';
   
-  // If not in session, try to fetch it from the user
+  // If role is still 'User' and we have a logged-in user, try to fetch current role from database
   if (roleLevel === 'User' && req.session?.user?.id) {
     try {
+      // Fetch the current role level from database (in case it changed)
       roleLevel = await fetchRoleLevel(req.session.user.id);
-      // Update session with current role
+      // Cache the fetched role in session for subsequent requests
       req.session.roleLevel = roleLevel;
     } catch (e) {
-      // Keep default 'User' if fetch fails
+      // If fetch fails, keep the default 'User' role for safety
     }
   }
   
   return roleLevel;
 }
 
-// Helper to log admin actions to webhook
+/**
+ * Logs administrative actions to webhook for audit trail
+ * Extracts admin user information from request session and sends to logging webhook
+ * @param {Object} req - Express request object with session data
+ * @param {string} action - Description of the admin action performed
+ * @param {string|null} targetId - ID of the target being acted upon (optional)
+ * @param {string|null} targetName - Name of the target being acted upon (optional)
+ * @param {Object} details - Additional details about the action (optional)
+ */
 async function logAdminActionFromReq(req, action, targetId = null, targetName = null, details = {}) {
   try {
+    // Extract admin user information from the authenticated session
     const adminUserId = req.session?.user?.id || 'Unknown';
     const adminUsername = req.session?.user?.username || req.session?.user?.global_name || 'Unknown Admin';
+    // Send the action to the webhook logging system for audit trail
     await logAdminAction(action, adminUserId, adminUsername, targetId, targetName, details);
   } catch (error) {
+    // Log webhook failures without breaking the main operation
     console.warn('[webhook] Failed to log admin action:', error.message);
   }
 }
 
+/**
+ * Counts the number of players currently visiting a specific Discord server
+ * Only counts players who are not currently traveling or have arrived at their destination
+ * @param {string} guildId - Discord server ID to count visitors for
+ * @returns {number} - Number of current visitors at the server
+ */
 function visitorsCount(guildId){
   try {
+    // Query players at this location who aren't traveling or have finished traveling
     const row = db.prepare('SELECT COUNT(*) as n FROM players WHERE locationGuildId=? AND (travelArrivalAt=0 OR travelArrivalAt<=?)')
                   .get(guildId, Date.now());
     return row ? row.n : 0;
-  } catch (e) { return 0; }
+  } catch (e) { 
+    // Return 0 if database query fails
+    return 0; 
+  }
 }
+
+/**
+ * Retrieves a list of all Discord servers from the database
+ * @param {boolean} includeArchived - Whether to include archived/deleted servers
+ * @returns {Array} - Array of server objects with basic information
+ */
 function listServers(includeArchived=false){
+  // Define the columns to select from the servers table
   const baseCols = 'guildId, name, lat, lon, iconUrl, discoverable, archived';
+  // Build query based on whether to include archived servers
   const q = includeArchived
-    ? `SELECT ${baseCols} FROM servers`
-    : `SELECT ${baseCols} FROM servers WHERE archived IS NULL OR archived=0`;
+    ? `SELECT ${baseCols} FROM servers`  // Include all servers
+    : `SELECT ${baseCols} FROM servers WHERE archived IS NULL OR archived=0`;  // Only active servers
   return db.prepare(q).all();
 }
+
+/**
+ * Retrieves all currently active boss battles across all servers
+ * @returns {Array} - Array of active boss battle objects
+ */
 function activeBosses(){
-  try { return db.prepare('SELECT * FROM bosses WHERE active=1').all(); }
-  catch(e){ return []; }
+  try { 
+    // Query for all bosses marked as active in the database
+    return db.prepare('SELECT * FROM bosses WHERE active=1').all(); 
+  }
+  catch(e){ 
+    // Return empty array if query fails
+    return []; 
+  }
 }
+
+/**
+ * Gets boss battle information for a specific Discord server
+ * Checks if there's an active boss and whether it has expired
+ * @param {string} guildId - Discord server ID to check for boss battles
+ * @returns {Object} - Object containing boss active status and tier information
+ */
 function getBossData(guildId){
   try {
+    // Find the most recent active boss for this server
     const boss = db.prepare('SELECT active, tier, expiresAt FROM bosses WHERE guildId=? AND active=1 ORDER BY id DESC LIMIT 1').get(guildId);
+    // Check if boss exists and hasn't expired yet
     if (boss && boss.expiresAt > Date.now()) {
       return { active: true, tier: boss.tier || 1 };
     }
+    // No active boss or boss has expired
     return { active: false, tier: null };
   } catch (e) { 
+    // Return inactive boss data if query fails
     return { active: false, tier: null }; 
   }
 }
+/**
+ * Finds the nearest Discord servers to a given geographic center point
+ * Calculates distances and enriches server data with real-time information
+ * @param {Object} center - Geographic center point with lat/lon properties
+ * @param {number} limit - Maximum number of servers to return (default: 50)
+ * @param {Object} opts - Options for filtering results
+ * @param {boolean} opts.includeArchived - Include archived servers in results
+ * @param {boolean} opts.discoverableOnly - Only include servers marked as discoverable
+ * @param {boolean} opts.bossActiveOnly - Only include servers with active boss battles
+ * @returns {Array} - Array of server objects sorted by distance from center
+ */
 function nearest(center, limit=50, opts={}){
+  // Get all servers matching the archive and discoverability filters
   const all = listServers(!!opts.includeArchived)
-    .filter(s => s.lat != null && s.lon != null)
-    .filter(s => (opts.discoverableOnly ? !!s.discoverable : true));
+    .filter(s => s.lat != null && s.lon != null)  // Only servers with valid coordinates
+    .filter(s => (opts.discoverableOnly ? !!s.discoverable : true));  // Filter by discoverability if requested
+  
+  // Enrich each server with calculated distance and real-time data
   const rows = all.map(s => {
-    const bossData = getBossData(s.guildId);
+    const bossData = getBossData(s.guildId);  // Get current boss battle status
     return {
-      ...s,
-      dist: haversine(center.lat, center.lon, s.lat, s.lon),
-      visitors: visitorsCount(s.guildId),
-      bossActive: bossData.active,
-      bossTier: bossData.tier
+      ...s,  // Spread original server data
+      dist: haversine(center.lat, center.lon, s.lat, s.lon),  // Calculate distance from center
+      visitors: visitorsCount(s.guildId),  // Get current visitor count
+      bossActive: bossData.active,  // Include boss battle status
+      bossTier: bossData.tier  // Include boss tier level
     };
   });
-  // Optional filter when bossActiveOnly
+  
+  // Apply boss-active filter if requested
   const rows2 = opts.bossActiveOnly ? rows.filter(r => r.bossActive) : rows;
+  // Sort servers by distance from center (closest first)
   rows2.sort((a,b)=>a.dist-b.dist);
+  // Return only the requested number of closest servers
   return rows2.slice(0, limit);
 }
 function globalList(limit=500, opts={}){
@@ -109,14 +205,30 @@ function globalList(limit=500, opts={}){
   });
 }
 
-// ---------------- Routes ----------------
+// ===============================================
+// API ROUTE DEFINITIONS  
+// ===============================================
 
-// CSRF seed
+/**
+ * CSRF Token Endpoint
+ * GET /api/csrf
+ * Provides CSRF tokens for form submissions and state-changing operations
+ * Rate limited to prevent abuse
+ */
 router.get('/api/csrf', rateLimit(), setCsrf);
 
-// === Weather System ===
+// ===============================================
+// WEATHER SYSTEM ENDPOINTS
+// ===============================================
 
-// Get active weather events for map display
+/**
+ * Active Weather Events Endpoint
+ * GET /api/weather
+ * Returns all currently active weather events for map display
+ * Used by the interactive map to show weather overlays and travel restrictions
+ * Rate limited: 60 requests per 60 seconds
+ * @returns {Object} - Object containing array of active weather events with display data
+ */
 router.get('/api/weather', rateLimit(60, 60000), async (req, res) => {
   try {
     const { getActiveWeather, WEATHER_TYPES } = require('../../utils/weather');
@@ -155,9 +267,18 @@ router.get('/api/weather', rateLimit(60, 60000), async (req, res) => {
 router.post('/api/weather/route', rateLimit(30, 60000), ensureCsrf, async (req, res) => {
   try {
     const { fromLat, fromLon, toLat, toLon } = req.body;
-    
-    if (!fromLat || !fromLon || !toLat || !toLon) {
-      return res.status(400).json({ error: 'invalid_input', message: 'Coordinates required' });
+
+    // Validate coordinates are present and numeric
+    if (typeof fromLat !== 'number' || typeof fromLon !== 'number' ||
+        typeof toLat !== 'number' || typeof toLon !== 'number') {
+      return res.status(400).json({ error: 'invalid_input', message: 'All coordinates must be numbers' });
+    }
+
+    // Validate coordinate bounds and finite values
+    if (fromLat < -90 || fromLat > 90 || toLat < -90 || toLat > 90 ||
+        fromLon < -180 || fromLon > 180 || toLon < -180 || toLon > 180 ||
+        !isFinite(fromLat) || !isFinite(fromLon) || !isFinite(toLat) || !isFinite(toLon)) {
+      return res.status(400).json({ error: 'invalid_input', message: 'Coordinates out of valid range' });
     }
 
     const { getWeatherEffectsForTravel } = require('../../utils/weather');
@@ -265,9 +386,9 @@ router.post('/api/admin/weather/regional', rateLimit(10, 60000), ensureCsrf, asy
     }
     
     const { createWeatherInCountry } = require('../../utils/weather');
-    console.log(`[API] Creating regional weather: type=${type}, country=${country}`);
+    logger.info(`[API] Creating regional weather: type=${type}, country=${country}`);
     const result = await createWeatherInCountry(type, country, null);
-    console.log(`[API] Weather creation result:`, result);
+    logger.info(`[API] Weather creation result:`, result);
     
     if (!result.success) {
       console.error(`[API] Weather creation failed:`, result.message);
@@ -364,7 +485,6 @@ router.post('/api/admin/weather/clear', rateLimit(10, 60000), ensureCsrf, async 
 // Session/me with regen, roles, inventory and map center
 router.get('/api/me', rateLimit(180, 60000), async (req, res) => {
   try {
-    console.log('API /me called - session.user:', req.session.user ? 'exists' : 'null', 'sessionID:', req.sessionID);
     if (!req.session.user) return res.json({ user: null });
     const u = req.session.user;
 
@@ -483,10 +603,8 @@ router.patch('/api/admin/set-coords', rateLimit(20, 10000), ensureCsrf, async (r
       return res.status(403).json({ error: 'insufficient_privileges' });
     }
     
-    console.log('set-coords called by admin:', req.session.user.id);
     
     const { guildId, lat, lon } = req.body || {};
-    console.log('set-coords data:', { guildId, lat, lon });
     
     // Comprehensive input validation
     if (!guildId || typeof guildId !== 'string' || !/^\d{17,19}$/.test(guildId)) {
@@ -502,12 +620,12 @@ router.patch('/api/admin/set-coords', rateLimit(20, 10000), ensureCsrf, async (r
     // Validate that the coordinates are on land
     const onLand = await isOnLand(lat, lon);
     if (!onLand) {
-      console.log(`Coordinates ${lat}, ${lon} are in water, finding nearby land...`);
+      logger.info(`Coordinates ${lat}, ${lon} are in water, finding nearby land...`);
       const landPos = await findLandPosition(lat, lon, 20);
       
       db.prepare('UPDATE servers SET lat=?, lon=? WHERE guildId=?').run(landPos.lat, landPos.lon, guildId);
       logger.info('admin_set_coords: moved %s from water (%s,%s) to land (%s,%s)', guildId, lat, lon, landPos.lat, landPos.lon);
-      console.log('set-coords success (moved to land)');
+      logger.info('set-coords success (moved to land)');
       res.json({ 
         ok: true, 
         moved_to_land: true,
@@ -518,7 +636,7 @@ router.patch('/api/admin/set-coords', rateLimit(20, 10000), ensureCsrf, async (r
     } else {
       db.prepare('UPDATE servers SET lat=?, lon=? WHERE guildId=?').run(lat, lon, guildId);
       logger.info('admin_set_coords: user moved %s to %s,%s (on land)', guildId, lat, lon);
-      console.log('set-coords success (on land)');
+      logger.info('set-coords success (on land)');
       res.json({ ok: true });
     }
   }catch(e){
@@ -540,7 +658,12 @@ router.post('/api/admin/server-archive', rateLimit(20, 10000), ensureCsrf, async
   }
   
   const { guildId } = req.body || {};
-  if (!guildId) return res.status(400).json({ ok:false, error:'missing_guildId' });
+
+  // Validate Discord guild ID format
+  if (!guildId || typeof guildId !== 'string' || !/^\d{17,19}$/.test(guildId)) {
+    return res.status(400).json({ ok: false, error: 'invalid_guild_id' });
+  }
+
   db.prepare('UPDATE servers SET archived=1 WHERE guildId=?').run(guildId);
   logger.info('server_archive: %s by %s', guildId, req.session?.user?.id);
   res.json({ ok:true });
@@ -557,7 +680,12 @@ router.post('/api/admin/server-restore', rateLimit(20, 10000), ensureCsrf, async
   }
   
   const { guildId } = req.body || {};
-  if (!guildId) return res.status(400).json({ ok:false, error:'missing_guildId' });
+
+  // Validate Discord guild ID format
+  if (!guildId || typeof guildId !== 'string' || !/^\d{17,19}$/.test(guildId)) {
+    return res.status(400).json({ ok: false, error: 'invalid_guild_id' });
+  }
+
   db.prepare('UPDATE servers SET archived=0 WHERE guildId=?').run(guildId);
   logger.info('server_restore: %s by %s', guildId, req.session?.user?.id);
   res.json({ ok:true });
@@ -715,19 +843,29 @@ router.get('/api/map/landmark-visitors', rateLimit(), async (req, res) => {
       return res.status(404).json({ error: 'landmark_not_found' });
     }
     
-    // Get users who have visited this landmark
-    const visitors = db.prepare(`
-      SELECT p.userId, p.name, p.avatar, pv.visitedAt
-      FROM poi_visits pv
-      JOIN players p ON p.userId = pv.userId
-      WHERE pv.poiId = ?
-      ORDER BY pv.visitedAt DESC
-      LIMIT ?
-    `).all(landmarkId, parseInt(limit));
+    // Get users who have visited this landmark with better error handling
+    let visitors = [];
+    let total = 0;
     
-    // Get total count
-    const totalResult = db.prepare('SELECT COUNT(*) as count FROM poi_visits WHERE poiId = ?').get(landmarkId);
-    const total = totalResult?.count || 0;
+    try {
+      visitors = db.prepare(`
+        SELECT p.userId, p.name, p.avatar, pv.visitedAt
+        FROM poi_visits pv
+        JOIN players p ON p.userId = pv.userId
+        WHERE pv.poiId = ?
+        ORDER BY pv.visitedAt DESC
+        LIMIT ?
+      `).all(landmarkId, parseInt(limit));
+      
+      // Get total count
+      const totalResult = db.prepare('SELECT COUNT(*) as count FROM poi_visits WHERE poiId = ?').get(landmarkId);
+      total = totalResult?.count || 0;
+    } catch (dbError) {
+      console.warn('[landmark-visitors] Database query failed:', dbError.message);
+      // Return empty results instead of failing completely
+      visitors = [];
+      total = 0;
+    }
     
     // Format user data
     const users = visitors.map(visitor => ({
@@ -749,8 +887,8 @@ router.get('/api/map/landmark-visitors', rateLimit(), async (req, res) => {
       limit: parseInt(limit)
     });
   } catch (error) {
-    console.error('Landmark visitors error:', error);
-    res.status(500).json({ error: 'server_error' });
+    console.error('[landmark-visitors] API error:', error);
+    res.status(500).json({ error: 'server_error', message: error.message });
   }
 });
 
@@ -812,11 +950,29 @@ router.get('/api/landmark/:landmarkId', rateLimit(), async (req, res) => {
         firstVisit: visitStats?.firstVisit,
         lastVisit: visitStats?.lastVisit
       },
-      recentVisitors: recentVisitors.map(visitor => ({
-        id: visitor.userId,
-        name: visitor.name || 'Unknown Traveler',
-        avatar: 'https://cdn.discordapp.com/embed/avatars/0.png',
-        visitedAt: visitor.visitedAt
+      recentVisitors: await Promise.all(recentVisitors.map(async visitor => {
+        // Try to get Discord avatar
+        let avatar = 'https://cdn.discordapp.com/embed/avatars/0.png';
+        try {
+          const response = await fetchSafe(`https://discord.com/api/users/${visitor.userId}`, {
+            headers: { Authorization: `Bot ${process.env.DISCORD_TOKEN}` }
+          });
+          if (response.ok) {
+            const discordUser = await response.json();
+            if (discordUser.avatar) {
+              avatar = `https://cdn.discordapp.com/avatars/${visitor.userId}/${discordUser.avatar}.png`;
+            }
+          }
+        } catch (e) {
+          console.warn(`Failed to fetch Discord avatar for user ${visitor.userId}:`, e.message);
+        }
+        
+        return {
+          id: visitor.userId,
+          name: visitor.name || 'Unknown Traveler',
+          avatar: avatar,
+          visitedAt: visitor.visitedAt
+        };
       }))
     };
     
@@ -1511,7 +1667,7 @@ router.get('/api/achievements', rateLimit(30, 60000), async (req, res) => {
             VALUES (?, ?, ?, 0)
           `).run(userId, achievement.id, Date.now());
           
-          console.log(`Auto-unlocked achievement ${achievement.id} for user ${userId}`);
+          logger.info(`Auto-unlocked achievement ${achievement.id} for user ${userId}`);
           
           achievementsWithStatus.push({
             ...achievement,
@@ -1558,8 +1714,20 @@ router.post('/api/admin/gems/add', rateLimit(20, 10000), ensureCsrf, async (req,
     }
 
     const { userId, amount, reason } = req.body;
-    if (!userId || !amount || isNaN(amount) || amount <= 0) {
-      return res.status(400).json({ error: 'invalid_input', message: 'Valid userId and positive amount required' });
+
+    // Validate Discord user ID format
+    if (!userId || typeof userId !== 'string' || !/^\d{17,19}$/.test(userId)) {
+      return res.status(400).json({ error: 'invalid_input', message: 'Valid Discord user ID required' });
+    }
+
+    // Validate amount is a positive number
+    if (!amount || isNaN(amount) || amount <= 0 || amount > 1000000) {
+      return res.status(400).json({ error: 'invalid_input', message: 'Amount must be a positive number (max 1,000,000)' });
+    }
+
+    // Validate reason if provided
+    if (reason && (typeof reason !== 'string' || reason.length > 200)) {
+      return res.status(400).json({ error: 'invalid_input', message: 'Reason must be a string (max 200 characters)' });
     }
 
     // Ensure player exists
@@ -1631,8 +1799,20 @@ router.post('/api/admin/gems/remove', rateLimit(20, 10000), ensureCsrf, async (r
     }
 
     const { userId, amount, reason } = req.body;
-    if (!userId || !amount || isNaN(amount) || amount <= 0) {
-      return res.status(400).json({ error: 'invalid_input', message: 'Valid userId and positive amount required' });
+
+    // Validate Discord user ID format
+    if (!userId || typeof userId !== 'string' || !/^\d{17,19}$/.test(userId)) {
+      return res.status(400).json({ error: 'invalid_input', message: 'Valid Discord user ID required' });
+    }
+
+    // Validate amount is a positive number
+    if (!amount || isNaN(amount) || amount <= 0 || amount > 1000000) {
+      return res.status(400).json({ error: 'invalid_input', message: 'Amount must be a positive number (max 1,000,000)' });
+    }
+
+    // Validate reason if provided
+    if (reason && (typeof reason !== 'string' || reason.length > 200)) {
+      return res.status(400).json({ error: 'invalid_input', message: 'Reason must be a string (max 200 characters)' });
     }
 
     // Check if user exists
@@ -1872,8 +2052,15 @@ router.post('/api/admin/user/ban', rateLimit(20, 10000), ensureCsrf, async (req,
     }
 
     const { userId, reason } = req.body;
-    if (!userId) {
-      return res.status(400).json({ error: 'invalid_input', message: 'Valid userId required' });
+
+    // Validate Discord user ID format
+    if (!userId || typeof userId !== 'string' || !/^\d{17,19}$/.test(userId)) {
+      return res.status(400).json({ error: 'invalid_input', message: 'Valid Discord user ID required' });
+    }
+
+    // Validate reason if provided
+    if (reason && (typeof reason !== 'string' || reason.length > 500)) {
+      return res.status(400).json({ error: 'invalid_input', message: 'Reason must be a string (max 500 characters)' });
     }
 
     // Ensure player exists
@@ -2155,7 +2342,9 @@ router.get('/api/admin/server/lookup/:guildId', rateLimit(30, 60000), async (req
       name: server.name,
       discordName: discordGuild?.name || server.name,
       ownerId: server.ownerId,
-      iconUrl: server.iconUrl,
+      iconUrl: discordGuild?.icon 
+        ? `https://cdn.discordapp.com/icons/${server.guildId}/${discordGuild.icon}.png`
+        : server.iconUrl || 'https://cdn.discordapp.com/embed/avatars/0.png',
       memberCount: discordGuild?.member_count || 0,
       lat: server.lat,
       lon: server.lon,
@@ -2348,7 +2537,7 @@ router.post('/api/admin/user/reset-stats', rateLimit(20, 10000), ensureCsrf, asy
       try {
         const result = db.prepare(resetOperations[i]).run(userId);
         successCount++;
-        console.log(`Reset operation ${i + 1} completed: ${result.changes} rows affected`);
+        logger.info(`Reset operation ${i + 1} completed: ${result.changes} rows affected`);
       } catch (error) {
         errors.push(`${resetDescription[i]}: ${error.message}`);
         console.error(`Reset operation ${i + 1} failed:`, error.message);
@@ -2541,7 +2730,7 @@ router.get('/api/admin/user/inventory/:userId', rateLimit(30, 60000), async (req
     let discordUser = null;
     try {
       const response = await fetchSafe(`https://discord.com/api/v10/users/${userId}`, {
-        headers: { Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}` }
+        headers: { Authorization: `Bot ${process.env.DISCORD_TOKEN}` }
       });
       if (response.ok) {
         discordUser = await response.json();

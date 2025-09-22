@@ -1,77 +1,176 @@
+/**
+ * HEALTH/STAMINA REGENERATION AND TRAVEL COMPLETION MODULE
+ * 
+ * This module manages the core regeneration system for QuestCord, handling:
+ * - Automatic health and stamina regeneration over time
+ * - Travel completion when arrival times are reached
+ * - Location-based regeneration modifiers (biome effects)
+ * - Activity penalties (recent travel, combat) affecting regen rates
+ * - Premium user bonuses for faster regeneration and higher maximums
+ * - Item-based temporary regeneration effects and buffs
+ * - Landmark visit processing and Point of Interest (POI) interactions
+ * - Batch processing for efficient server-wide regeneration updates
+ * 
+ * The regeneration system uses time-based calculations to provide consistent
+ * healing and stamina recovery regardless of when players check their status.
+ */
+
+// Import database connection for player data operations
 const { db } = require('./store_sqlite');
+// Import travel history recording functionality
 const { recordTravel } = require('./travel_history');
+
+/**
+ * CONFIGURATION LOADING AND CONSTANTS
+ * 
+ * Load regeneration settings from config file with fallback defaults.
+ * These constants define base regeneration rates and maximum values.
+ */
+
+// Attempt to load main config file, fall back to empty object if missing
 let config = {};
-try { config = require('../../config.json'); } catch { config = {}; }
+try { 
+  config = require('../../config.json'); 
+} catch { 
+  config = {}; 
+}
 
+// Extract regeneration-specific configuration section
 const regenConfig = config.regen || {};
-const MAX_H = regenConfig.maxHealth || 100;
-const MAX_S = regenConfig.maxStamina || 100;
-const BASE_HPM = regenConfig.baseHealthPerMinute || 2;
-const BASE_SPM = regenConfig.baseStaminaPerMinute || 3;
 
-function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
+// Define base regeneration constants with config overrides
+const MAX_H = regenConfig.maxHealth || 100;              // Base maximum health points
+const MAX_S = regenConfig.maxStamina || 100;             // Base maximum stamina points  
+const BASE_HPM = regenConfig.baseHealthPerMinute || 2;   // Base health points per minute
+const BASE_SPM = regenConfig.baseStaminaPerMinute || 3;  // Base stamina points per minute
 
-// Idempotent column adds
+/**
+ * UTILITY FUNCTION - VALUE CLAMPING
+ * 
+ * Clamps a numeric value between minimum and maximum bounds.
+ * Used to ensure health/stamina values stay within valid ranges.
+ * 
+ * @param {number} n - Value to clamp
+ * @param {number} lo - Minimum allowed value
+ * @param {number} hi - Maximum allowed value
+ * @returns {number} Clamped value between lo and hi
+ */
+function clamp(n, lo, hi) { 
+  return Math.max(lo, Math.min(hi, n)); 
+}
+
+/**
+ * DATABASE COLUMN EXISTENCE VALIDATION
+ * 
+ * Ensures all required columns exist in the players table for regeneration system.
+ * Adds missing columns dynamically to handle database schema evolution.
+ * This function is idempotent - safe to run multiple times.
+ */
 function ensureColumns() {
   try {
+    // Get list of all existing columns in players table
     const cols = db.prepare("PRAGMA table_info(players)").all().map(c => c.name);
+    
+    // Add health update timestamp column if missing
     if (!cols.includes('healthUpdatedAt')) {
       db.prepare("ALTER TABLE players ADD COLUMN healthUpdatedAt INTEGER").run();
+      // Initialize existing players with current timestamp
       db.prepare("UPDATE players SET healthUpdatedAt = strftime('%s','now')*1000 WHERE healthUpdatedAt IS NULL").run();
     }
+    // Add stamina update timestamp column if missing
     if (!cols.includes('staminaUpdatedAt')) {
       db.prepare("ALTER TABLE players ADD COLUMN staminaUpdatedAt INTEGER").run();
+      // Initialize existing players with current timestamp
       db.prepare("UPDATE players SET staminaUpdatedAt = strftime('%s','now')*1000 WHERE staminaUpdatedAt IS NULL").run();
     }
+    
+    // Add premium status column if missing (for regeneration bonuses)
     if (!cols.includes('isPremium')) {
       db.prepare("ALTER TABLE players ADD COLUMN isPremium INTEGER DEFAULT 0").run();
       db.prepare("UPDATE players SET isPremium = COALESCE(isPremium, 0)").run();
     }
+    
+    // Add last combat timestamp column if missing (for combat penalties)
     if (!cols.includes('lastCombatAt')) {
       db.prepare("ALTER TABLE players ADD COLUMN lastCombatAt INTEGER DEFAULT 0").run();
     }
+    
+    // Add regeneration effects column if missing (for item buffs)
     if (!cols.includes('regenEffects')) {
       db.prepare("ALTER TABLE players ADD COLUMN regenEffects TEXT DEFAULT '{}'").run();
     }
+    
+    // Add current biome column if missing (for location bonuses)
     if (!cols.includes('currentBiome')) {
       db.prepare("ALTER TABLE players ADD COLUMN currentBiome TEXT DEFAULT 'city'").run();
     }
   } catch (e) {
-    // ignore; first boot might not have tables yet
+    // Ignore errors - tables might not exist on first boot
+    // Database initialization will handle table creation
   }
 }
+
+// Run column validation on module load
 ensureColumns();
 
+/**
+ * LOCATION-BASED REGENERATION MULTIPLIERS
+ * 
+ * Calculates regeneration rate multipliers based on player's current biome/location.
+ * Different environments provide different healing rates (e.g., hospitals heal faster).
+ * 
+ * @param {string} biome - Current biome/location type
+ * @returns {Object} Object with health and stamina multiplier values
+ */
 function getLocationMultiplier(biome) {
+  // Get location bonuses from config, with fallback to empty object
   const locationBonuses = regenConfig.locationBonuses || {};
+  // Get bonuses for specific biome, fallback to city, then to empty object
   const bonus = locationBonuses[biome] || locationBonuses['city'] || {};
+  
   return {
-    health: bonus.healthMultiplier || 1.0,
-    stamina: bonus.staminaMultiplier || 1.0
+    health: bonus.healthMultiplier || 1.0,   // Health regeneration multiplier
+    stamina: bonus.staminaMultiplier || 1.0  // Stamina regeneration multiplier
   };
 }
 
+/**
+ * ACTIVITY-BASED REGENERATION PENALTIES
+ * 
+ * Calculates regeneration penalties based on recent player activities.
+ * Recent travel or combat reduces regeneration rates temporarily.
+ * This adds realism - you heal slower when recently active or stressed.
+ * 
+ * @param {string} userId - Player to check activity penalties for
+ * @param {number} now - Current timestamp for recency calculations
+ * @returns {Object} Object with health and stamina penalty multipliers
+ */
 function getActivityPenalty(userId, now) {
+  // Get player's recent activity timestamps
   const player = db.prepare(`SELECT travelArrivalAt, lastCombatAt FROM players WHERE userId=?`).get(userId);
   if (!player) return { health: 1.0, stamina: 1.0 };
 
+  // Start with no penalties (1.0 = normal rate)
   let healthMult = 1.0;
   let staminaMult = 1.0;
 
+  // Get penalty configuration settings
   const penalties = regenConfig.activityPenalties || {};
   
-  // Check for recent travel
+  // Apply travel penalty if player recently completed travel
   if (player.travelArrivalAt && (now - player.travelArrivalAt) < (penalties.recently_traveled?.duration || 300000)) {
     const travelPenalty = penalties.recently_traveled || {};
-    healthMult *= (travelPenalty.healthMultiplier || 0.7);
-    staminaMult *= (travelPenalty.staminaMultiplier || 0.3);
+    // Travel is exhausting - reduces regeneration rates temporarily
+    healthMult *= (travelPenalty.healthMultiplier || 0.7);   // 70% health regen
+    staminaMult *= (travelPenalty.staminaMultiplier || 0.3); // 30% stamina regen
   }
 
-  // Check for recent combat
+  // Apply combat penalty if player was recently in combat
   if (player.lastCombatAt && (now - player.lastCombatAt) < (penalties.in_combat?.duration || 600000)) {
     const combatPenalty = penalties.in_combat || {};
-    healthMult *= (combatPenalty.healthMultiplier || 0.2);
-    staminaMult *= (combatPenalty.staminaMultiplier || 0.1);
+    // Combat stress severely impacts regeneration
+    healthMult *= (combatPenalty.healthMultiplier || 0.2);   // 20% health regen
+    staminaMult *= (combatPenalty.staminaMultiplier || 0.1); // 10% stamina regen
   }
 
   return { health: healthMult, stamina: staminaMult };
@@ -114,15 +213,27 @@ function getActiveItemEffects(userId, now) {
   return { health: healthMult, stamina: staminaMult };
 }
 
+/**
+ * PREMIUM USER REGENERATION BONUSES
+ * 
+ * Calculates bonus multipliers and maximum increases for premium users.
+ * Premium users get faster regeneration and higher maximum values as a benefit.
+ * 
+ * @param {boolean} isPremium - Whether user has premium status
+ * @returns {Object} Bonus multipliers and maximum value increases
+ */
 function getPremiumBonuses(isPremium) {
+  // Non-premium users get no bonuses
   if (!isPremium) return { health: 1.0, stamina: 1.0, maxHealthBonus: 0, maxStaminaBonus: 0 };
   
+  // Get premium bonus configuration
   const premiumBonuses = regenConfig.premiumBonuses || {};
+  
   return {
-    health: premiumBonuses.healthMultiplier || 1.5,
-    stamina: premiumBonuses.staminaMultiplier || 1.3,
-    maxHealthBonus: premiumBonuses.maxHealthBonus || 50,
-    maxStaminaBonus: premiumBonuses.maxStaminaBonus || 30
+    health: premiumBonuses.healthMultiplier || 1.5,      // 150% health regen rate
+    stamina: premiumBonuses.staminaMultiplier || 1.3,    // 130% stamina regen rate  
+    maxHealthBonus: premiumBonuses.maxHealthBonus || 50, // +50 max health
+    maxStaminaBonus: premiumBonuses.maxStaminaBonus || 30 // +30 max stamina
   };
 }
 
@@ -228,52 +339,57 @@ function applyRegenForUser(userId) {
 function applyRegenToAll() {
   try {
     const now = Date.now();
-    
-    // First, complete any finished travels and record history
-    const completedTravels = db.prepare(`
-      SELECT userId, travelFromGuildId, locationGuildId, travelStartAt, travelArrivalAt
-      FROM players 
-      WHERE travelArrivalAt > 0 AND travelArrivalAt <= ?
-    `).all(now);
-    
-    // Record travel history for completed travels
-    for (const travel of completedTravels) {
-      const travelTime = travel.travelArrivalAt - travel.travelStartAt;
-      recordTravel(travel.userId, travel.travelFromGuildId, travel.locationGuildId, travelTime);
-      
-      // Handle landmark arrivals
-      if (travel.locationGuildId && travel.locationGuildId.startsWith('landmark_')) {
-        const landmarkId = travel.locationGuildId.replace('landmark_', '');
-        
-        try {
-          // Get POI info
-          const poi = db.prepare('SELECT * FROM pois WHERE id = ?').get(landmarkId);
-          if (poi) {
-            // Check if already visited
-            const alreadyVisited = db.prepare('SELECT 1 FROM poi_visits WHERE userId = ? AND poiId = ?').get(travel.userId, landmarkId);
-            
-            if (!alreadyVisited) {
-              // Record first visit
-              db.prepare('INSERT INTO poi_visits (userId, poiId, visitedAt, isFirstVisit) VALUES (?, ?, ?, 1)').run(
-                travel.userId, landmarkId, now
-              );
+
+    // Process travel completions in a transaction to prevent race conditions
+    const completeTravels = db.transaction(() => {
+      // First, get and lock the completed travels
+      const completedTravels = db.prepare(`
+        SELECT userId, travelFromGuildId, locationGuildId, travelStartAt, travelArrivalAt
+        FROM players
+        WHERE travelArrivalAt > 0 AND travelArrivalAt <= ?
+      `).all(now);
+
+      if (completedTravels.length === 0) return;
+
+      // Record travel history for completed travels
+      for (const travel of completedTravels) {
+        const travelTime = travel.travelArrivalAt - travel.travelStartAt;
+        recordTravel(travel.userId, travel.travelFromGuildId, travel.locationGuildId, travelTime);
+
+        // Handle landmark arrivals
+        if (travel.locationGuildId && travel.locationGuildId.startsWith('landmark_')) {
+          const landmarkId = travel.locationGuildId.replace('landmark_', '');
+
+          try {
+            // Get POI info
+            const poi = db.prepare('SELECT * FROM pois WHERE id = ?').get(landmarkId);
+            if (poi) {
+              // Check if already visited
+              const alreadyVisited = db.prepare('SELECT 1 FROM poi_visits WHERE userId = ? AND poiId = ?').get(travel.userId, landmarkId);
+
+              if (!alreadyVisited) {
+                // Record first visit
+                db.prepare('INSERT INTO poi_visits (userId, poiId, visitedAt, isFirstVisit) VALUES (?, ?, ?, 1)').run(
+                  travel.userId, landmarkId, now
+                );
+              }
             }
+          } catch (error) {
+            console.error('Error processing landmark arrival:', error);
           }
-        } catch (error) {
-          console.error('Error processing landmark arrival:', error);
         }
-        
-        // Keep player at landmark (they are now "at" the landmark, not back at origin)
-        // This allows them to travel FROM landmarks to other destinations
       }
-    }
-    
-    // Clear completed travels
-    db.prepare(`
-      UPDATE players 
-      SET travelArrivalAt = 0 
-      WHERE travelArrivalAt > 0 AND travelArrivalAt <= ?
-    `).run(now);
+
+      // Clear completed travels atomically
+      db.prepare(`
+        UPDATE players
+        SET travelArrivalAt = 0
+        WHERE travelArrivalAt > 0 AND travelArrivalAt <= ?
+      `).run(now);
+    });
+
+    // Execute the travel completion transaction
+    completeTravels();
     
     const rows = db.prepare(`
       SELECT userId, health, stamina, healthUpdatedAt, staminaUpdatedAt, 
@@ -423,13 +539,19 @@ function getRegenStatus(userId) {
   };
 }
 
+/**
+ * MODULE EXPORTS - REGENERATION SYSTEM API
+ * 
+ * Export all regeneration-related functions for use by other modules.
+ * This API provides both individual player operations and batch processing.
+ */
 module.exports = { 
-  applyRegenForUser, 
-  applyRegenToAll, 
-  applyItemEffect, 
-  updateCombatStatus, 
-  updateBiome, 
-  getRegenStatus,
-  MAX_H, 
-  MAX_S 
+  applyRegenForUser,      // Apply regeneration to single player
+  applyRegenToAll,        // Batch regeneration for all players + travel completion
+  applyItemEffect,        // Apply temporary item-based regeneration effects
+  updateCombatStatus,     // Mark player as recently in combat (affects regen)
+  updateBiome,            // Update player's current biome for location bonuses
+  getRegenStatus,         // Get current regeneration rates and status for player
+  MAX_H,                  // Base maximum health constant
+  MAX_S                   // Base maximum stamina constant
 };

@@ -3,15 +3,16 @@ const config = require('./config');
 
 /**
  * Automatic Boss Spawning System
- * Spawns bosses every 4-6 hours with a global limit of 15
+ * Maintains exactly 1 boss active at all times globally
+ * Spawns new boss when current boss is defeated or expires
  */
 
 // Boss spawn configuration
 const BOSS_CONFIG = {
-  SPAWN_INTERVAL: 5 * 60 * 60 * 1000, // 5 hours in milliseconds (4-6 hour range with randomization)
-  MAX_GLOBAL_BOSSES: 15,
-  MAX_BOSSES_PER_CYCLE: 3, // Maximum bosses that can spawn in a single cycle
-  SPAWN_CHANCE: 0.4, // 40% chance to fill each potential spawn slot
+  SPAWN_INTERVAL: 2 * 60 * 60 * 1000, // 2 hours in milliseconds (check more frequently for single boss)
+  MAX_GLOBAL_BOSSES: 1, // Only 1 boss at a time globally
+  MAX_BOSSES_PER_CYCLE: 1, // Maximum bosses that can spawn in a single cycle
+  SPAWN_CHANCE: 1.0, // 100% chance to spawn when no boss is active
   NOTIFICATION_CHANNEL_ID: '1411045103921004554',
   BOSS_ROLE_ID: '1411051374153826386' // Correct boss notification role
 };
@@ -313,40 +314,40 @@ async function notifyBossSpawn(bossData, client) {
 
     const { EmbedBuilder } = require('discord.js');
     const embed = new EmbedBuilder()
-      .setTitle(`🔥👹 **${bossData.name.toUpperCase()}** 👹🔥`)
-      .setDescription(`⚔️ **NEW BOSS SPAWNED** ⚔️\n*A mighty foe has emerged from the ${bossData.biome || 'unknown'} realm...*`)
+      .setTitle(`⚔️ ${bossData.name} has spawned!`)
+      .setDescription(`A **Tier ${bossData.tier} ${tierNames[bossData.tier]}** boss has emerged and threatens the realm!`)
       .setColor(tierColors[bossData.tier] || 0xFF0000)
       .addFields(
         {
-          name: '🏮 **Boss Details**',
-          value: `**${bossData.name}**\n💀 **${bossData.maxHp.toLocaleString()} HP**\n⚡ **Tier ${bossData.tier}** (${tierNames[bossData.tier]})\n🌍 **${bossData.biome || 'Unknown'} Biome**`,
+          name: '💀 Boss Info',
+          value: `**HP:** ${bossData.maxHp.toLocaleString()}\n**Type:** ${tierNames[bossData.tier]} (Tier ${bossData.tier})\n**Biome:** ${bossData.biome || 'Unknown'}`,
           inline: true
         },
         {
-          name: '📍 **Location**',
-          value: `**${bossData.serverName || 'Unknown Server'}**\nServer ID: ${bossData.guildId}\n🗺️ [View on Map](https://questcord.fun/${bossData.guildId})`,
+          name: '📍 Location',
+          value: `**${bossData.serverName || 'Unknown Server'}**\n\n🗺️ [View on Map](https://questcord.fun/)`,
           inline: true
         },
         {
-          name: '⏰ **Time Limit**',
-          value: `**${timeRemainingHours}h remaining**\n⚡ Attack before it vanishes!\n🏆 Defeat for epic loot`,
+          name: '⏰ Time Left',
+          value: `**${timeRemainingHours}h**\n\nHurry before it escapes!`,
           inline: true
         }
       )
       .addFields({
-        name: '⚔️ **Battle Instructions**',
-        value: '• Join the server to fight\n• Use `/boss attack` to deal damage\n• Coordinate with other players!\n• Higher tier = better rewards',
+        name: '⚔️ How to Fight',
+        value: '• Join the server where the boss spawned\n• Use `/boss attack` to deal damage\n• Work together with other players!\n• Defeat it for valuable rewards',
         inline: false
       })
       .setFooter({ 
-        text: '⚔️ Good luck, brave adventurers! • QuestCord Boss System',
+        text: 'Only one boss can exist at a time • QuestCord',
         iconURL: client.user?.displayAvatarURL()
       })
       .setTimestamp();
 
     // Send notification with role mention
     await channel.send({
-      content: `<@&${BOSS_CONFIG.BOSS_ROLE_ID}> 🔥 **NEW BOSS ALERT** 🔥`,
+      content: `<@&${BOSS_CONFIG.BOSS_ROLE_ID}> 🚨 **BOSS ALERT** 🚨`,
       embeds: [embed]
     });
 
@@ -390,26 +391,18 @@ async function runBossSpawningCycle(client = null) {
     const activeBosses = db.prepare('SELECT COUNT(*) as count FROM bosses WHERE active = 1').get();
     const currentCount = activeBosses?.count || 0;
     
-    // Get total number of active servers (not archived)
-    const serverCount = db.prepare('SELECT COUNT(*) as count FROM servers WHERE archived = 0').get();
-    const totalServers = serverCount?.count || 0;
+    console.log(`[boss_spawner] Current active bosses: ${currentCount}/1 (single boss system, cleaned up ${expiredCount} expired)`);
     
-    // Calculate dynamic boss limit: 1 boss per 10 servers, minimum 1, maximum 15
-    const dynamicBossLimit = Math.min(BOSS_CONFIG.MAX_GLOBAL_BOSSES, Math.max(1, Math.floor(totalServers / 10)));
-    
-    console.log(`[boss_spawner] Current active bosses: ${currentCount}/${dynamicBossLimit} (${totalServers} servers, cleaned up ${expiredCount} expired)`);
-    
-    // Don't spawn if we're at the dynamic limit
-    if (currentCount >= dynamicBossLimit) {
-      console.log('[boss_spawner] Dynamic boss limit reached, skipping spawn cycle');
+    // Don't spawn if we already have an active boss
+    if (currentCount >= 1) {
+      console.log('[boss_spawner] Boss already active, skipping spawn cycle');
       return;
     }
     
-    // Calculate adaptive spawn chance - higher chance when fewer bosses are active
-    const bossesNeeded = dynamicBossLimit - currentCount;
-    const adaptiveSpawnChance = Math.min(BOSS_CONFIG.SPAWN_CHANCE * (1 + (bossesNeeded / dynamicBossLimit)), 0.8); // Cap at 80%
+    // Always spawn when no boss is active (simplified logic)
+    const adaptiveSpawnChance = BOSS_CONFIG.SPAWN_CHANCE;
     
-    // Check for global boss defeat cooldown (10 minutes after any boss is defeated)
+    // Check for global boss defeat cooldown (5 minutes after any boss is defeated)
     let lastBossDefeat = 0;
     try {
       // Create system_settings table if it doesn't exist
@@ -428,7 +421,7 @@ async function runBossSpawningCycle(client = null) {
       lastBossDefeat = 0;
     }
     
-    const defeatCooldown = 10 * 60 * 1000; // 10 minutes in milliseconds
+    const defeatCooldown = 5 * 60 * 1000; // 5 minutes in milliseconds
     
     if (lastBossDefeat && (Date.now() - lastBossDefeat) < defeatCooldown) {
       const timeLeft = Math.round((defeatCooldown - (Date.now() - lastBossDefeat)) / 1000 / 60);

@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const { db } = require('../utils/store_sqlite');
-const { isStaffOrDev, tag } = require('../utils/roles');
+const { isStaffOrDev, tag, getUserPrefix } = require('../utils/roles');
 const logger = require('../utils/logger');
 
 module.exports = {

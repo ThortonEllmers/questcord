@@ -63,9 +63,17 @@ module.exports = {
       
       if (!existingPlayer) {
         // Create player entry if doesn't exist
-        const guildId = interaction.guildId || process.env.SPAWN_GUILD_ID || '1404523107544469545';
+        const guildId = interaction.guildId || process.env.SPAWN_GUILD_ID;
+
+        if (!guildId) {
+          return interaction.reply({
+            content: `${userPrefix} Error: No guild context available and SPAWN_GUILD_ID not configured.`,
+            ephemeral: true
+          });
+        }
+
         db.prepare(`
-          INSERT INTO players (userId, name, health, stamina, locationGuildId) 
+          INSERT INTO players (userId, name, health, stamina, locationGuildId)
           VALUES (?, ?, ?, ?, ?)
         `).run(targetUser.id, targetUser.username, 100, 100, guildId);
       }

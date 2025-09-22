@@ -79,10 +79,10 @@ module.exports = {
       const gemBalance = getGemBalance(userId);
       
       const statusEmbed = new EmbedBuilder()
-        .setTitle(isPremiumUser ? '👑✨ **PREMIUM STATUS** ✨👑' : '⭐🔒 **PREMIUM UPGRADE** 🔒⭐')
-        .setDescription(isPremiumUser ? 
-          '🌟 *You have access to exclusive premium features* 🌟' :
-          '💎 *Upgrade to premium for exclusive benefits* 💎')
+        .setTitle(isPremiumUser ? 'Premium Status' : 'Premium Upgrade')
+        .setDescription(isPremiumUser ?
+          'You have access to exclusive premium features' :
+          'Upgrade to premium for exclusive benefits')
         .setColor(isPremiumUser ? 0xFFD700 : 0x95A5A6)
         .setAuthor({ 
           name: `${userPrefix}${isPremiumUser ? ' - Premium Member' : ' - Standard Account'}`,

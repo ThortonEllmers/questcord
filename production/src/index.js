@@ -1,8 +1,6 @@
-// Load environment-specific .env file first, then fallback to default
-// DEVELOPMENT VERSION WITH TEST CHANGES
 const envFile = process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env';
 require('dotenv').config({ path: envFile });
-require('dotenv').config(); // Fallback to .env for any missing vars
+require('dotenv').config();
 const { Client, Collection, GatewayIntentBits, Partials, Events, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
@@ -20,13 +18,25 @@ const client = new Client({
 });
 
 client.commands = new Collection();
-const cmdFiles = fs.readdirSync(path.join(__dirname, 'commands')).filter(f => f.endsWith('.js') && !['_common.js', '_guard.js'].includes(f));
+const cmdFiles = fs.readdirSync(path.join(__dirname, 'commands'))
+  .filter(f => f.endsWith('.js') && !['_common.js', '_guard.js'].includes(f));
 for (const f of cmdFiles) {
   const cmd = require(path.join(__dirname, 'commands', f));
   if (cmd.data) client.commands.set(cmd.data.name, cmd);
 }
 
 const buckets = new Map();
+
+// Cleanup expired rate limiting buckets every 10 minutes to prevent memory leaks
+setInterval(() => {
+  const now = Date.now();
+  for (const [userId, bucket] of buckets.entries()) {
+    if (now > bucket.reset) {
+      buckets.delete(userId);
+    }
+  }
+}, 600000); // Clean every 10 minutes
+
 function hit(userId) {
   const now = Date.now();
   const lim = config.security?.commandRate || { max: 12, perMs: 10000 };
@@ -37,124 +47,197 @@ function hit(userId) {
     b.count = 0;
     b.reset = now + perMs;
   }
-  b.count++;
-  buckets.set(userId, b);
-  return b.count <= max;
+  b.count++; // Increment command count
+  buckets.set(userId, b); // Update user's bucket
+  return b.count <= max; // Return true if under limit, false if over
 }
 
+// ============================================================================
+// AUTOMATIC SERVER PLACEMENT SYSTEM
+// ============================================================================
+// Assigns geographic coordinates to servers that don't have them
+// Uses intelligent land-based placement with collision detection
+
+/**
+ * Automatically place a guild on the map if it doesn't have coordinates
+ * @param {string} guildId - Discord guild ID
+ */
 async function autoPlaceIfNeeded(guildId) {
-  const s = db.prepare('SELECT * FROM servers WHERE guildId=?').get(guildId);
-  if (!s || s.lat == null || s.lon == null) {
+  const s = db.prepare('SELECT * FROM servers WHERE guildId=?').get(guildId); // Check if server exists in database
+  if (!s || s.lat == null || s.lon == null) { // If server doesn't exist or lacks coordinates
     try {
-      const count = db.prepare('SELECT COUNT(*) as n FROM servers').get().n;
-      const center = process.env.SPAWN_GUILD_ID ? db.prepare('SELECT lat, lon FROM servers WHERE guildId=?').get(process.env.SPAWN_GUILD_ID) || { lat: 0, lon: 0 } : { lat: 0, lon: 0 };
+      const count = db.prepare('SELECT COUNT(*) as n FROM servers').get().n; // Get total server count for spiral placement
+      // Get spawn center coordinates from environment or use (0,0) as default
+      const center = process.env.SPAWN_GUILD_ID ? 
+        db.prepare('SELECT lat, lon FROM servers WHERE guildId=?').get(process.env.SPAWN_GUILD_ID) || { lat: 0, lon: 0 } : 
+        { lat: 0, lon: 0 };
       
-      // Use collision-aware placement
+      // Use collision-aware placement to avoid placing servers on water or too close to others
       const pos = await findNonCollidingLandPosition(center.lat, center.lon, db);
-      const biome = require('./web/util').assignBiomeDeterministic(guildId);
+      const biome = require('./web/util').assignBiomeDeterministic(guildId); // Assign biome based on guild ID
       
+      // Update database with new coordinates and biome
       db.prepare('UPDATE servers SET lat=?, lon=?, biome=? WHERE guildId=?').run(pos.lat, pos.lon, biome, guildId);
-      console.log(`Auto-placed guild ${guildId} at ${pos.lat}, ${pos.lon} (${biome})`);
+      logger.info(`Auto-placed guild ${guildId} at ${pos.lat}, ${pos.lon} (${biome})`);
     } catch (error) {
       console.warn(`Failed to auto-place guild ${guildId} with collision detection, using fallback:`, error.message);
       
-      // Fallback to original spiral placement
-      const count = db.prepare('SELECT COUNT(*) as n FROM servers').get().n;
-      const center = process.env.SPAWN_GUILD_ID ? db.prepare('SELECT lat, lon FROM servers WHERE guildId=?').get(process.env.SPAWN_GUILD_ID) || { lat: 0, lon: 0 } : { lat: 0, lon: 0 };
-      const pos = placeOnSpiral(count, center);
-      const biome = require('./web/util').assignBiomeDeterministic(guildId);
-      db.prepare('UPDATE servers SET lat=?, lon=?, biome=? WHERE guildId=?').run(pos.lat, pos.lon, biome, guildId);
+      // Fallback to original spiral placement if advanced placement fails
+      const count = db.prepare('SELECT COUNT(*) as n FROM servers').get().n; // Get server count
+      const center = process.env.SPAWN_GUILD_ID ? 
+        db.prepare('SELECT lat, lon FROM servers WHERE guildId=?').get(process.env.SPAWN_GUILD_ID) || { lat: 0, lon: 0 } : 
+        { lat: 0, lon: 0 }; // Get spawn center
+      const pos = placeOnSpiral(count, center); // Place on spiral pattern
+      const biome = require('./web/util').assignBiomeDeterministic(guildId); // Assign biome
+      db.prepare('UPDATE servers SET lat=?, lon=?, biome=? WHERE guildId=?').run(pos.lat, pos.lon, biome, guildId); // Update database
     }
   }
 }
 
+// ============================================================================
+// BOT STATUS MANAGEMENT
+// ============================================================================
+// Updates the bot's Discord presence based on active boss count
+// Shows "Peaceful World" when no bosses, "X Bosses Active!" when bosses are spawned
+
+/**
+ * Update bot's Discord status based on active boss count
+ * Changes activity type and text to reflect current world state
+ */
 function updateBossStatus() {
   try {
-    const activeBossCount = db.prepare('SELECT COUNT(*) as count FROM bosses WHERE active=1 AND expiresAt > ?').get(Date.now()).count;
+    // Get active boss information
+    const activeBoss = db.prepare('SELECT b.*, s.name as serverName FROM bosses b LEFT JOIN servers s ON b.guildId = s.guildId WHERE b.active=1 AND b.expiresAt > ? LIMIT 1')
+      .get(Date.now());
     
-    let status;
-    let activityType;
-    if (activeBossCount === 0) {
-      status = 'Peaceful World';
-      activityType = 0; // PLAYING
-    } else if (activeBossCount === 1) {
-      status = '1 Boss Active!';
-      activityType = 1; // STREAMING  
+    let status; // Status text to display
+    let activityType; // Discord activity type (3=WATCHING)
+    
+    if (!activeBoss) {
+      status = 'a peaceful world'; // No active bosses
+      activityType = 3; // WATCHING activity type
     } else {
-      status = `${activeBossCount} Bosses Active!`;
-      activityType = 1; // STREAMING
+      const serverName = activeBoss.serverName || 'Unknown Server';
+      status = `a boss battle in ${serverName}`; // Boss active
+      activityType = 3; // WATCHING activity type
     }
     
+    // Set the bot's Discord presence
     client.user.setActivity(status, { 
-      type: activityType,
-      url: activityType === 1 ? 'https://twitch.tv/questcord' : undefined
+      type: activityType // WATCHING activity type shows as "Watching {status}"
     });
     
-    logger.info('boss_status: Updated bot status - %s', status);
+    logger.info('boss_status: Updated bot status - Watching %s', status); // Log status update
   } catch (error) {
-    logger.error('boss_status: Failed to update bot status - %s', error.message);
+    logger.error('boss_status: Failed to update bot status - %s', error.message); // Log errors
   }
 }
 
-// Export the function so it can be called from other modules
-module.exports = { updateBossStatus };
+// Export the function so it can be called from other modules (e.g., boss spawner)
+module.exports = { updateBossStatus }; // Make updateBossStatus available to other files
+
+// ============================================================================
+// BOT READY EVENT - SYSTEM INITIALIZATION
+// ============================================================================
+// This event fires once when the bot successfully connects to Discord
+// Handles all system initialization including commands, databases, and background services
 
 client.once(Events.ClientReady, async () => {
-  console.log(`[bot] Logged in as ${client.user.tag}`);
+  logger.info(`[bot] Logged in as ${client.user.tag}`);
   
-  // Log bot startup to webhook
+  // Log bot startup to Discord webhook for monitoring
   try {
-    await logBotStartup();
-    console.log('[webhook] Startup logged to Discord');
+    await logBotStartup(); // Send startup notification to Discord webhook
+    logger.info('[webhook] Startup logged to Discord');
   } catch (error) {
-    console.warn('[webhook] Failed to log startup:', error.message);
+    console.warn('[webhook] Failed to log startup:', error.message); // Non-critical error
   }
   
   // Auto-deploy slash commands on startup
+  // This registers all bot commands with Discord so users can see and use them
   try {
-    console.log('[deploy] Deploying slash commands...');
-    require('../scripts/deploy-commands');
-    console.log('[deploy] Slash commands deployed successfully');
+    logger.info('[deploy] Deploying slash commands...');
+    require('../scripts/deploy-commands'); // Run deployment script
+    logger.info('[deploy] Slash commands deployed successfully');
   } catch (error) {
-    console.error('[deploy] Failed to deploy slash commands:', error.message);
-    await logError(error, 'Slash command deployment failed');
+    console.error('[deploy] Failed to deploy slash commands:', error.message); // Log deployment failure
+    await logError(error, 'Slash command deployment failed'); // Send error to webhook
   }
   
   // Initialize boss status tracking
-  updateBossStatus();
+  // Updates bot's Discord presence to show active boss count
+  updateBossStatus(); // Update status immediately
   setInterval(updateBossStatus, 30000); // Update every 30 seconds
   
   // Initialize regeneration system (handles travel completion and stats recording)
-  const { applyRegenToAll } = require('./utils/regen');
-  applyRegenToAll(); // Run once on startup
-  setInterval(applyRegenToAll, 60000); // Run every 60 seconds
-  console.log('[regen] Batch regeneration system started - travel completion and stats recording active');
+  // This system processes player health/stamina regeneration and completes travel
+  const { applyRegenToAll } = require('./utils/regen'); // Import regeneration functions
+  applyRegenToAll(); // Run once on startup to process any pending travels
+  setInterval(applyRegenToAll, 60000); // Run every 60 seconds continuously
+  logger.info('[regen] Batch regeneration system started - travel completion and stats recording active');
   
   // Initialize weather system
-  const { initializeWeatherSystem, generateWeatherEvents } = require('./utils/weather');
-  initializeWeatherSystem(); // Setup database tables
-  generateWeatherEvents(client); // Generate initial weather
+  // Creates dynamic weather that affects travel times and routes
+  const { initializeWeatherSystem, generateWeatherEvents } = require('./utils/weather'); // Import weather functions
+  initializeWeatherSystem(); // Setup database tables for weather data
+  generateWeatherEvents(client); // Generate initial weather events
   setInterval(() => generateWeatherEvents(client), 5 * 60 * 1000); // Generate new weather every 5 minutes
-  console.log('[weather] Dynamic weather system initialized - storms, cyclones, and weather effects active');
+  logger.info('[weather] Dynamic weather system initialized - storms, cyclones, and weather effects active');
   
-  // Initialize POI system with famous landmarks
-  const { initializePOIs } = require('./utils/pois');
-  initializePOIs();
-  console.log('[poi] Points of Interest system initialized - famous landmarks ready for exploration');
+  // Initialize POI (Points of Interest) system with famous landmarks
+  // Loads famous world landmarks that players can travel to and visit
+  const { initializePOIs } = require('./utils/pois'); // Import POI functions
+  initializePOIs(); // Load landmarks into database
+  logger.info('[poi] Points of Interest system initialized - famous landmarks ready for exploration');
+  
+  // Bulk import all existing users from all servers to spawn server
+  // This ensures all users across all servers are displayed in the spawn server
+  if (process.env.SPAWN_GUILD_ID) {
+    logger.info('[user_import] Starting bulk user import from all servers...');
+    setTimeout(async () => {
+      try {
+        const { ensurePlayerWithVehicles } = require('./utils/players');
+        let importCount = 0;
+        
+        for (const [guildId, guild] of client.guilds.cache) {
+          try {
+            const members = await guild.members.fetch();
+            for (const [userId, member] of members) {
+              // Skip bots and users already in database
+              if (member.user.bot) continue;
+              
+              const existingPlayer = db.prepare('SELECT userId FROM players WHERE userId=?').get(userId);
+              if (existingPlayer) continue;
+              
+              // Create player at spawn server
+              await ensurePlayerWithVehicles(client, userId, member.user.username, process.env.SPAWN_GUILD_ID);
+              importCount++;
+            }
+          } catch (e) {
+            console.warn(`[user_import] Failed to import users from guild ${guild.name}:`, e.message);
+          }
+        }
+        
+        logger.info(`[user_import] Bulk import completed - imported ${importCount} new users to spawn server`);
+      } catch (error) {
+        console.error('[user_import] Bulk import failed:', error.message);
+      }
+    }, 10000); // Wait 10 seconds for bot to be fully ready
+  }
   
   // Initialize automatic boss spawning system with randomized 4-6 hour intervals
   const { initializeBossSpawner, runBossSpawningCycle, getNextSpawnInterval, cleanupExpiredBosses, cleanupOrphanedBossFighterRoles } = require('./utils/boss_spawner');
   initializeBossSpawner(); // Setup boss spawning system
   
   // Startup cleanup: Clean up any expired bosses and orphaned roles from previous session
-  console.log('[boss_spawner] Running startup cleanup...');
+  logger.info('[boss_spawner] Running startup cleanup...');
   
   // Add a small delay to ensure bot is fully ready and guilds are cached
   setTimeout(async () => {
     try {
       const expiredCount = await cleanupExpiredBosses(client); // Clean up expired bosses and database records
       await cleanupOrphanedBossFighterRoles(client); // Clean up orphaned Discord roles
-      console.log(`[boss_spawner] Startup cleanup completed - cleaned up ${expiredCount} expired bosses and orphaned roles`);
+      logger.info(`[boss_spawner] Startup cleanup completed - cleaned up ${expiredCount} expired bosses and orphaned roles`);
     } catch (error) {
       console.warn('[boss_spawner] Startup cleanup failed:', error.message);
     }
@@ -167,7 +250,7 @@ client.once(Events.ClientReady, async () => {
   function scheduleNextBossSpawn() {
     const nextInterval = getNextSpawnInterval(); // 4-6 hours randomized
     const hoursFromNow = (nextInterval / (1000 * 60 * 60)).toFixed(1);
-    console.log(`[boss_spawner] Next boss spawn scheduled in ${hoursFromNow} hours`);
+    logger.info(`[boss_spawner] Next boss spawn scheduled in ${hoursFromNow} hours`);
     
     setTimeout(async () => {
       try {
@@ -180,7 +263,7 @@ client.once(Events.ClientReady, async () => {
   }
   
   scheduleNextBossSpawn(); // Start the randomized scheduling
-  console.log('[boss_spawner] Automatic boss spawning system initialized - 4-6 hour randomized intervals with chance-based spawning (15 global limit)');
+  logger.info('[boss_spawner] Automatic boss spawning system initialized - 4-6 hour randomized intervals with chance-based spawning (15 global limit)');
   
   for (const [id, guild] of client.guilds.cache) {
     const iconUrl = guild.iconURL({ extension: 'png', size: 64 });
@@ -197,13 +280,22 @@ client.once(Events.ClientReady, async () => {
   
   // Check for servers in water and fix them automatically
   try {
-    console.log('Starting water check...');
+    logger.info('Starting water check...');
     await checkAndFixWaterServers(db);
   } catch (error) {
     console.error('Water check failed:', error.message);
   }
   
   createWebServer();
+
+  // Ensure all guilds have a biome assigned
+  try {
+    for (const [id] of client.guilds.cache) {
+      ensureGuildBiome(id);
+    }
+  } catch (e) {
+    console.warn('[biome] ready hook error:', e.message);
+  }
 });
 
 client.on(Events.GuildCreate, async (guild) => {
@@ -239,6 +331,32 @@ client.on(Events.GuildCreate, async (guild) => {
 client.on(Events.GuildDelete, (guild) => {
   db.prepare('UPDATE servers SET archived=1, archivedAt=?, archivedBy=? WHERE guildId=?').run(Date.now(), 'system', guild.id);
   logger.info('guild_remove_soft: %s', guild.id);
+});
+
+// Handle new members joining ANY server - add them to spawn server display
+client.on(Events.GuildMemberAdd, async (member) => {
+  try {
+    // Skip bots
+    if (member.user.bot) {
+      return;
+    }
+    
+    // Skip if no spawn server configured
+    if (!process.env.SPAWN_GUILD_ID) {
+      return;
+    }
+    
+    // Import player utilities for creating new users
+    const { ensurePlayerWithVehicles } = require('./utils/players');
+    
+    // Create new player and place them at spawn server (regardless of which server they joined)
+    await ensurePlayerWithVehicles(client, member.user.id, member.user.username, process.env.SPAWN_GUILD_ID);
+    
+    logger.info('new_user_auto_created: %s (%s) joined server %s and was registered at spawn server', member.user.username, member.user.id, member.guild.name);
+    
+  } catch (error) {
+    logger.error('Failed to handle new member join: %s', error.message);
+  }
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
@@ -542,10 +660,10 @@ process.on('unhandledRejection', async (reason, promise) => {
 
 // Handle graceful shutdown
 process.on('SIGINT', async () => {
-  console.log('\nReceived SIGINT. Graceful shutdown initiated...');
+  logger.info('\nReceived SIGINT. Graceful shutdown initiated...');
   try {
     await logBotShutdown('Manual shutdown (SIGINT)');
-    console.log('Shutdown logged to Discord');
+    logger.info('Shutdown logged to Discord');
   } catch (webhookError) {
     console.warn('Failed to log shutdown:', webhookError.message);
   }
@@ -553,10 +671,10 @@ process.on('SIGINT', async () => {
 });
 
 process.on('SIGTERM', async () => {
-  console.log('\nReceived SIGTERM. Graceful shutdown initiated...');
+  logger.info('\nReceived SIGTERM. Graceful shutdown initiated...');
   try {
     await logBotShutdown('System shutdown (SIGTERM)');
-    console.log('Shutdown logged to Discord');
+    logger.info('Shutdown logged to Discord');
   } catch (webhookError) {
     console.warn('Failed to log shutdown:', webhookError.message);
   }
@@ -575,19 +693,11 @@ function ensureGuildBiome(guildId) {
       const pick = arr[Math.floor(Math.random() * arr.length)];
       db.prepare('UPDATE servers SET biome=?, tokens=COALESCE(tokens, 1) WHERE guildId=?')
         .run(String(pick).toLowerCase(), guildId);
-      console.log('[biome] Assigned random biome to guild', guildId, '→', pick);
+      logger.info('[biome] Assigned random biome to guild', guildId, '→', pick);
     }
   } catch (e) { console.warn('[biome] ensureGuildBiome error:', e.message); }
 }
 
 
 
-// On ready, ensure all guilds have a biome
-client.once(Events.ClientReady, async () => {
-  try {
-    for (const [id] of client.guilds.cache) {
-      ensureGuildBiome(id);
-    }
-  } catch (e) { console.warn('[biome] ready hook error:', e.message); }
-});
 

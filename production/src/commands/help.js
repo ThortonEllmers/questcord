@@ -31,49 +31,48 @@ module.exports = {
       return await this.showCategory(interaction, category, isStaff);
     }
     
-    // Show all categories overview
     const embed = new EmbedBuilder()
-      .setTitle(`${userPrefix} - 🎮 QuestCord - Command Help`)
+      .setTitle(`${userPrefix} - QuestCord Help`)
       .setDescription('Use `/help category:<name>` to see detailed commands for each category.')
       .setColor(0x00AE86)
       .addFields(
         {
-          name: '📋 General',
+          name: 'General',
           value: 'Basic information and utility commands',
           inline: true
         },
         {
-          name: '📊 Player Stats', 
+          name: 'Player Stats',
           value: 'Health, stamina, and character info',
           inline: true
         },
         {
-          name: '💰 Economy & Trading',
+          name: 'Economy & Trading',
           value: 'Currency, market, and trading',
           inline: true
         },
         {
-          name: '🗺️ Travel & Exploration',
+          name: 'Travel & Exploration',
           value: 'Movement, locations, and navigation',
           inline: true
         },
         {
-          name: '🎒 Items & Equipment',
+          name: 'Items & Equipment',
           value: 'Inventory, equipment, and item usage',
           inline: true
         },
         {
-          name: '🔨 Crafting',
+          name: 'Crafting',
           value: 'Item creation and progression',
           inline: true
         },
         {
-          name: '⚔️ Combat & Bosses',
+          name: 'Combat & Bosses',
           value: 'Fighting and boss battles',
           inline: true
         },
         {
-          name: '🏛️ Server Management',
+          name: 'Server Management',
           value: 'Server settings and tokens',
           inline: true
         }
@@ -81,13 +80,13 @@ module.exports = {
       
     if (isStaff) {
       embed.addFields({
-        name: '👑 Staff Commands',
+        name: 'Staff Commands',
         value: 'Administrative and developer tools',
         inline: true
       });
     }
-    
-    embed.setFooter({ 
+
+    embed.setFooter({
       text: 'Use /help category:<name> for detailed command lists • QuestCord'
     });
     
@@ -99,7 +98,7 @@ module.exports = {
     
     switch (category) {
       case 'general':
-        embed.setTitle('📋 General Commands')
+        embed.setTitle('General Commands')
           .addFields(
             {
               name: '/help',

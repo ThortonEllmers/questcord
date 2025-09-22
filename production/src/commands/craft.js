@@ -6,7 +6,6 @@ const { isBanned, regenStamina } = require('./_guard');
 const logger = require('../utils/logger');
 const { itemById } = require('../utils/items');
 
-// Crafting tiers and requirements
 const CRAFTING_TIERS = {
   1: { name: 'Apprentice', requirement: 0, maxRarity: 'common' },
   2: { name: 'Journeyman', requirement: 25, maxRarity: 'uncommon' },
@@ -30,32 +29,48 @@ function getCraftingLevel(itemsCrafted) {
 function canCraftRarity(itemsCrafted, rarity) {
   const level = getCraftingLevel(itemsCrafted);
   const tierData = CRAFTING_TIERS[level];
-  
+
   const rarityOrder = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic', 'transcendent'];
   const currentMaxIndex = rarityOrder.indexOf(tierData.maxRarity);
   const requestedIndex = rarityOrder.indexOf(rarity);
-  
+
   return requestedIndex <= currentMaxIndex;
 }
 
+/**
+ * Calculates crafting time in seconds based on item rarity and premium status
+ * @param {string} rarity - Item rarity tier
+ * @param {boolean} isPremiumUser - Whether user has premium benefits
+ * @returns {number} Crafting time in seconds
+ */
 function getCraftingTime(rarity, isPremiumUser) {
+  // Base crafting times scale exponentially with rarity
   const baseTimes = {
-    'common': 60,      // 1 minute
-    'uncommon': 300,   // 5 minutes
-    'rare': 900,       // 15 minutes
-    'epic': 1800,      // 30 minutes
-    'legendary': 3600, // 1 hour
-    'mythic': 7200,    // 2 hours
-    'transcendent': 43200 // 12 hours
+    'common': 60,      // 1 minute - basic items
+    'uncommon': 300,   // 5 minutes - slightly better
+    'rare': 900,       // 15 minutes - valuable items
+    'epic': 1800,      // 30 minutes - powerful gear
+    'legendary': 3600, // 1 hour - exceptional items
+    'mythic': 7200,    // 2 hours - legendary crafts
+    'transcendent': 43200 // 12 hours - ultimate masterpieces
   };
   
   const baseTime = baseTimes[rarity] || 60;
-  return isPremiumUser ? Math.floor(baseTime * 0.75) : baseTime; // 25% faster for premium
+  // Premium users get 25% speed bonus (75% of normal time)
+  return isPremiumUser ? Math.floor(baseTime * 0.75) : baseTime;
 }
 
+/**
+ * Checks if player has all required materials for a recipe
+ * @param {string} userId - Player's Discord user ID
+ * @param {Array} recipe - Array of ingredient objects with {id, qty}
+ * @returns {boolean} True if player has sufficient materials
+ */
 function hasRequiredItems(userId, recipe) {
+  // Check each ingredient requirement
   for (const ingredient of recipe) {
     const inv = db.prepare('SELECT qty FROM inventory WHERE userId=? AND itemId=?').get(userId, ingredient.id);
+    // Fail if ingredient is missing or insufficient quantity
     if (!inv || inv.qty < ingredient.qty) {
       return false;
     }
@@ -63,36 +78,57 @@ function hasRequiredItems(userId, recipe) {
   return true;
 }
 
+/**
+ * Consumes materials from player's inventory for crafting
+ * Removes items from inventory or reduces quantities as needed
+ * @param {string} userId - Player's Discord user ID
+ * @param {Array} recipe - Array of ingredient objects to consume
+ */
 function consumeIngredients(userId, recipe) {
   for (const ingredient of recipe) {
+    // Get current quantity in inventory
     const currentQty = db.prepare('SELECT qty FROM inventory WHERE userId=? AND itemId=?').get(userId, ingredient.id)?.qty || 0;
     const newQty = currentQty - ingredient.qty;
     
     if (newQty <= 0) {
+      // Remove item completely if quantity reaches zero
       db.prepare('DELETE FROM inventory WHERE userId=? AND itemId=?').run(userId, ingredient.id);
     } else {
+      // Update with reduced quantity
       db.prepare('UPDATE inventory SET qty=? WHERE userId=? AND itemId=?').run(newQty, userId, ingredient.id);
     }
   }
 }
 
+/**
+ * Adds items to player's inventory, stacking with existing quantities
+ * @param {string} userId - Player's Discord user ID
+ * @param {string} itemId - ID of item to add
+ * @param {number} qty - Quantity to add (default: 1)
+ */
 function addItemToInventory(userId, itemId, qty = 1) {
   const existing = db.prepare('SELECT qty FROM inventory WHERE userId=? AND itemId=?').get(userId, itemId);
   if (existing) {
+    // Stack with existing quantity
     db.prepare('UPDATE inventory SET qty=qty+? WHERE userId=? AND itemId=?').run(qty, userId, itemId);
   } else {
+    // Create new inventory entry
     db.prepare('INSERT INTO inventory(userId, itemId, qty) VALUES(?,?,?)').run(userId, itemId, qty);
   }
 }
 
 module.exports = {
+  // Define comprehensive slash command structure with 5 subcommands for full crafting system
   data: new SlashCommandBuilder()
     .setName('craft')
     .setDescription('Craft items using materials')
+    // Subcommand 1: Start crafting a specific item with autocomplete and quantity options
     .addSubcommand(sc => sc.setName('item').setDescription('Craft a specific item')
       .addStringOption(o => o.setName('item').setDescription('Item to craft').setRequired(true).setAutocomplete(true))
       .addIntegerOption(o => o.setName('quantity').setDescription('Quantity to craft (default: 1)').setMinValue(1).setMaxValue(10)))
+    // Subcommand 2: Check crafting level, active crafts, and progress
     .addSubcommand(sc => sc.setName('status').setDescription('Check your crafting status and active crafts'))
+    // Subcommand 3: Browse available recipes with optional rarity filtering
     .addSubcommand(sc => sc.setName('recipes').setDescription('Browse available recipes')
       .addStringOption(o => o.setName('rarity').setDescription('Filter by rarity').setChoices(
         { name: 'Common', value: 'common' },
@@ -103,7 +139,9 @@ module.exports = {
         { name: 'Mythic', value: 'mythic' },
         { name: 'Transcendent', value: 'transcendent' }
       )))
+    // Subcommand 4: Collect completed crafts and gain experience
     .addSubcommand(sc => sc.setName('complete').setDescription('Complete a finished craft'))
+    // Subcommand 5: Cancel active crafts with partial material refund
     .addSubcommand(sc => sc.setName('cancel').setDescription('Cancel an active craft')
       .addIntegerOption(o => o.setName('craft_id').setDescription('Craft ID to cancel').setRequired(true))),
 
@@ -174,27 +212,26 @@ module.exports = {
       const progressBar = nextTier ? '█'.repeat(Math.floor(progress/5)) + '░'.repeat(20 - Math.floor(progress/5)) : '█'.repeat(20);
       
       const statusEmbed = new EmbedBuilder()
-        .setTitle('🔨⚡ **CRAFTING MASTERY** ⚡🔨')
-        .setDescription(`🎯 *Forge your destiny with skill and precision* ⚒️`)
+        .setTitle('Crafting Status')
         .setColor(craftingLevel >= 6 ? 0xFFD700 : craftingLevel >= 4 ? 0x9B59B6 : craftingLevel >= 2 ? 0x3498DB : 0x2ECC71)
-        .setAuthor({ 
+        .setAuthor({
           name: `${userPrefix} - ${tierData.name}`,
-          iconURL: interaction.user.displayAvatarURL() 
+          iconURL: interaction.user.displayAvatarURL()
         })
         .addFields(
           {
-            name: '🏅 **Crafting Level**',
-            value: `**${craftingLevel}** - ${tierData.name}\n🎯 ${itemsCrafted} items forged`,
+            name: 'Crafting Level',
+            value: `${craftingLevel} - ${tierData.name}\n${itemsCrafted} items crafted`,
             inline: true
           },
           {
-            name: '💎 **Max Rarity**',
-            value: `**${tierData.maxRarity.toUpperCase()}**\n✨ Unlock better recipes`,
+            name: 'Max Rarity',
+            value: tierData.maxRarity.toUpperCase(),
             inline: true
           },
           {
-            name: '🔧 **Active Crafts**',
-            value: `**${activeCrafts.length}** / 5 slots used\n⏳ ${activeCrafts.filter(c => c.completionTime <= Date.now()).length} ready`,
+            name: 'Active Crafts',
+            value: `${activeCrafts.length} / 5 slots used\n${activeCrafts.filter(c => c.completionTime <= Date.now()).length} ready`,
             inline: true
           }
         );
@@ -202,8 +239,8 @@ module.exports = {
       if (nextTier) {
         const remaining = nextTier.requirement - itemsCrafted;
         statusEmbed.addFields({
-          name: '📈 **Progress to Next Level**',
-          value: `\`${progressBar}\`\n**${remaining}** more items to **${nextTier.name}**\n🎭 Unlock ${nextTier.maxRarity} recipes`,
+          name: 'Progress to Next Level',
+          value: `\`${progressBar}\`\n${remaining} more items to ${nextTier.name}\nUnlock ${nextTier.maxRarity} recipes`,
           inline: false
         });
       }
@@ -219,21 +256,21 @@ module.exports = {
         }).join('\n');
 
         statusEmbed.addFields({
-          name: '🛠️ **Current Projects**',
-          value: craftsList + (activeCrafts.filter(c => c.completionTime <= Date.now()).length > 0 ? '\n\n🎁 Use `/craft complete` to collect finished items!' : ''),
+          name: 'Current Projects',
+          value: craftsList + (activeCrafts.filter(c => c.completionTime <= Date.now()).length > 0 ? '\n\nUse `/craft complete` to collect finished items!' : ''),
           inline: false
         });
       } else {
         statusEmbed.addFields({
-          name: '🔨 **Workshop Status**',
+          name: 'Workshop Status',
           value: '• No active crafts\n• All slots available\n• Ready for new projects!\n• Use `/craft recipes` to browse',
           inline: false
         });
       }
 
       statusEmbed
-        .setFooter({ 
-          text: `⚒️ Master craftsmen forge legendary equipment • QuestCord Workshop`,
+        .setFooter({
+          text: `QuestCord Workshop`,
           iconURL: interaction.client.user.displayAvatarURL()
         })
         .setTimestamp();
@@ -609,42 +646,41 @@ module.exports = {
       const rarityIcon = rarityColors[item.rarity] || '⚪';
 
       const startEmbed = new EmbedBuilder()
-        .setTitle('🔥⚒️ **CRAFTING INITIATED** ⚒️🔥')
-        .setDescription(`🎯 *Your workshop springs to life with creative energy* ⚡`)
+        .setTitle('Crafting Started')
         .setColor(item.rarity === 'legendary' || item.rarity === 'mythic' || item.rarity === 'transcendent' ? 0xFFD700 : 0x00AE86)
-        .setAuthor({ 
-          name: `${userPrefix} - Master Artisan`,
-          iconURL: interaction.user.displayAvatarURL() 
+        .setAuthor({
+          name: `${userPrefix}`,
+          iconURL: interaction.user.displayAvatarURL()
         })
         .addFields(
           {
-            name: '🎨 **Item Being Crafted**',
-            value: `${rarityIcon} **${item.name}**\n💎 ${item.rarity} quality`,
+            name: 'Item Being Crafted',
+            value: `${rarityIcon} ${item.name}\n${item.rarity} quality`,
             inline: true
           },
           {
-            name: '🔢 **Quantity**',
-            value: `**${quantity}** item${quantity > 1 ? 's' : ''}\n${quantity > 1 ? '🏭 Batch production' : '🎯 Single craft'}`,
+            name: 'Quantity',
+            value: `${quantity} item${quantity > 1 ? 's' : ''}`,
             inline: true
           },
           {
-            name: '⏱️ **Crafting Time**',
-            value: `**${timeText}**\n${isPremiumUser ? '👑 Premium speed boost' : '⚒️ Standard pace'}`,
+            name: 'Crafting Time',
+            value: `${timeText}${isPremiumUser ? ' (Premium speed boost)' : ''}`,
             inline: true
           },
           {
-            name: '🆔 **Craft ID**',
-            value: `**#${craftResult.lastInsertRowid}**\nUse for cancellation`,
+            name: 'Craft ID',
+            value: `#${craftResult.lastInsertRowid}`,
             inline: true
           },
           {
-            name: '🕐 **Completion Time**',
-            value: `**${new Date(finalCompletionTime).toLocaleTimeString()}**\n📅 ${new Date(finalCompletionTime).toLocaleDateString()}`,
+            name: 'Completion Time',
+            value: `${new Date(finalCompletionTime).toLocaleTimeString()}\n${new Date(finalCompletionTime).toLocaleDateString()}`,
             inline: true
           },
           {
-            name: '📊 **Workshop Status**',
-            value: `**${activeCraftCount + 1}** / 5 slots used\nEfficiency optimized`,
+            name: 'Workshop Status',
+            value: `${activeCraftCount + 1} / 5 slots used`,
             inline: true
           }
         );
@@ -656,22 +692,22 @@ module.exports = {
       }).join('\n');
 
       startEmbed.addFields({
-        name: '📦 **Materials Consumed**',
+        name: 'Materials Consumed',
         value: materialsUsed,
         inline: false
       });
 
       if (item.description) {
         startEmbed.addFields({
-          name: '📖 **Item Description**',
+          name: 'Item Description',
           value: item.description,
           inline: false
         });
       }
 
       startEmbed
-        .setFooter({ 
-          text: `⚒️ Use /craft complete when ready • QuestCord Workshop`,
+        .setFooter({
+          text: `Use /craft complete when ready • QuestCord Workshop`,
           iconURL: interaction.client.user.displayAvatarURL()
         })
         .setTimestamp();

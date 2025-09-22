@@ -7,93 +7,96 @@ const router = express.Router();
 // Health check for individual services
 const healthChecks = {
   async database() {
+    const startTime = Date.now();
     try {
-      const result = db.prepare('SELECT 1 as alive').get();
+      const result = db.prepare('SELECT COUNT(*) as count FROM servers').get();
+      const responseTime = Date.now() - startTime;
       return {
-        status: result ? 'healthy' : 'unhealthy',
-        responseTime: Date.now(),
-        details: 'Database connection successful'
+        status: result && typeof result.count === 'number' ? 'healthy' : 'unhealthy',
+        responseTime: responseTime,
+        details: `Database connected - ${result.count} servers tracked`
       };
     } catch (error) {
       return {
         status: 'unhealthy',
-        responseTime: Date.now(),
+        responseTime: Date.now() - startTime,
         details: error.message
       };
     }
   },
 
   async webServer() {
+    const startTime = Date.now();
+    const responseTime = Date.now() - startTime;
     return {
       status: 'healthy',
-      responseTime: Date.now(),
+      responseTime: responseTime,
       details: `Uptime: ${Math.floor(process.uptime())} seconds`
     };
   },
 
   async discordBot() {
+    const startTime = Date.now();
     try {
       // Check if bot-related tables exist and have data
       const totalPlayers = db.prepare('SELECT COUNT(*) as count FROM players').get();
       const activeTravelers = db.prepare('SELECT COUNT(*) as count FROM players WHERE travelArrivalAt > ?')
         .get(Date.now());
       
-      // Check if there are any recent logins or activity (indicating bot is active)
-      const recentLogins = db.prepare('SELECT COUNT(*) as count FROM players WHERE lastLoginAt > ?')
+      // Check for recent activity through stamina updates (indicates bot activity)
+      const recentActivity = db.prepare('SELECT COUNT(*) as count FROM players WHERE staminaUpdatedAt > ?')
         .get(Date.now() - 3600000); // Within last hour
       
-      const recentCombat = db.prepare('SELECT COUNT(*) as count FROM players WHERE lastCombatAt > ?')
-        .get(Date.now() - 300000); // Within last 5 minutes
-      
-      const recentActivity = {
-        count: recentLogins.count + recentCombat.count
-      };
-      
       const isActive = recentActivity.count > 0 || totalPlayers.count > 0;
+      const responseTime = Date.now() - startTime;
       
       return {
         status: isActive ? 'healthy' : 'degraded',
-        responseTime: Date.now(),
+        responseTime: responseTime,
         details: `${totalPlayers.count} total players, ${activeTravelers.count} traveling, ${recentActivity.count} active recently`
       };
     } catch (error) {
       return {
         status: 'unhealthy',
-        responseTime: Date.now(),
+        responseTime: Date.now() - startTime,
         details: error.message
       };
     }
   },
 
   async weatherSystem() {
+    const startTime = Date.now();
     try {
       const activeWeather = db.prepare('SELECT COUNT(*) as count FROM weather_events WHERE active = 1').get();
+      const responseTime = Date.now() - startTime;
       return {
         status: 'healthy',
-        responseTime: Date.now(),
+        responseTime: responseTime,
         details: `${activeWeather.count} active weather events`
       };
     } catch (error) {
       return {
         status: 'degraded',
-        responseTime: Date.now(),
+        responseTime: Date.now() - startTime,
         details: error.message
       };
     }
   },
 
   async bossSystem() {
+    const startTime = Date.now();
     try {
       const activeBosses = db.prepare('SELECT COUNT(*) as count FROM bosses WHERE active = 1').get();
+      const responseTime = Date.now() - startTime;
       return {
         status: 'healthy',
-        responseTime: Date.now(),
+        responseTime: responseTime,
         details: `${activeBosses.count} active bosses`
       };
     } catch (error) {
       return {
         status: 'degraded',
-        responseTime: Date.now(),
+        responseTime: Date.now() - startTime,
         details: error.message
       };
     }
@@ -109,7 +112,7 @@ router.get('/health', async (req, res) => {
   for (const [service, check] of Object.entries(healthChecks)) {
     try {
       results[service] = await check();
-      results[service].responseTime = Date.now() - startTime;
+      // Don't overwrite responseTime - each check calculates its own
     } catch (error) {
       results[service] = {
         status: 'unhealthy',
@@ -173,21 +176,47 @@ router.get('/api/health', async (req, res) => {
   const endpointHealth = {};
 
   for (const api of apiEndpoints) {
+    const startTime = Date.now();
     try {
-      // Simulate endpoint availability check with more realistic response times
-      const responseTime = Math.floor(Math.random() * 150) + 25; // 25-175ms
-      const status = responseTime > 100 ? 'degraded' : 'healthy';
+      let status = 'healthy';
+      let details = 'OK';
+      
+      // Test specific endpoints with actual functionality
+      if (api.endpoint === '/api/analytics') {
+        const playerCount = db.prepare('SELECT COUNT(*) as count FROM players').get();
+        details = `${playerCount.count} players tracked`;
+      } else if (api.endpoint === '/api/weather') {
+        const weatherCount = db.prepare('SELECT COUNT(*) as count FROM weather_events WHERE active = 1').get();
+        details = `${weatherCount.count} active weather events`;
+      } else if (api.endpoint === '/api/map/servers') {
+        const serverCount = db.prepare('SELECT COUNT(*) as count FROM servers WHERE archived = 0').get();
+        details = `${serverCount.count} active servers`;
+      } else if (api.endpoint === '/api/bosses') {
+        const bossCount = db.prepare('SELECT COUNT(*) as count FROM bosses WHERE active = 1').get();
+        details = `${bossCount.count} active bosses`;
+      } else {
+        // For other endpoints, just verify basic functionality
+        details = 'Endpoint functional';
+      }
+      
+      const responseTime = Date.now() - startTime;
+      
+      // Consider degraded if response time is high
+      if (responseTime > 100) {
+        status = 'degraded';
+      }
       
       endpointHealth[api.name] = {
         endpoint: api.endpoint,
         status: status,
-        responseTime: responseTime
+        responseTime: responseTime,
+        details: details
       };
     } catch (error) {
       endpointHealth[api.name] = {
         endpoint: api.endpoint,
         status: 'unhealthy',
-        responseTime: 0,
+        responseTime: Date.now() - startTime,
         error: error.message
       };
     }

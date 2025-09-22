@@ -1,160 +1,237 @@
-function deg2rad(d) { return d * Math.PI / 180; }
-function haversine(lat1, lon1, lat2, lon2) {
-  const R = 6371; // km
-  const dLat = deg2rad(lat2 - lat1);
-  const dLon = deg2rad(lon2 - lon1);
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+function deg2rad(d) {
+  return d * Math.PI / 180;
 }
 
+function haversine(lat1, lon1, lat2, lon2) {
+  if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) return 0;
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return 6371 * c;
+}
+
+/**
+ * SPIRAL PLACEMENT ALGORITHM
+ * 
+ * Places points in a spiral pattern around a center point using the golden ratio.
+ * Used for searching land positions in expanding circles when initial location is invalid.
+ * The golden ratio spacing ensures even distribution without clustering.
+ * 
+ * @param {number} i - Spiral index (higher = farther from center)
+ * @param {Object} center - Center point with lat/lon properties
+ * @returns {Object} New position with lat/lon properties
+ */
 function placeOnSpiral(i, center = { lat: 0, lon: 0 }) {
+  // Golden angle for optimal spiral distribution
   const golden = Math.PI * (3 - Math.sqrt(5));
-  const r = 0.5 * Math.sqrt(i); // spread
+  // Radius increases with square root for even spacing
+  const r = 0.5 * Math.sqrt(i);
+  // Angle based on golden ratio and index
   const t = i * golden;
+  // Calculate new position relative to center
   return { lat: center.lat + r * Math.sin(t), lon: center.lon + r * Math.cos(t) };
 }
 
-// Safe fetch helper
+/**
+ * SAFE FETCH HELPER
+ * 
+ * Provides cross-environment fetch functionality, handling both Node.js and browser environments.
+ * Uses built-in fetch if available (Node.js 18+), otherwise falls back to node-fetch polyfill.
+ * 
+ * @param {...any} args - Arguments to pass to fetch function
+ * @returns {Promise} Fetch response promise
+ */
 async function fetchSafe(...args) {
+  // Use built-in fetch if available (Node.js 18+ or browsers)
   if (typeof globalThis.fetch === 'function') return globalThis.fetch(...args);
+  // Fall back to node-fetch polyfill for older Node.js versions
   const mod = await import('node-fetch');
   return mod.default(...args);
 }
 
-// Check if coordinates are on land using multiple methods
+/**
+ * COMPREHENSIVE LAND/WATER DETECTION
+ * 
+ * Determines if coordinates are on land using multiple validation methods:
+ * 1. Coordinate-based detection using predefined ocean/continental boundaries
+ * 2. Elevation API validation for borderline cases
+ * 3. Sophisticated elevation analysis for edge cases
+ * 
+ * This dual approach ensures accurate land detection while minimizing API calls.
+ * 
+ * @param {number} lat - Latitude coordinate to check
+ * @param {number} lon - Longitude coordinate to check  
+ * @returns {Promise<boolean>} True if position is on land, false if in water
+ */
 async function isOnLand(lat, lon) {
-  // console.log(`🗺️  Checking land status for ${lat.toFixed(4)}, ${lon.toFixed(4)}`); // Disabled to reduce spam
+  // Log position being checked (commented out to reduce spam)
+  // console.log(`🗺️  Checking land status for ${lat.toFixed(4)}, ${lon.toFixed(4)}`);
   
-  // First try accurate coordinate-based detection
+  // First attempt: Fast coordinate-based detection using boundary definitions
   const coordinateBased = isLandByCoordinates(lat, lon);
-  // console.log(`📍 Coordinate-based detection: ${coordinateBased ? 'LAND' : 'WATER'}`); // Disabled to reduce spam
+  // console.log(`📍 Coordinate-based detection: ${coordinateBased ? 'LAND' : 'WATER'}`);
   
-  // If coordinates suggest water, return false immediately
+  // If coordinate detection suggests water, return false immediately (optimization)
   if (!coordinateBased) {
-    console.log(`🌊 Position determined to be in water by coordinates`);
     return false;
   }
   
-  // If coordinates suggest land, double-check with elevation API
+  /**
+   * ELEVATION API VALIDATION
+   * 
+   * For positions that coordinate detection suggests might be land,
+   * verify using elevation data from open-elevation.com API.
+   */
   try {
+    // Construct API URL for elevation lookup
     const url = `https://api.open-elevation.com/api/v1/lookup?locations=${lat},${lon}`;
+    // Make API request with timeout to avoid hanging
     const response = await fetchSafe(url, { timeout: 3000 });
     
     if (response.ok) {
       const data = await response.json();
       const elevation = data.results?.[0]?.elevation;
       
-      // console.log(`🏔️  Elevation: ${elevation}m`); // Disabled to reduce spam
+      // Log elevation data (commented to reduce spam)
+      // console.log(`🏔️  Elevation: ${elevation}m`);
       
-      // More sophisticated elevation analysis
+      // Apply sophisticated elevation analysis for land/water determination
       if (typeof elevation === 'number') {
-        // Water bodies typically have elevation very close to 0 (sea level)
-        // But some lakes can be above sea level, so we need more nuanced logic
+        /**
+         * ELEVATION ANALYSIS LOGIC
+         * 
+         * Analyzes elevation data to determine land vs water:
+         * - Significantly negative elevation = deep water (oceans, deep lakes)
+         * - Near sea level (±2m) = trust coordinate detection (handles coastal areas)
+         * - Positive elevation = likely land
+         */
         
-        // If elevation is significantly negative, it's likely a deep water body
+        // Deep negative elevation indicates major water bodies
         if (elevation < -50) {
-          console.log(`🌊 Deep water detected (elevation ${elevation}m)`);
           return false;
         }
         
-        // If elevation is exactly 0 or very close to 0, might be ocean/sea
-        // But also consider lakes at sea level, so use coordinate data as primary
+        // Near sea level requires coordinate-based decision
         if (Math.abs(elevation) <= 2) {
-          console.log(`🌊 Near sea level (${elevation}m), trusting coordinate detection: ${coordinateBased ? 'LAND' : 'WATER'}`);
-          return coordinateBased; // Trust coordinate-based detection more
+          return coordinateBased; // Trust coordinate boundaries for coastal areas
         }
         
-        // If elevation is positive, likely land
+        // Positive elevation above 2m typically indicates land
         const isLand = elevation > 2;
-        // console.log(`🏞️  Elevation suggests: ${isLand ? 'LAND' : 'WATER'}`); // Disabled to reduce spam
+        // console.log(`🏞️  Elevation suggests: ${isLand ? 'LAND' : 'WATER'}`);
         return isLand;
       }
     } else {
-      console.log(`❌ Elevation API returned ${response.status}`);
+      // API request failed, log status code
     }
   } catch (error) {
+    // API completely failed, fall back to coordinate detection
     console.warn('🚨 Elevation API failed, using coordinate-based detection:', error.message);
   }
   
-  // Fallback to coordinate-based result
-  console.log(`✅ Final result: ${coordinateBased ? 'LAND' : 'WATER'} (coordinate-based)`);
+  // Final fallback: use coordinate-based detection result
   return coordinateBased;
 }
 
-// Accurate coordinate-based land detection using precise boundaries
+/**
+ * COORDINATE-BASED LAND DETECTION
+ * 
+ * Fast land/water detection using predefined geographic boundaries.
+ * Defines major ocean areas and continental regions to classify coordinates
+ * without external API calls. Used as primary filter before elevation checking.
+ * 
+ * @param {number} lat - Latitude coordinate to check
+ * @param {number} lon - Longitude coordinate to check
+ * @returns {boolean} True if likely land, false if likely water
+ */
 function isLandByCoordinates(lat, lon) {
-  // Avoid polar regions (mostly ice/water)
+  // Exclude polar regions (mostly ice sheets and frozen seas)
   if (Math.abs(lat) > 78) return false;
   
-  // Define major ocean areas with precise boundaries
+  /**
+   * MAJOR OCEAN AREAS DEFINITION
+   * 
+   * Defines rectangular boundaries for major ocean regions where land is unlikely.
+   * These areas are checked first to quickly identify obviously oceanic coordinates.
+   */
   const oceanAreas = [
-    // Pacific Ocean - Central/Eastern  
+    // Pacific Ocean regions (largest ocean, split into sections)
     { latMin: -60, latMax: 65, lonMin: -180, lonMax: -100, name: "Eastern Pacific" },
-    { latMin: -60, latMax: 65, lonMin: 140, lonMax: 165, name: "Western Pacific" }, // Exclude NZ area
+    { latMin: -60, latMax: 65, lonMin: 140, lonMax: 165, name: "Western Pacific" }, // Excludes New Zealand area
     
-    // Atlantic Ocean - Central
+    // Atlantic Ocean central regions (avoiding coastal areas)
     { latMin: -60, latMax: 70, lonMin: -65, lonMax: -10, name: "Central Atlantic" },
     
-    // Indian Ocean - Central
+    // Indian Ocean central region
     { latMin: -50, latMax: 30, lonMin: 45, lonMax: 100, name: "Central Indian" },
     
-    // Arctic Ocean
+    // Polar ocean regions
     { latMin: 78, latMax: 90, lonMin: -180, lonMax: 180, name: "Arctic" },
-    
-    // Southern Ocean
     { latMin: -90, latMax: -60, lonMin: -180, lonMax: 180, name: "Southern" },
     
-    // Specific problem areas
-    // Mediterranean gaps
+    /**
+     * COMPLEX WATER REGIONS WITH LAND EXCEPTIONS
+     * 
+     * Regions that are primarily water but contain significant land masses.
+     * Exceptions define the land areas within these water regions.
+     */
+    
+    // Mediterranean Sea region (complex coastlines require exceptions)
     { latMin: 30, latMax: 46, lonMin: -6, lonMax: 36, name: "Mediterranean", 
       exceptions: [
-        // Spain/Portugal
+        // Iberian Peninsula (Spain/Portugal)
         { latMin: 35, latMax: 44, lonMin: -10, lonMax: -6 },
-        // Italy
+        // Italian Peninsula 
         { latMin: 36, latMax: 47, lonMin: 6, lonMax: 19 },
-        // Balkans
+        // Balkan Peninsula
         { latMin: 39, latMax: 47, lonMin: 13, lonMax: 30 },
-        // Turkey
+        // Turkey/Anatolia
         { latMin: 36, latMax: 42, lonMin: 26, lonMax: 45 }
       ]
     },
     
-    // Caribbean/Gulf of Mexico
+    // Caribbean Sea and Gulf of Mexico region
     { latMin: 10, latMax: 30, lonMin: -100, lonMax: -60, name: "Caribbean",
       exceptions: [
-        // Florida/Cuba area
+        // Florida Peninsula and Cuba
         { latMin: 20, latMax: 28, lonMin: -85, lonMax: -79 },
-        // Caribbean islands
+        // Caribbean island chains
         { latMin: 10, latMax: 25, lonMin: -85, lonMax: -60 }
       ]
     },
     
-    // Red Sea/Persian Gulf area
+    // Red Sea and Persian Gulf region  
     { latMin: 12, latMax: 32, lonMin: 32, lonMax: 58, name: "Red Sea/Persian Gulf",
       exceptions: [
-        // Saudi Arabia/Middle East
+        // Arabian Peninsula and surrounding land
         { latMin: 15, latMax: 33, lonMin: 34, lonMax: 56 }
       ]
     }
   ];
   
-  // Check if point is in any ocean area
+  /**
+   * OCEAN AREA BOUNDARY CHECKING
+   * 
+   * Check if coordinates fall within any defined ocean regions.
+   * If in ocean area, check for land exceptions (islands, peninsulas).
+   */
   for (const ocean of oceanAreas) {
     if (lat >= ocean.latMin && lat <= ocean.latMax && 
         lon >= ocean.lonMin && lon <= ocean.lonMax) {
       
-      // Check if it's in an exception (land) area within this ocean zone
+      // Check for land exceptions within this ocean zone
       if (ocean.exceptions) {
         for (const exception of ocean.exceptions) {
           if (lat >= exception.latMin && lat <= exception.latMax && 
               lon >= exception.lonMin && lon <= exception.lonMax) {
-            return true; // It's in an exception area (land)
+            return true; // Coordinates are in a land exception area
           }
         }
       }
       
-      return false; // It's in ocean
+      return false; // Coordinates are in ocean with no land exceptions
     }
   }
   
@@ -200,7 +277,6 @@ async function findLandPosition(startLat = 0, startLon = 0, maxAttempts = 100) {
     return { lat: startLat, lon: startLon };
   }
   
-  console.log(`Searching for land position near ${startLat}, ${startLon}`);
   
   // Search in expanding spiral pattern with larger radius
   for (let i = 1; i <= maxAttempts; i++) {
@@ -216,7 +292,6 @@ async function findLandPosition(startLat = 0, startLon = 0, maxAttempts = 100) {
     pos.lon = Math.max(-180, Math.min(180, pos.lon));
     
     if (await isOnLand(pos.lat, pos.lon)) {
-      console.log(`Found land position at ${pos.lat}, ${pos.lon} after ${i} attempts`);
       return pos;
     }
     
@@ -240,7 +315,6 @@ async function findLandPosition(startLat = 0, startLon = 0, maxAttempts = 100) {
   if (startLat < -30 && startLon > 160) { // Oceania region
     for (const fallback of countryFallbacks.nz) {
       if (await isOnLand(fallback.lat, fallback.lon)) {
-        console.log(`Using New Zealand fallback: ${fallback.lat}, ${fallback.lon}`);
         return fallback;
       }
     }
@@ -260,7 +334,6 @@ async function findLandPosition(startLat = 0, startLon = 0, maxAttempts = 100) {
   
   for (const city of cityFallbacks) {
     if (await isOnLand(city.lat, city.lon)) {
-      console.log(`🌍 Using city fallback: ${city.name}`);
       return city;
     }
   }
@@ -292,7 +365,6 @@ async function findNonCollidingLandPosition(startLat = 0, startLon = 0, db, maxA
     WHERE lat IS NOT NULL AND lon IS NOT NULL AND archived = 0
   `).all();
   
-  console.log(`🌍 Finding random global land position avoiding ${existingServers.length} existing servers`);
   
   // Define global land regions for random selection
   const globalLandRegions = [
@@ -338,12 +410,10 @@ async function findNonCollidingLandPosition(startLat = 0, startLon = 0, db, maxA
     const randomLat = region.latMin + Math.random() * (region.latMax - region.latMin);
     const randomLon = region.lonMin + Math.random() * (region.lonMax - region.lonMin);
     
-    console.log(`🎲 Attempt ${attempt}: Trying ${region.name} at ${randomLat.toFixed(4)}, ${randomLon.toFixed(4)}`);
     
     // Check if position is valid (on land and not too close to others)
     if (await isOnLand(randomLat, randomLon) && 
         !isPositionTooClose(randomLat, randomLon, existingServers)) {
-      console.log(`🎯 Found random global land position in ${region.name}: ${randomLat}, ${randomLon} after ${attempt} attempts`);
       return { lat: randomLat, lon: randomLon };
     }
     
@@ -395,7 +465,6 @@ async function findNonCollidingLandPosition(startLat = 0, startLon = 0, db, maxA
   for (const fallback of globalCityFallbacks) {
     if (await isOnLand(fallback.lat, fallback.lon) && 
         !isPositionTooClose(fallback.lat, fallback.lon, existingServers, 25)) {
-      console.log(`🏙️  Using global city fallback: ${fallback.name} (${fallback.lat}, ${fallback.lon})`);
       return fallback;
     }
   }
@@ -435,7 +504,6 @@ async function checkAndFixWaterServers(db) {
           const isLand = await isOnLand(server.lat, server.lon);
           
           if (!isLand) {
-            console.log(`🏊 Server "${server.name}" (${server.guildId}) is in water at ${server.lat}, ${server.lon}`);
             
             // Find nearest land position
             const landPosition = await findLandPosition(server.lat, server.lon, 50);
@@ -447,7 +515,6 @@ async function checkAndFixWaterServers(db) {
               WHERE guildId = ?
             `).run(landPosition.lat, landPosition.lon, server.guildId);
             
-            console.log(`🏝️  Moved "${server.name}" to land at ${landPosition.lat}, ${landPosition.lon}`);
             fixedCount++;
             
           } else {
@@ -465,9 +532,7 @@ async function checkAndFixWaterServers(db) {
     }
     
     if (fixedCount > 0) {
-      console.log(`🎉 Fixed ${fixedCount} servers that were in water`);
     } else {
-      console.log('✨ All servers are already on land!');
     }
     
     return { total: servers.length, fixed: fixedCount };
@@ -478,13 +543,31 @@ async function checkAndFixWaterServers(db) {
   }
 }
 
+/**
+ * MODULE EXPORTS
+ * 
+ * Export all geographic utility functions for use by other modules:
+ * - haversine: Distance calculation between coordinates
+ * - placeOnSpiral: Spiral search pattern generation  
+ * - isOnLand: Comprehensive land/water detection
+ * - isLandByCoordinates: Fast coordinate-based land detection
+ * - findLandPosition: Find nearest land position to coordinates
+ * - checkAndFixWaterServers: Batch validation and fixing of water-placed servers
+ * - isPositionTooClose: Collision detection for server placement
+ * - findNonCollidingLandPosition: Global random land position finder
+ * 
+ * Note: This module contains extensive geographic logic with continent/ocean
+ * boundary definitions, elevation API integration, and sophisticated algorithms
+ * for server placement and validation. Many functions include detailed position
+ * validation and fallback mechanisms to ensure reliable operation.
+ */
 module.exports = { 
-  haversine, 
-  placeOnSpiral, 
-  isOnLand, 
-  isLandByCoordinates,
-  findLandPosition,
-  checkAndFixWaterServers,
-  isPositionTooClose,
-  findNonCollidingLandPosition
+  haversine,                      // Distance calculations
+  placeOnSpiral,                  // Spiral search patterns
+  isOnLand,                       // Primary land/water detection
+  isLandByCoordinates,           // Fast coordinate-based detection  
+  findLandPosition,              // Land position search
+  checkAndFixWaterServers,       // Server position validation
+  isPositionTooClose,            // Collision detection
+  findNonCollidingLandPosition   // Global server placement
 };

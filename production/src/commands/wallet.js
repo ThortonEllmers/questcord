@@ -54,44 +54,43 @@ module.exports = {
     }
 
     const embed = new EmbedBuilder()
-      .setTitle(`${wealthIcon}💰 **FINANCIAL PORTFOLIO** 💰${wealthIcon}`)
-      .setDescription(`🏦 *Managing your ${config.currencyName} treasury with precision* 📊`)
+      .setTitle('Wallet')
       .setColor(isPremiumUser ? 0xFFD700 : wealthColor)
-      .setAuthor({ 
+      .setAuthor({
         name: `${userPrefix} - ${wealthTier}`,
-        iconURL: interaction.user.displayAvatarURL() 
+        iconURL: interaction.user.displayAvatarURL()
       })
       .addFields(
         {
-          name: '💳 **Current Balance**',
-          value: `**${balance.toLocaleString()}** ${config.currencyName}\n${wealthIcon} ${wealthTier}`,
+          name: 'Current Balance',
+          value: `${balance.toLocaleString()} ${config.currencyName}\n${wealthIcon} ${wealthTier}`,
           inline: true
         },
         {
-          name: '📈 **Account Status**',
-          value: isPremiumUser 
-            ? '👑 **Premium Member**\nExclusive benefits active'
-            : '⭐ **Standard Account**\nUpgrade available',
+          name: 'Account Status',
+          value: isPremiumUser
+            ? 'Premium Member'
+            : 'Standard Account',
           inline: true
         },
         {
-          name: '🏦 **Quick Actions**',
-          value: '📊 View /market listings\n🛒 Buy premium items\n💼 Trade with players',
+          name: 'Quick Actions',
+          value: 'View /market listings\nBuy premium items\nTrade with players',
           inline: true
         }
       );
 
     if (balance >= 10000) {
       embed.addFields({
-        name: '💎 **Wealth Analysis**',
-        value: `• Portfolio value: **${balance.toLocaleString()}** ${config.currencyName}\n• You're in the top tier of adventurers! 🌟\n• Consider investing in rare equipment\n• Premium items unlock at this level`,
+        name: 'Wealth Analysis',
+        value: `• Portfolio value: ${balance.toLocaleString()} ${config.currencyName}\n• Top tier adventurer status\n• Consider investing in rare equipment\n• Premium items available`,
         inline: false
       });
     }
 
     embed
-      .setFooter({ 
-        text: `💰 Build your fortune through trading and adventures • QuestCord Treasury`,
+      .setFooter({
+        text: `QuestCord Treasury`,
         iconURL: interaction.client.user.displayAvatarURL()
       })
       .setTimestamp();

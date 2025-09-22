@@ -1,4 +1,3 @@
-// src/commands/whereami.js
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { getUserPrefix } = require('../utils/roles');
 const config = require('../utils/config');
@@ -9,10 +8,9 @@ module.exports = {
     .setDescription('Show your current virtual location (server name and ID).'),
 
   async execute(interaction) {
-    const { db } = require('../utils/store_sqlite'); // Lazy require for deploy safety
+    const { db } = require('../utils/store_sqlite');
     const userId = interaction.user.id;
 
-    // Get full player info including travel data
     const player = db.prepare(`
       SELECT locationGuildId, travelArrivalAt, travelFromGuildId, travelStartAt
       FROM players
@@ -20,9 +18,7 @@ module.exports = {
 
     const userPrefix = await getUserPrefix(interaction.client, interaction.user);
 
-    // Check if currently traveling
     if (player.travelArrivalAt && player.travelArrivalAt > Date.now()) {
-      // User is traveling
       const fromServer = db.prepare('SELECT name FROM servers WHERE guildId=?').get(player.travelFromGuildId);
       const toServer = db.prepare('SELECT name FROM servers WHERE guildId=?').get(player.locationGuildId);
       
@@ -33,39 +29,26 @@ module.exports = {
       const arrivalTime = new Date(player.travelArrivalAt);
       
       const travelEmbed = new EmbedBuilder()
-        .setTitle('✈️🌍 **CURRENTLY TRAVELING** 🌍✈️')
-        .setDescription('🛫 *Your journey is in progress* 🛬')
+        .setTitle('Currently Traveling')
         .setColor(0x3498DB)
-        .setAuthor({ 
-          name: userPrefix,
-          iconURL: interaction.user.displayAvatarURL() 
-        })
         .addFields(
           {
-            name: '🏃‍♀️ **Departure**',
-            value: `**${fromName}**\n📍 Left your origin`,
+            name: 'From',
+            value: fromName,
             inline: true
           },
           {
-            name: '🎯 **Destination**',
-            value: `**${toName}**\n📍 Journey endpoint`,
+            name: 'To',
+            value: toName,
             inline: true
           },
           {
-            name: '⏰ **ETA**',
-            value: `**${timeLeft} minutes**\n🕐 ${arrivalTime.toLocaleTimeString()}`,
+            name: 'ETA',
+            value: `${timeLeft} minutes`,
             inline: true
-          },
-          {
-            name: '🗺️ **Journey Status**',
-            value: `🛫 **In Transit**\n✈️ Flying through the skies\n🌟 Adventure awaits at destination!`,
-            inline: false
           }
         )
-        .setFooter({ 
-          text: `Safe travels! Your adventure continues shortly • QuestCord Travel`,
-          iconURL: interaction.client.user.displayAvatarURL()
-        })
+        .setFooter({ text: 'QuestCord' })
         .setTimestamp();
       
       await interaction.reply({ embeds: [travelEmbed] });
@@ -103,39 +86,26 @@ module.exports = {
         'Unknown Region';
       
       const locationEmbed = new EmbedBuilder()
-        .setTitle('🗺️📍 **CURRENT LOCATION** 📍🗺️')
-        .setDescription('🏛️ *You have arrived at your destination* 🏛️')
+        .setTitle('Current Location')
         .setColor(0x00AE86)
-        .setAuthor({ 
-          name: userPrefix,
-          iconURL: interaction.user.displayAvatarURL() 
-        })
         .addFields(
           {
-            name: '🏛️ **Server**',
-            value: `**${displayName}**\n🆔 ${destinationGuildId}`,
+            name: 'Server',
+            value: displayName,
             inline: true
           },
           {
-            name: '🌍 **Region**',
-            value: `**${region}**\n🗺️ Geographic location`,
+            name: 'Region', 
+            value: region,
             inline: true
           },
           {
-            name: '🌿 **Biome**',
-            value: `**${biome}**\n🌱 Environmental setting`,
+            name: 'Biome',
+            value: biome,
             inline: true
-          },
-          {
-            name: '✅ **Status**',
-            value: `🏠 **Currently Located**\n📍 Ready for your next journey\n🚀 Use /travel to visit other servers!`,
-            inline: false
           }
         )
-        .setFooter({ 
-          text: `Visit other servers with /travel or /nearby • QuestCord Navigation`,
-          iconURL: interaction.client.user.displayAvatarURL()
-        })
+        .setFooter({ text: 'Use /travel to visit other servers' })
         .setTimestamp();
       
       await interaction.reply({ embeds: [locationEmbed] });

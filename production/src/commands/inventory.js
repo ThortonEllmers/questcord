@@ -4,8 +4,8 @@ const { itemById } = require('../utils/items');
 const { ensurePlayerWithVehicles } = require('../utils/players');
 const { getUserPrefix } = require('../utils/roles');
 
-function metaFor(id) { 
-  return itemById(id) || { name: id }; 
+function metaFor(id) {
+  return itemById(id) || { name: id };
 }
 
 module.exports = {
@@ -37,55 +37,55 @@ module.exports = {
         { name: 'Vehicles', value: 'vehicle' },
         { name: 'Artifacts', value: 'artifact' }
       )),
+  /**
+   * Main execution handler for inventory command
+   * Processes sorting/filtering options and displays organized inventory
+   * 
+   * @param {CommandInteraction} interaction - Discord slash command interaction
+   */
   async execute(interaction) {
-    const { db } = require('../utils/store_sqlite'); // lazy require for deploy safety
+    // Lazy load database to avoid circular dependency issues during deployment
+    const { db } = require('../utils/store_sqlite');
     const userId = interaction.user.id;
+    // Extract user preferences for sorting and filtering (with defaults)
     const sortBy = interaction.options.getString('sort') || 'name';
     const filterBy = interaction.options.getString('filter') || 'all';
 
-    // Ensure player exists with proper vehicle setup
+    // Ensure player record exists with proper vehicle setup
     await ensurePlayerWithVehicles(interaction.client, userId, interaction.user.username);
 
-    // Optional: passive regen tick on read
+    // Apply passive health/stamina regeneration when checking inventory
     try { 
       const { applyRegenForUser } = require('../utils/regen'); 
       applyRegenForUser(userId); 
     } catch {
-      // Silently ignore regen errors
+      // Silently ignore regen errors to prevent command failures
     }
 
+    // Fetch all inventory items with positive quantities
     const rows = db.prepare('SELECT itemId, qty FROM inventory WHERE userId=? AND qty>0').all(userId);
+    // Get user's display prefix for embed styling
     const userPrefix = await getUserPrefix(interaction.client, interaction.user);
 
     if (rows.length === 0) {
       const emptyEmbed = new EmbedBuilder()
-        .setTitle('🎒📦 **EMPTY INVENTORY** 📦🎒')
-        .setDescription('✨ *Your adventure chest awaits its first treasures* ✨')
+        .setTitle('Empty Inventory')
+        .setDescription('Your inventory is currently empty.')
         .setColor(0x95A5A6)
-        .setAuthor({ 
-          name: `${userPrefix} - Inventory Manager`,
-          iconURL: interaction.user.displayAvatarURL() 
-        })
         .addFields(
           {
-            name: '🏪 **Get Started**',
-            value: '• **Market**: Buy items from other players\
-• **Crafting**: Create equipment from materials\
-• **Boss Battles**: Earn rare loot drops\
-• **Exploration**: Find treasures while traveling',
+            name: 'Get Started',
+            value: '• Market: Buy items from other players\n• Crafting: Create equipment from materials\n• Boss Battles: Earn rare loot drops\n• Exploration: Find treasures while traveling',
             inline: false
           },
           {
-            name: '🎯 **Quick Actions**',
-            value: '• `/market search` - Browse available items\
-• `/craft` - Create items from materials\
-• `/boss` - Fight for legendary rewards\
-• `/travel` - Explore new servers for loot',
+            name: 'Quick Actions',
+            value: '• `/market browse` - Browse available items\n• `/craft recipes` - View craftable items\n• `/boss status` - Check for boss battles\n• `/travel` - Explore new servers',
             inline: false
           }
         )
-        .setFooter({ 
-          text: `🎒 Start your collection today • QuestCord Inventory`,
+        .setFooter({
+          text: `QuestCord`,
           iconURL: interaction.client.user.displayAvatarURL()
         });
 
@@ -105,80 +105,89 @@ module.exports = {
       };
     });
 
-    // Apply filters
+    // Apply user-selected filters to narrow down displayed items
     let filteredItems = itemsWithMeta;
     if (filterBy !== 'all') {
       switch (filterBy) {
         case 'equipment':
+          // Show all items in the equipment category
           filteredItems = itemsWithMeta.filter(item => item.category === 'equipment');
           break;
         case 'weapon':
+          // Show only weapon slot equipment
           filteredItems = itemsWithMeta.filter(item => item.equipSlot === 'weapon');
           break;
         case 'armor':
+          // Show only armor slot equipment
           filteredItems = itemsWithMeta.filter(item => item.equipSlot === 'armor');
           break;
         case 'material':
         case 'consumable':
         case 'vehicle':
         case 'artifact':
+          // Show items matching the specific category
           filteredItems = itemsWithMeta.filter(item => item.category === filterBy);
           break;
       }
     }
 
-    // Apply sorting
+    // Apply user-selected sorting to organize the display order
     const rarityOrder = { 'transcendent': 7, 'mythic': 6, 'legendary': 5, 'epic': 4, 'rare': 3, 'uncommon': 2, 'common': 1 };
     switch (sortBy) {
       case 'quantity':
+        // Sort by stack size (highest quantities first)
         filteredItems.sort((a, b) => b.qty - a.qty);
         break;
       case 'rarity':
+        // Sort by rarity tier (rarest items first)
         filteredItems.sort((a, b) => (rarityOrder[b.rarity] || 0) - (rarityOrder[a.rarity] || 0));
         break;
       case 'category':
+        // Sort alphabetically by item category
         filteredItems.sort((a, b) => a.category.localeCompare(b.category));
         break;
       case 'equipslot':
+        // Sort by equipment slot type (armor, weapon, etc.)
         filteredItems.sort((a, b) => (a.equipSlot || 'z').localeCompare(b.equipSlot || 'z'));
         break;
       case 'name':
       default:
+        // Default: Sort alphabetically by item name
         filteredItems.sort((a, b) => a.name.localeCompare(b.name));
         break;
     }
 
-    // Generate rarity emojis and colors
+    // Define visual indicators for different item rarities (color-coded system)
     const rarityEmojis = {
-      'transcendent': '🌟',
-      'mythic': '🔮',
-      'legendary': '👑',
-      'epic': '💜',
-      'rare': '💙',
-      'uncommon': '💚',
-      'common': '⚪'
+      'transcendent': '🌟',  // Star - highest tier, ultra rare
+      'mythic': '🔮',        // Crystal ball - mythical power
+      'legendary': '👑',     // Crown - legendary status
+      'epic': '💜',          // Purple heart - epic quality
+      'rare': '💙',          // Blue heart - rare finds
+      'uncommon': '💚',      // Green heart - uncommon items
+      'common': '⚪'           // White circle - common items
     };
 
+    // Define visual indicators for different item categories
     const categoryEmojis = {
-      'equipment': '⚔️',
-      'material': '🧱',
-      'consumable': '🧪',
-      'vehicle': '🚗',
-      'artifact': '🏺',
-      'unknown': '❓'
+      'equipment': '⚔️',    // Crossed swords - combat gear
+      'material': '🧱',     // Brick - crafting materials
+      'consumable': '🧪',   // Test tube - usable items
+      'vehicle': '🚗',       // Car - transportation
+      'artifact': '🏺',      // Amphora - special collectibles
+      'unknown': '❓'         // Question mark - unrecognized items
     };
 
-    // Build inventory display
     const inventoryEmbed = new EmbedBuilder()
-      .setTitle('🎒⭐ **INVENTORY COLLECTION** ⭐🎒')
-      .setDescription(`🎯 *${filteredItems.length} items found* • Sorted by ${sortBy} ${filterBy !== 'all' ? `• Filtered: ${filterBy}` : ''}`)
+      .setTitle('Inventory')
+      .setDescription(`${filteredItems.length} items found • Sorted by ${sortBy}${filterBy !== 'all' ? ` • Filtered: ${filterBy}` : ''}`)
       .setColor(0x3498DB)
-      .setAuthor({ 
-        name: `${userPrefix} - Item Collector`,
-        iconURL: interaction.user.displayAvatarURL() 
+      .setAuthor({
+        name: `${userPrefix}`,
+        iconURL: interaction.user.displayAvatarURL()
       });
 
-    // Group items by category for better organization
+    // Organize items by category for structured display
     const itemsByCategory = {};
     filteredItems.forEach(item => {
       const cat = item.category || 'unknown';
@@ -186,16 +195,13 @@ module.exports = {
       itemsByCategory[cat].push(item);
     });
 
-    // Add inventory summary
-    const totalValue = filteredItems.reduce((sum, item) => sum + item.qty, 0);
-    const uniqueCategories = Object.keys(itemsByCategory).length;
+    // Calculate inventory statistics for summary display
+    const totalValue = filteredItems.reduce((sum, item) => sum + item.qty, 0);  // Total quantity across all stacks
+    const uniqueCategories = Object.keys(itemsByCategory).length;               // Number of different categories
     
     inventoryEmbed.addFields({
-      name: '📊 **Inventory Summary**',
-      value: `🎒 **${filteredItems.length}** item types\
-📦 **${totalValue}** total quantity\
-🏷️ **${uniqueCategories}** categories\
-${filterBy !== 'all' ? `🔍 Filter: **${filterBy}**` : ''}`,
+      name: 'Summary',
+      value: `${filteredItems.length} item types\n${totalValue} total quantity\n${uniqueCategories} categories${filterBy !== 'all' ? `\nFilter: ${filterBy}` : ''}`,
       inline: false
     });
 
@@ -213,23 +219,20 @@ ${filterBy !== 'all' ? `🔍 Filter: **${filterBy}**` : ''}`,
 ... and ${items.length - 8} more` : '';
 
       inventoryEmbed.addFields({
-        name: `${emoji} **${category.toUpperCase()}** (${items.length})`,
+        name: `${emoji} ${category.toUpperCase()} (${items.length})`,
         value: itemList + moreItems,
         inline: true
       });
     });
 
-    // Add sorting/filtering help
     inventoryEmbed.addFields({
-      name: '🔧 **Inventory Tools**',
-      value: '• **Sort by**: Name, Quantity, Rarity, Category, Equipment Type\
-• **Filter by**: Equipment, Weapons, Armor, Materials, etc.\
-• **Quick Access**: `/equip`, `/useitem`, `/craft`',
+      name: 'Inventory Tools',
+      value: '• Sort by: Name, Quantity, Rarity, Category, Equipment Type\n• Filter by: Equipment, Weapons, Armor, Materials, etc.\n• Quick Access: `/equip`, `/useitem`, `/craft`',
       inline: false
     });
 
-    inventoryEmbed.setFooter({ 
-      text: `🎒 Use sorting and filtering options for better organization • QuestCord Inventory`,
+    inventoryEmbed.setFooter({
+      text: `QuestCord`,
       iconURL: interaction.client.user.displayAvatarURL()
     });
 
