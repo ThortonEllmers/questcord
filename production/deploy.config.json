@@ -1,12 +1,12 @@
 {
   "deployment": {
     "source": {
-      "database": "data/staging/database.sqlite",
+      "database": "data.sqlite",
       "config": "config.json",
       "env": ".env"
     },
     "target": {
-      "database": "data/production/database.sqlite",
+      "database": "data.sqlite",
       "config": "config.json",
       "env": ".env"
     },
@@ -19,10 +19,10 @@
     },
     "validation": {
       "checkDependencies": true,
-      "checkPorts": true
+      "checkPorts": false
     },
     "migration": {
-      "migrateDatabase": true,
+      "migrateDatabase": false,
       "preserveUserData": true,
       "mergeConfigs": false
     },
