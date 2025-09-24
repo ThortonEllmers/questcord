@@ -1,3417 +1,925 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"/>
-  <title>QuestCord World Map</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <style>
-    html, body { 
-      height: 100%; 
-      margin: 0; 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: #333;
-      -webkit-text-size-adjust: 100%;
-      -moz-text-size-adjust: 100%;
-      text-size-adjust: 100%;
-    }
-    #app { 
-      display: grid; 
-      grid-template-columns: 1fr 340px; 
-      height: 100vh; 
-      gap: 15px;
-      padding: 15px;
-      box-sizing: border-box;
-      position: relative;
-    }
-    #map { 
-      height: 100%; 
-      border-radius: 15px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-      border: 3px solid rgba(255, 255, 255, 0.2);
-      overflow: hidden;
-    }
-    .sidebar { 
-      background: white;
-      border-radius: 15px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      color: #333;
-    }
-    .map-controls { 
-      position: absolute; 
-      top: 25px; 
-      left: 25px; 
-      width: 240px;
-      z-index: 1001;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      isolation: isolate;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    
-    /* Professional Map Controls Styling */
-    .map-controls .heading {
-      color: #2d3748 !important;
-      font-weight: 600 !important;
-      font-size: 12px;
-      margin-bottom: 10px;
-      padding-bottom: 8px;
-      border-bottom: 2px solid #e2e8f0;
-      text-transform: uppercase;
-      letter-spacing: 0.75px;
-      position: relative;
-      z-index: 1;
-    }
-    
-    .map-controls .heading:first-child {
-      margin-top: 0;
-    }
-    
-    .map-controls label {
-      display: flex !important;
-      align-items: center;
-      margin-bottom: 8px !important;
-      color: #4a5568 !important;
-      font-weight: 500 !important;
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      padding: 6px 0;
-      position: relative;
-      z-index: 1;
-      border-radius: 6px;
-    }
-    
-    .map-controls label:hover {
-      color: #2d3748 !important;
-      background: rgba(74, 85, 104, 0.05);
-      padding-left: 8px;
-      padding-right: 8px;
-    }
-    
-    .map-controls label:last-child {
-      margin-bottom: 0 !important;
-    }
-    
-    .map-controls input[type="radio"],
-    .map-controls input[type="checkbox"] {
-      margin-right: 8px !important;
-      accent-color: #4299e1;
-      transform: scale(1.0);
-      cursor: pointer;
-    }
-    
-    .map-controls input[type="radio"]:checked,
-    .map-controls input[type="checkbox"]:checked {
-      accent-color: #3182ce;
-    }
-    
-    #centerName {
-      color: #2d3748 !important;
-      font-weight: 500 !important;
-      font-size: 11px !important;
-      padding: 8px 10px !important;
-      background: rgba(247, 250, 252, 0.8) !important;
-      border: 1px solid #e2e8f0 !important;
-      border-radius: 6px !important;
-      margin-top: 8px !important;
-      position: relative;
-      z-index: 1;
-      transition: all 0.2s ease;
-    }
-    
-    #centerName:hover {
-      background: rgba(247, 250, 252, 1) !important;
-      border-color: #cbd5e0 !important;
-    }
-    
-    #adminMapControls {
-      margin-top: 20px;
-      padding-top: 20px;
-      border-top: 1px solid #e2e8f0;
-      position: relative;
-      z-index: 1;
-    }
-    
-    #toggleEditMapBtn {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-      color: white !important;
-      border: none !important;
-      padding: 12px 18px !important;
-      border-radius: 10px !important;
-      font-weight: 600 !important;
-      font-size: 12px !important;
-      cursor: pointer !important;
-      transition: all 0.2s ease !important;
-      text-transform: uppercase !important;
-      letter-spacing: 0.75px !important;
-      width: 100% !important;
-      box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2) !important;
-    }
-    
-    #toggleEditMapBtn:hover {
-      transform: translateY(-2px) !important;
-      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4) !important;
-    }
-    
-    /* Override any conflicting styles */
-    .map-controls * {
-      color: inherit;
-    }
-    .panel { 
-      background: rgba(255, 255, 255, 0.96);
-      padding: 14px;
-      border-radius: 12px;
-      box-shadow: 
-        0 20px 25px -5px rgba(0, 0, 0, 0.1),
-        0 10px 10px -5px rgba(0, 0, 0, 0.04),
-        0 0 0 1px rgba(255, 255, 255, 0.05);
-      color: #1a202c;
-      border: 3px solid rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(24px) saturate(200%);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-    }
-    
-    .panel::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, 
-        rgba(255, 255, 255, 0.1) 0%, 
-        rgba(255, 255, 255, 0) 50%, 
-        rgba(255, 255, 255, 0.05) 100%);
-      border-radius: 12px;
-      pointer-events: none;
-    }
-    
-    .panel:hover {
-      box-shadow: 
-        0 25px 50px -12px rgba(0, 0, 0, 0.18),
-        0 15px 20px -8px rgba(0, 0, 0, 0.08),
-        0 0 0 1px rgba(255, 255, 255, 0.08);
-      transform: translateY(-2px) scale(1.02);
-      background: rgba(255, 255, 255, 0.98);
-    }
-    .server-marker { position:relative; width:48px; height:48px; transform:none; }
-    .server-marker.archived { filter: grayscale(1) opacity(0.7); }
-    .server-marker .visitors { 
-      position:absolute; 
-      top:-36px; 
-      left:50%; 
-      transform:translateX(-50%); 
-      font-family: 'Inter', sans-serif;
-      font-size: 12px;
-      line-height: 1.2;
-      font-weight: 700;
-      background: rgba(255, 255, 255, 0.95); 
-      color: #333; 
-      padding: 4px 10px; 
-      border-radius: 12px; 
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      border: 1px solid #ddd;
-      backdrop-filter: blur(10px);
-      white-space: nowrap; 
-    }
-    .server-marker img { 
-      position:absolute; 
-      left:0; 
-      top:0; 
-      width:48px; 
-      height:48px; 
-      border-radius:50%; 
-      border:3px solid rgba(59, 130, 246, 0.8); 
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4), 0 0 0 2px rgba(255,255,255,0.1); 
-    }
-    .server-marker .name { 
-      position:absolute; 
-      top:52px; 
-      left:50%; 
-      transform:translateX(-50%); 
-      font-family: 'Inter', sans-serif;
-      font-size: 12px;
-      line-height: 1.2;
-      font-weight: 700;
-      background: rgba(255, 255, 255, 0.95); 
-      color: #333;
-      padding: 4px 10px; 
-      border-radius: 12px; 
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      border: 1px solid #ddd;
-      backdrop-filter: blur(10px);
-      white-space: nowrap; 
-    }
-    
-    /* Boss Active Server Effects */
-    .server-marker.boss-active img {
-      animation: boss-pulse 2s ease-in-out infinite;
-      border-color: #ff4444 !important;
-      box-shadow: 0 0 20px rgba(255, 68, 68, 0.6), 0 4px 12px rgba(0,0,0,0.4) !important;
-    }
-    
-    .server-marker.boss-active.tier-1 img {
-      border-color: #ff6b35 !important;
-      box-shadow: 0 0 15px rgba(255, 107, 53, 0.5), 0 4px 12px rgba(0,0,0,0.4) !important;
-    }
-    
-    .server-marker.boss-active.tier-2 img {
-      border-color: #ff8c00 !important;
-      box-shadow: 0 0 18px rgba(255, 140, 0, 0.6), 0 4px 12px rgba(0,0,0,0.4) !important;
-    }
-    
-    .server-marker.boss-active.tier-3 img {
-      border-color: #ff4444 !important;
-      box-shadow: 0 0 20px rgba(255, 68, 68, 0.7), 0 4px 12px rgba(0,0,0,0.4) !important;
-      animation: boss-pulse-fire 1.8s ease-in-out infinite;
-    }
-    
-    .server-marker.boss-active.tier-4 img {
-      border-color: #cc0000 !important;
-      box-shadow: 0 0 25px rgba(204, 0, 0, 0.8), 0 4px 12px rgba(0,0,0,0.4) !important;
-      animation: boss-pulse-intense 1.5s ease-in-out infinite;
-    }
-    
-    .server-marker.boss-active.tier-5 img {
-      border-color: #8b0000 !important;
-      box-shadow: 0 0 30px rgba(139, 0, 0, 0.9), 0 0 15px rgba(255, 0, 0, 0.5), 0 4px 12px rgba(0,0,0,0.4) !important;
-      animation: boss-pulse-legendary 1.2s ease-in-out infinite;
-    }
-    
-    .server-marker.boss-active::before {
-      content: '';
-      position: absolute;
-      top: -5px;
-      left: -5px;
-      right: -5px;
-      bottom: -5px;
-      background: conic-gradient(from 0deg, transparent, #ff4444, transparent, #ff4444, transparent);
-      border-radius: 50%;
-      animation: boss-spin 3s linear infinite;
-      z-index: -1;
-      opacity: 0.7;
-    }
-    
-    .server-marker.boss-active .name {
-      background: rgba(139, 0, 0, 0.95) !important;
-      border: 1px solid rgba(255, 68, 68, 0.5) !important;
-      color: #ffdddd !important;
-      text-shadow: 0 0 5px rgba(255, 68, 68, 0.8);
-      animation: boss-text-glow 2s ease-in-out infinite;
-    }
-    
-    .server-marker.boss-active .visitors {
-      background: rgba(139, 0, 0, 0.95) !important;
-      border: 1px solid rgba(255, 68, 68, 0.5) !important;
-      color: #ffdddd !important;
-      text-shadow: 0 0 5px rgba(255, 68, 68, 0.8);
-    }
-    
-    @keyframes boss-pulse {
-      0%, 100% { 
-        transform: scale(1);
-        box-shadow: 0 0 20px rgba(255, 68, 68, 0.6), 0 4px 12px rgba(0,0,0,0.4);
-      }
-      50% { 
-        transform: scale(1.05);
-        box-shadow: 0 0 30px rgba(255, 68, 68, 0.8), 0 4px 12px rgba(0,0,0,0.4);
-      }
-    }
-    
-    @keyframes boss-pulse-fire {
-      0%, 100% { 
-        transform: scale(1);
-        box-shadow: 0 0 20px rgba(255, 68, 68, 0.7), 0 4px 12px rgba(0,0,0,0.4);
-      }
-      25% { 
-        transform: scale(1.03);
-        box-shadow: 0 0 25px rgba(255, 140, 0, 0.8), 0 4px 12px rgba(0,0,0,0.4);
-      }
-      50% { 
-        transform: scale(1.06);
-        box-shadow: 0 0 30px rgba(255, 68, 68, 0.9), 0 4px 12px rgba(0,0,0,0.4);
-      }
-      75% { 
-        transform: scale(1.03);
-        box-shadow: 0 0 25px rgba(255, 140, 0, 0.8), 0 4px 12px rgba(0,0,0,0.4);
-      }
-    }
-    
-    @keyframes boss-pulse-intense {
-      0%, 100% { 
-        transform: scale(1) rotate(0deg);
-        box-shadow: 0 0 25px rgba(204, 0, 0, 0.8), 0 4px 12px rgba(0,0,0,0.4);
-      }
-      33% { 
-        transform: scale(1.04) rotate(1deg);
-        box-shadow: 0 0 35px rgba(255, 0, 0, 0.9), 0 4px 12px rgba(0,0,0,0.4);
-      }
-      66% { 
-        transform: scale(1.08) rotate(-1deg);
-        box-shadow: 0 0 40px rgba(204, 0, 0, 1), 0 4px 12px rgba(0,0,0,0.4);
-      }
-    }
-    
-    @keyframes boss-pulse-legendary {
-      0%, 100% { 
-        transform: scale(1) rotate(0deg);
-        box-shadow: 0 0 30px rgba(139, 0, 0, 0.9), 0 0 15px rgba(255, 0, 0, 0.5), 0 4px 12px rgba(0,0,0,0.4);
-      }
-      20% { 
-        transform: scale(1.06) rotate(2deg);
-        box-shadow: 0 0 40px rgba(255, 0, 0, 1), 0 0 20px rgba(255, 69, 0, 0.7), 0 4px 12px rgba(0,0,0,0.4);
-      }
-      40% { 
-        transform: scale(1.1) rotate(-2deg);
-        box-shadow: 0 0 50px rgba(139, 0, 0, 1), 0 0 25px rgba(255, 0, 0, 0.8), 0 4px 12px rgba(0,0,0,0.4);
-      }
-      60% { 
-        transform: scale(1.08) rotate(1deg);
-        box-shadow: 0 0 45px rgba(255, 0, 0, 1), 0 0 22px rgba(255, 69, 0, 0.7), 0 4px 12px rgba(0,0,0,0.4);
-      }
-      80% { 
-        transform: scale(1.04) rotate(-1deg);
-        box-shadow: 0 0 35px rgba(139, 0, 0, 0.9), 0 0 18px rgba(255, 0, 0, 0.6), 0 4px 12px rgba(0,0,0,0.4);
-      }
-    }
-    
-    @keyframes boss-spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    
-    @keyframes boss-text-glow {
-      0%, 100% { 
-        text-shadow: 0 0 5px rgba(255, 68, 68, 0.8);
-      }
-      50% { 
-        text-shadow: 0 0 10px rgba(255, 68, 68, 1), 0 0 20px rgba(255, 0, 0, 0.5);
-      }
-    }
-    
-    /* Particle effect overlay for boss servers */
-    .server-marker.boss-active::after {
-      content: '';
-      position: absolute;
-      top: -10px;
-      left: -10px;
-      right: -10px;
-      bottom: -10px;
-      background: radial-gradient(circle at 50% 50%, transparent 30%, rgba(255, 68, 68, 0.1) 40%, transparent 60%);
-      border-radius: 50%;
-      animation: boss-particle-pulse 2.5s ease-in-out infinite;
-      pointer-events: none;
-      z-index: -2;
-    }
-    
-    @keyframes boss-particle-pulse {
-      0%, 100% { 
-        opacity: 0.3;
-        transform: scale(1);
-      }
-      50% { 
-        opacity: 0.7;
-        transform: scale(1.2);
-      }
-    }
-    .server-marker.me img { border-color: #00aaff; }
-    
-    /* Landmark Marker Styles */
-    .server-marker.landmark-marker img {
-      border: 3px solid #ff6b6b !important;
-      box-shadow: 0 0 15px rgba(255, 107, 107, 0.6), 0 4px 12px rgba(0,0,0,0.4) !important;
-      animation: landmark-glow 3s ease-in-out infinite;
-    }
-    
-    .server-marker.landmark-marker .name {
-      background: rgba(255, 107, 107, 0.95) !important;
-      border: 1px solid rgba(255, 107, 107, 0.8) !important;
-      color: white !important;
-      font-weight: 600;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-    }
-    
-    .server-marker.landmark-marker .visitors {
-      background: rgba(255, 107, 107, 0.95) !important;
-      border: 1px solid rgba(255, 107, 107, 0.8) !important;
-      color: white !important;
-      font-weight: 600;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-    }
-    
-    .server-marker.landmark-marker::before {
-      content: '🌟';
-      position: absolute;
-      top: -8px;
-      right: -8px;
-      font-size: 16px;
-      animation: landmark-star 2s ease-in-out infinite;
-      z-index: 10;
-    }
-    
-    @keyframes landmark-glow {
-      0%, 100% { 
-        box-shadow: 0 0 15px rgba(255, 107, 107, 0.6), 0 4px 12px rgba(0,0,0,0.4) !important;
-      }
-      50% { 
-        box-shadow: 0 0 25px rgba(255, 107, 107, 0.9), 0 4px 15px rgba(0,0,0,0.5) !important;
-      }
-    }
-    
-    @keyframes landmark-star {
-      0%, 100% { 
-        transform: scale(1) rotate(0deg);
-        opacity: 0.8;
-      }
-      50% { 
-        transform: scale(1.2) rotate(180deg);
-        opacity: 1;
-      }
-    }
-    
-    /* User Current Landmark Styles */
-    .server-marker.landmark-marker.user-current-landmark img {
-      border: 3px solid #00aaff !important;
-      box-shadow: 0 0 20px rgba(0, 170, 255, 0.8), 0 4px 12px rgba(0,0,0,0.4) !important;
-      animation: user-landmark-pulse 2s ease-in-out infinite;
-    }
-    
-    .server-marker.landmark-marker.user-current-landmark .name {
-      background: rgba(0, 170, 255, 0.95) !important;
-      border: 1px solid rgba(0, 170, 255, 0.8) !important;
-      color: white !important;
-      font-weight: 700;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.7);
-    }
-    
-    .server-marker.landmark-marker.user-current-landmark .visitors {
-      background: rgba(0, 170, 255, 0.95) !important;
-      border: 1px solid rgba(0, 170, 255, 0.8) !important;
-      color: white !important;
-      font-weight: 700;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.7);
-    }
-    
-    .current-location-badge {
-      position: absolute;
-      top: -45px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 170, 255, 0.95);
-      color: white;
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 10px;
-      font-weight: 600;
-      white-space: nowrap;
-      border: 1px solid rgba(0, 170, 255, 0.8);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-      z-index: 20;
-    }
-    
-    @keyframes user-landmark-pulse {
-      0%, 100% { 
-        box-shadow: 0 0 20px rgba(0, 170, 255, 0.8), 0 4px 12px rgba(0,0,0,0.4) !important;
-      }
-      50% { 
-        box-shadow: 0 0 30px rgba(0, 170, 255, 1), 0 4px 15px rgba(0,0,0,0.5) !important;
-      }
-    }
-    
-    /* Landmark popup styles */
-    .landmark-popup {
-      font-family: 'Inter', sans-serif;
-    }
-    
-    .landmark-popup .landmark-header h3 {
-      margin: 0 0 4px 0;
-      color: #ff6b6b;
-      font-size: 16px;
-      font-weight: 700;
-    }
-    
-    .landmark-popup .landmark-header p {
-      margin: 0;
-      color: #666;
-      font-size: 13px;
-      font-weight: 600;
-    }
-    
-    .heading { 
-      font-family: 'Inter', sans-serif;
-      font-size: 16px;
-      line-height: 1.4;
-      font-weight: 700; 
-      margin-bottom: 12px;
-      color: #333;
-      border-bottom: 2px solid #4f46e5;
-      padding-bottom: 6px;
-    }
-    .row { 
-      margin: 12px 0; 
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      line-height: 1.4;
-      color: #333; 
-      font-weight: 500; 
-    }
-    .bar { 
-      height: 16px; 
-      background: linear-gradient(90deg, #ecf0f1 0%, #bdc3c7 100%);
-      border-radius: 12px; 
-      overflow: hidden;
-      border: 1px solid rgba(0,0,0,0.1);
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .bar > div { 
-      height: 100%; 
-      transition: width 0.3s ease;
-      box-shadow: inset 0 1px 2px rgba(255,255,255,0.3);
-    }
-    .health { 
-      background: linear-gradient(90deg, #e74c3c 0%, #c0392b 100%);
-    }
-    .stamina { 
-      background: linear-gradient(90deg, #27ae60 0%, #229954 100%);
-    }
-    
-    
-    /* Make all text white and bold */
-    * {
-      color: white !important;
-    }
-    
-    /* Exception for map controls - force black text */
-    .map-controls, .map-controls * {
-      color: black !important;
-    }
-    
-    h1, h2, h3, h4, h5, h6, .heading, .title {
-      color: #333 !important;
-      font-weight: 700 !important;
-    }
-    
-    p, span, div, label, .row {
-      color: #333 !important;
-      font-weight: 500 !important;
-    }
-    .auth { 
-      display: flex; 
-      gap: 12px; 
-      align-items: center;
-      padding: 12px;
-      background: rgba(52, 152, 219, 0.1);
-      border-radius: 10px;
-      border: 1px solid rgba(52, 152, 219, 0.3);
-    }
-    .auth img { 
-      width: 32px; 
-      height: 32px; 
-      border-radius: 50%;
-      border: 2px solid #3498db;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-    
-    /* Logout button styling */
-    .auth a[href="/auth/logout"] {
-      display: inline-block;
-      padding: 6px 12px;
-      background: linear-gradient(135deg, #e74c3c, #c0392b);
-      color: white !important;
-      text-decoration: none;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      border: 1px solid rgba(231, 76, 60, 0.3);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-      transition: all 0.3s ease;
-      margin-left: auto;
-    }
-    
-    .auth a[href="/auth/logout"]:hover {
-      background: linear-gradient(135deg, #c0392b, #a93226);
-      box-shadow: 0 3px 8px rgba(231, 76, 60, 0.4);
-      transform: translateY(-1px);
-    }
-    
-    .auth a[href="/auth/logout"]:active {
-      transform: translateY(0);
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-    }
-    .admin { margin-top: 20px; }
-    .admin button { 
-      margin-right: 8px;
-      padding: 8px 16px;
-      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      transition: all 0.2s ease;
-    }
-    .admin button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    }
-    .admin .row { display: flex; align-items: center; gap: 10px; }
-    
-    .bot-btn.admin-btn {
-      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-      color: white;
-    }
-    
-    .bot-btn.admin-btn:hover {
-      background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
-      text-decoration: none;
-      color: white;
-    }
-    
-    
-    .bot-buttons {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-top: 15px;
-      padding-top: 15px;
-      border-top: 2px solid rgba(52, 152, 219, 0.3);
-    }
-    
-    .bot-buttons.no-border {
-      border-top: none;
-      margin-top: 0;
-      padding-top: 0;
-    }
-    
-    .bot-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 12px 16px;
-      border: none;
-      border-radius: 8px;
-      font: 14px/1.4 'Segoe UI', sans-serif;
-      font-weight: 600;
-      text-decoration: none;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    
-    .bot-btn.add-bot {
-      background: linear-gradient(135deg, #5865F2 0%, #4752C4 100%);
-      color: white;
-    }
-    
-    .bot-btn.add-bot:hover {
-      background: linear-gradient(135deg, #4752C4 0%, #3C45A5 100%);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(88, 101, 242, 0.3);
-    }
-    
-    .bot-btn.join-discord {
-      background: linear-gradient(135deg, #2ECC71 0%, #27AE60 100%);
-      color: white;
-    }
-    
-    .bot-btn.join-discord:hover {
-      background: linear-gradient(135deg, #27AE60 0%, #229954 100%);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
-    }
-    
-    .bot-btn.discord-signin {
-      background: linear-gradient(135deg, #7289DA 0%, #5865F2 100%);
-      color: white;
-    }
-    
-    .bot-btn.discord-signin:hover {
-      background: linear-gradient(135deg, #5865F2 0%, #4752C4 100%);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(114, 137, 218, 0.3);
-      text-decoration: none;
-      color: white;
-    }
-    
-    .legal-buttons {
-      display: flex;
-      flex-direction: row;
-      gap: 8px;
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px solid rgba(52, 152, 219, 0.2);
-    }
-    
-    .bot-btn.legal-btn {
-      background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
-      color: white;
-      font-size: 12px;
-      padding: 8px 12px;
-      flex: 1;
-    }
-    
-    .bot-btn.legal-btn:hover {
-      background: linear-gradient(135deg, #7f8c8d 0%, #6c7b7d 100%);
-      transform: translateY(-1px);
-      box-shadow: 0 3px 8px rgba(149, 165, 166, 0.3);
-      color: white;
-      text-decoration: none;
-    }
-    
-    .bot-btn.profile-btn:hover {
-      background: linear-gradient(135deg, #8e44ad 0%, #7d3c98 100%);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(155, 89, 182, 0.3);
-      text-decoration: none;
-      color: white;
-    }
-    
-    .bot-btn.status-btn {
-      background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
-      color: white;
-    }
-    
-    .bot-btn.status-btn:hover {
-      background: linear-gradient(135deg, #e67e22 0%, #d68910 100%);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);
-      text-decoration: none;
-      color: white;
-    }
-    
-    .logo-text {
-      text-align: center;
-      margin-bottom: 25px;
-      padding: 20px 15px 20px 15px;
-      background: linear-gradient(135deg, rgba(52, 152, 219, 0.1) 0%, rgba(41, 128, 185, 0.05) 100%);
-      border-radius: 12px;
-      border: 1px solid rgba(52, 152, 219, 0.2);
-      box-shadow: 0 4px 16px rgba(52, 152, 219, 0.1);
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .logo-text::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-      animation: shine 3s ease-in-out infinite;
-    }
-    
-    @keyframes shine {
-      0% { left: -100%; }
-      50% { left: 100%; }
-      100% { left: 100%; }
-    }
-    
-    .logo-text h1 {
-      font: 28px/1.1 'Segoe UI', sans-serif;
-      font-weight: 800;
-      margin: 0 0 5px 0;
-      background: linear-gradient(135deg, #3498db 0%, #2980b9 50%, #1abc9c 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      text-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
-      letter-spacing: -0.5px;
-      position: relative;
-      z-index: 1;
-    }
-    
-    .logo-text p {
-      font: 13px/1.2 'Segoe UI', sans-serif;
-      margin: 0;
-      color: #5a6c7d;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      opacity: 0.8;
-      position: relative;
-      z-index: 1;
-    }
-    
-    .logo-text .version {
-      font: 10px/1 'Segoe UI', sans-serif;
-      color: rgba(52, 152, 219, 0.6);
-      font-weight: 500;
-      margin-top: 3px;
-      letter-spacing: 0.5px;
-    }
-    
-    .logo-text .developer {
-      font: 10px/1 'Segoe UI', sans-serif;
-      color: rgba(149, 165, 166, 0.8);
-      font-weight: 500;
-      margin-top: 5px;
-      letter-spacing: 0.8px;
-      font-style: italic;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuestCord - Discord Quest Bot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #5865f2;
+            --primary-dark: #4752c4;
+            --secondary: #7c3aed;
+            --bg-dark: #0f0f23;
+            --bg-light: #1a1a2e;
+            --text-light: #ffffff;
+            --text-muted: #b9bbbe;
+            --border: rgba(255, 255, 255, 0.1);
+            --shadow: rgba(0, 0, 0, 0.3);
+            --gradient: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        }
 
-    /* Mobile Responsive Design */
-    @media (max-width: 768px) {
-      html, body {
-        font-size: 14px; /* Smaller base font for mobile */
-      }
-      
-      #app {
-        display: block;
-        height: 100vh;
-        height: 100dvh; /* Dynamic viewport height for better mobile support */
-        padding: 5px;
-        gap: 5px;
-        overflow: hidden;
-        box-sizing: border-box;
-      }
-      
-      #map {
-        height: 50vh;
-        height: 50dvh;
-        min-height: 250px;
-        margin-bottom: 5px;
-        border-radius: 8px;
-        box-sizing: border-box;
-      }
-      
-      .sidebar {
-        height: calc(50vh - 10px);
-        height: calc(50dvh - 10px);
-        min-height: 300px;
-        padding: 10px;
-        overflow-y: auto;
-        border-radius: 8px;
-        position: relative;
-        box-sizing: border-box;
-      }
-      
-      .map-controls {
-        position: fixed;
-        top: 80px;
-        right: 20px;
-        left: 20px;
-        width: auto;
-        z-index: 1000;
-        background: rgba(255, 255, 255, 0.98);
-        backdrop-filter: blur(20px) saturate(180%);
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        max-height: 60vh;
-        overflow-y: auto;
-        transform: translateY(-100%);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      }
-      
-      .map-controls.show {
-        transform: translateY(0);
-      }
-      
-      .mobile-controls-toggle {
-        position: fixed;
-        top: 20px;
-        left: 20px;
-        z-index: 1001;
-        background: rgba(255, 255, 255, 0.95);
-        color: #4a5568;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        border-radius: 8px;
-        width: 44px;
-        height: 44px;
-        font-size: 18px;
-        cursor: pointer;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        backdrop-filter: blur(10px);
-      }
-      
-      .mobile-controls-toggle:hover {
-        background: rgba(255, 255, 255, 1);
-        color: #2d3748;
-        transform: scale(1.05);
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-      }
-      
-      .map-controls .heading {
-        font-size: 14px;
-        margin-bottom: 8px;
-      }
-      
-      .map-controls label {
-        font-size: 12px;
-        margin: 4px 0;
-        color: #000000 !important;
-      }
-      
-      .map-controls input,
-      .map-controls #centerName {
-        color: #000000 !important;
-      }
-      
-      .logo-text {
-        padding: 8px 6px;
-        margin-bottom: 8px;
-        overflow: visible;
-        box-sizing: border-box;
-      }
-      
-      .logo-text h1 {
-        font-size: 18px;
-        line-height: 1.0;
-        word-break: break-word;
-        hyphens: auto;
-        margin: 0 0 3px 0;
-        overflow: visible;
-      }
-      
-      .logo-text p {
-        font-size: 11px;
-        line-height: 1.1;
-        margin: 2px 0;
-      }
-      
-      .logo-text .version,
-      .logo-text .developer {
-        font-size: 12px;
-        line-height: 1.0;
-        margin: 1px 0;
-      }
-      
-      .heading {
-        font-size: 13px;
-        margin-bottom: 4px;
-        line-height: 1.2;
-        font-weight: 700;
-      }
-      
-      .row {
-        font-size: 12px;
-        margin: 4px 0;
-        line-height: 1.3;
-      }
-      
-      .bar {
-        height: 20px;
-        min-height: 20px;
-        margin: 4px 0 8px 0;
-        border-radius: 10px;
-        background: #ecf0f1;
-        border: 2px solid rgba(0,0,0,0.15);
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.15);
-        overflow: hidden;
-        position: relative;
-        width: 100%;
-        box-sizing: border-box;
-      }
-      
-      .bar > div {
-        height: 100%;
-        min-height: 16px;
-        transition: width 0.3s ease;
-        border-radius: 8px;
-        position: relative;
-        box-shadow: inset 0 1px 2px rgba(255,255,255,0.3);
-      }
-      
-      .health {
-        background: linear-gradient(90deg, #e74c3c 0%, #c0392b 100%);
-        border: none;
-      }
-      
-      .stamina {
-        background: linear-gradient(90deg, #27ae60 0%, #229954 100%);
-        border: none;
-      }
-      
-      .auth {
-        padding: 6px;
-        flex-direction: row;
-        text-align: left;
-        gap: 6px;
-        align-items: center;
-        margin: 4px 0;
-      }
-      
-      .auth img {
-        width: 28px;
-        height: 28px;
-        margin-bottom: 0;
-        flex-shrink: 0;
-      }
-      
-      .auth > div {
-        min-width: 0;
-        flex: 1;
-        font-size: 12px;
-        line-height: 1.2;
-      }
-      
-      /* Mobile logout button styling */
-      .auth a[href="/auth/logout"] {
-        padding: 4px 8px;
-        font-size: 12px;
-        border-radius: 4px;
-        margin-left: 6px;
-      }
-      
-      .bot-buttons {
-        gap: 6px;
-        margin-top: 8px;
-      }
-      
-      .bot-btn {
-        padding: 8px 10px;
-        font-size: 12px;
-        min-height: 36px;
-        box-sizing: border-box;
-        border-radius: 6px;
-      }
-      
-      .legal-buttons {
-        flex-direction: row;
-        gap: 4px;
-      }
-      
-      .bot-btn.legal-btn {
-        font-size: 10px;
-        padding: 5px 8px;
-        min-height: 28px;
-        flex: 1;
-      }
-      
-      .admin button {
-        padding: 5px 10px;
-        font-size: 11px;
-        margin-bottom: 4px;
-      }
-      
-      .admin .row {
-        flex-direction: row;
-        gap: 8px;
-        align-items: center;
-        flex-wrap: wrap;
-      }
-      
-      /* Ensure sidebar content is properly contained */
-      .sidebar > * {
-        box-sizing: border-box;
-        max-width: 100%;
-      }
-      
-      /* Enhanced health and stamina bars styling when visible */
-      #healthBar, #staminaBar {
-        height: 100%;
-        min-height: 16px;
-      }
-      
-      /* Mobile specific bar container styling */
-      .sidebar .bar {
-        width: 100%;
-        max-width: 100%;
-        min-width: 200px;
-        position: relative;
-        clear: both;
-      }
-    }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    /* Large mobile devices (tablets in portrait) */
-    @media (min-width: 769px) and (max-width: 1024px) {
-      #app {
-        grid-template-columns: 1fr 280px;
-        gap: 10px;
-        padding: 10px;
-      }
-      
-      .sidebar {
-        padding: 15px;
-      }
-      
-      .map-controls {
-        left: 35px;
-        width: 180px;
-      }
-      
-      .logo-text {
-        padding: 15px 10px 15px 10px;
-      }
-      
-      .logo-text h1 {
-        font-size: 22px;
-      }
-      
-      .heading {
-        font-size: 15px;
-      }
-      
-    }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
 
-    /* Extra small mobile devices */
-    @media (max-width: 480px) {
-      html, body {
-        font-size: 14px;
-      }
-      
-      #app {
-        padding: 4px;
-      }
-      
-      #map {
-        height: 48vh;
-        height: 48dvh;
-        border-radius: 8px;
-        min-height: 240px;
-      }
-      
-      .sidebar {
-        height: calc(52vh - 8px);
-        height: calc(52dvh - 8px);
-        padding: 6px;
-        border-radius: 8px;
-        min-height: 200px;
-      }
-      
-      .bar {
-        height: 18px;
-        min-height: 18px;
-        margin: 3px 0 6px 0;
-        border-radius: 9px;
-        border: 1px solid rgba(0,0,0,0.2);
-      }
-      
-      .bar > div {
-        height: 100%;
-        min-height: 16px;
-        border-radius: 7px;
-      }
-      
-      .map-controls {
-        top: 10px;
-        right: 10px;
-        left: 10px;
-        padding: 8px;
-        border-radius: 8px;
-        max-height: 35vh;
-      }
-      
-      .logo-text {
-        padding: 8px 6px;
-        margin-bottom: 8px;
-      }
-      
-      .logo-text h1 {
-        font-size: 18px;
-        line-height: 1.1;
-      }
-      
-      .logo-text p {
-        font-size: 12px;
-        line-height: 1.2;
-      }
-      
-      .logo-text .version,
-      .logo-text .developer {
-        font-size: 10px;
-        line-height: 1.1;
-      }
-      
-      .heading {
-        font-size: 13px;
-        margin-bottom: 6px;
-      }
-      
-      .row {
-        font-size: 12px;
-        margin: 6px 0;
-      }
-      
-      .auth {
-        padding: 8px;
-      }
-      
-      .auth img {
-        width: 28px;
-        height: 28px;
-      }
-      
-      
-      .bot-btn {
-        padding: 8px 10px;
-        font-size: 12px;
-      }
-      
-      .bot-btn.legal-btn {
-        font-size: 10px;
-        padding: 5px 8px;
-      }
-    }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
 
-    /* Landscape orientation adjustments for mobile */
-    @media (max-width: 768px) and (orientation: landscape) {
-      #app {
-        display: grid;
-        grid-template-columns: 1fr 240px;
-        height: 100vh;
-        height: 100svh;
-        padding: 4px;
-        gap: 4px;
-      }
-      
-      #map {
-        height: 100%;
-        margin-bottom: 0;
-        min-height: auto;
-      }
-      
-      .sidebar {
-        height: 100%;
-        min-height: auto;
-        padding: 8px;
-        overflow-y: auto;
-      }
-      
-      .map-controls {
-        position: absolute;
-        top: 15px;
-        left: 15px;
-        width: 160px;
-        max-height: 50vh;
-      }
-      
-      .logo-text {
-        margin-bottom: 6px;
-        padding: 6px 4px;
-      }
-      
-      .logo-text h1 {
-        font-size: 16px;
-        line-height: 1.1;
-      }
-      
-      .logo-text p {
-        font-size: 11px;
-        line-height: 1.1;
-      }
-      
-      .logo-text .version,
-      .logo-text .developer {
-        font-size: 9px;
-      }
-      
-      .heading {
-        font-size: 13px;
-        margin-bottom: 5px;
-      }
-      
-      
-      .bot-buttons {
-        margin-top: 8px;
-        gap: 5px;
-      }
-      
-      .bot-btn {
-        padding: 6px 8px;
-        font-size: 11px;
-      }
-    }
-  
-/* Center the travel marker exactly on the path point */
- .travel-marker{ 
-   margin:0; 
-   padding:0; 
- }
- .travel-pin{ 
-   position:relative; 
-   width:32px; 
-   height:32px; 
-   pointer-events:none; 
-   margin:0; 
-   padding:0; 
-   display: flex; 
-   align-items: center; 
-   justify-content: center;
- }
- .travel-pin img{ 
-   position:absolute; 
-   left:0; 
-   top:0; 
-   width:32px; 
-   height:32px; 
-   border-radius:50%; 
-   border:2px solid #fff; 
-   box-shadow:0 0 6px rgba(0,0,0,.4); 
- }
- .travel-pin .eta{ 
-   position:absolute; 
-   top:38px; 
-   left:50%; 
-   transform:translateX(-50%); 
-   background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); 
-   color:#fff; 
-   font:bold 12px/1.2 'Segoe UI', sans-serif; 
-   padding:6px 10px; 
-   border-radius:15px; 
-   opacity:1; 
-   white-space:nowrap; 
-   box-shadow: 0 3px 10px rgba(0,0,0,0.4);
-   border: 2px solid rgba(255,255,255,0.3);
-   text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-   animation: etaPulse 2s ease-in-out infinite;
- }
- 
- @keyframes etaPulse {
-   0%, 100% { transform: translateX(-50%) scale(1); }
-   50% { transform: translateX(-50%) scale(1.05); }
- }
- .travel-pin .plane-indicator{ 
-   position:absolute; 
-   top:-8px; 
-   right:-8px; 
-   font-size:16px; 
-   text-shadow: 1px 1px 2px rgba(0,0,0,0.8); 
-   z-index: 10;
-   animation: fly 2s ease-in-out infinite alternate;
-   transform-origin: center;
-   transition: transform 0.5s ease;
- }
- @keyframes fly {
-   0% { transform: translateY(0px) rotate(var(--plane-rotation, 0deg)); }
-   100% { transform: translateY(-2px) rotate(var(--plane-rotation, 0deg)); }
- }
- 
- @keyframes flyDirectional {
-   0% { transform: translateY(0px); }
-   100% { transform: translateY(-2px); }
- }
+        /* Header */
+        .header {
+            padding: 20px 0;
+            position: relative;
+            z-index: 100;
+        }
 
-/* Visitors popup list */
-.vis-list{ 
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-  font-size: 13px;
-  line-height: 1.4;
-  min-width: 200px; 
-  background: white;
-  color: #333;
-  padding: 16px;
-  border-radius: 12px;
-  border: 1px solid #ddd;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-}
-.vis-list .vis-title{ 
-  font-weight: 700; 
-  margin-bottom: 12px; 
-  color: #333;
-  font-size: 15px;
-  border-bottom: 2px solid #4f46e5;
-  padding-bottom: 6px;
-}
-.vis-list .vis-note{ 
-  color: #666; 
-  font-weight: 500;
-  font-style: italic;
-  margin: 8px 0;
-}
-.vis-list .vis-row{ 
-  display: flex; 
-  align-items: center; 
-  gap: 10px; 
-  margin: 8px 0; 
-  padding: 6px 8px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.05);
-  transition: background 0.2s ease;
-  font-weight: 600;
-  color: #333;
-}
-/* Hover styling now handled by .vis-user-link:hover .vis-row */
-.vis-list .vis-row img{ 
-  width: 28px; 
-  height: 28px; 
-  border-radius: 50%; 
-  border: 2px solid #4f46e5;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-.vis-list .vis-user-link {
-  color: inherit;
-  text-decoration: none;
-  display: block;
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-.vis-list .vis-user-link:hover {
-  color: #4f46e5;
-  text-decoration: none;
-}
-.vis-list .vis-user-link:hover .vis-row {
-  background: rgba(79, 70, 229, 0.1);
-  border-left: 3px solid #4f46e5;
-  transform: translateX(2px);
-}
-.vis-list .vis-user-link span {
-  color: #333;
-  font-weight: 600;
-  transition: all 0.2s ease;
-}
-.vis-list .vis-user-link:hover span {
-  color: #4f46e5;
-}
-.vis-list .profile-arrow {
-  color: #999 !important;
-  font-weight: 400 !important;
-  margin-left: auto;
-  font-size: 14px;
-  transition: all 0.2s ease;
-}
-.vis-list .vis-user-link:hover .profile-arrow {
-  color: #4f46e5 !important;
-  transform: translateX(2px);
-  text-shadow: none !important;
-}
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-/* Leaflet popup theme override */
-.leaflet-popup-content-wrapper {
-  background: white !important;
-  border: 1px solid #ddd !important;
-  border-radius: 12px !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
-  color: #333 !important;
-  padding: 0 !important;
-}
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
-.leaflet-popup-content {
-  margin: 0 !important;
-  padding: 0 !important;
-  color: #333 !important;
-  font-family: 'Inter', sans-serif !important;
-}
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            list-style: none;
+        }
 
-.leaflet-popup-tip {
-  background: white !important;
-  border: 1px solid #ddd !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-}
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
 
-.leaflet-popup-close-button {
-  color: #666 !important;
-  font-size: 18px !important;
-  font-weight: bold !important;
-  background: rgba(0, 0, 0, 0.05) !important;
-  border-radius: 50% !important;
-  width: 24px !important;
-  height: 24px !important;
-  text-align: center !important;
-  line-height: 22px !important;
-  transition: all 0.2s ease !important;
-}
+        .nav-links a:hover {
+            color: var(--text-light);
+        }
 
-.leaflet-popup-close-button:hover {
-  background: rgba(0, 0, 0, 0.1) !important;
-  color: #333 !important;
-}
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 120px 0 140px;
+            position: relative;
+        }
 
-/* Weather popup specific styling */
-.leaflet-popup-content div[style*="text-align: center"] {
-  color: #333 !important;
-}
-.leaflet-popup-content div[style*="text-align: center"] strong {
-  color: #4f46e5 !important;
-}
+        .brand-title {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 48px;
+            font-family: 'Inter', sans-serif;
+            gap: 12px;
+            overflow: visible;
+        }
 
-/* Weather marker animations */
-@keyframes weatherPulse {
-  0% { transform: scale(1); opacity: 0.8; }
-  50% { transform: scale(1.1); opacity: 1; }
-  100% { transform: scale(1); opacity: 0.8; }
-}
+        .title-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            background: var(--gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            animation: iconFloat 3s ease-in-out infinite, iconGlow 2s ease-in-out infinite alternate;
+            box-shadow: 0 8px 32px rgba(88, 101, 242, 0.3);
+        }
 
-@keyframes severePulse {
-  0% { transform: scale(1); opacity: 0.6; box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7); }
-  50% { transform: scale(1.05); opacity: 1; box-shadow: 0 0 0 10px rgba(255, 0, 0, 0); }
-  100% { transform: scale(1); opacity: 0.6; box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); }
-}
+        .title-icon::before {
+            content: '⚔';
+            font-size: 28px;
+            color: white;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
 
-.weather-marker {
-  z-index: 1000 !important;
-}
+        .title-text {
+            font-size: clamp(3.5rem, 7vw, 6rem);
+            font-weight: 700;
+            letter-spacing: -2px;
+            position: relative;
+            background: linear-gradient(135deg,
+                var(--primary) 0%,
+                var(--secondary) 25%,
+                #ffffff 50%,
+                var(--secondary) 75%,
+                var(--primary) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: textWave 4s ease-in-out infinite;
+            filter: drop-shadow(0 4px 12px rgba(88, 101, 242, 0.2));
+        }
 
-.weather-marker div {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(4px);
-  font-weight: 600 !important;
-}
+        .title-text::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gradient);
+            border-radius: 1px;
+            transform: scaleX(0);
+            animation: underlineGrow 1.5s ease-out 0.5s forwards;
+        }
 
-/* World Clock styles removed */
-.world-clock {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  z-index: 1001;
-  width: 100px;
-  height: 100px;
-  background: rgba(30, 41, 55, 0.95);
-  backdrop-filter: blur(20px);
-  border: 3px solid rgba(75, 85, 99, 0.4);
-  border-radius: 50%;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  color: white;
-  font-family: 'Inter', sans-serif;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  /* Position within the map container */
-  margin: 0;
-}
+        .title-badge {
+            position: absolute;
+            top: -12px;
+            right: -24px;
+            background: linear-gradient(135deg, #f59e0b, #f97316);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 16px rgba(249, 115, 22, 0.3);
+            opacity: 0;
+            transform: scale(0.8) rotate(-10deg);
+            animation: badgeAppear 0.8s ease-out 1.2s forwards;
+        }
 
-.world-clock.night-mode {
-  background: rgba(15, 23, 42, 0.95);
-  border-color: rgba(100, 116, 139, 0.4);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-}
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-4px) rotate(-2deg); }
+            66% { transform: translateY(2px) rotate(2deg); }
+        }
 
-.clock-time {
-  font-size: 14px;
-  font-weight: 700;
-  margin-bottom: 2px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-  letter-spacing: 0.5px;
-  line-height: 1;
-}
+        @keyframes iconGlow {
+            0% { box-shadow: 0 8px 32px rgba(88, 101, 242, 0.3); }
+            100% { box-shadow: 0 12px 40px rgba(124, 58, 237, 0.5); }
+        }
 
-.clock-date {
-  display: none; /* Hide date in compact round design */
-}
+        @keyframes textWave {
+            0%, 100% { background-position: 0% 50%; transform: translateY(0); }
+            25% { background-position: 50% 25%; transform: translateY(-2px); }
+            50% { background-position: 100% 50%; transform: translateY(0); }
+            75% { background-position: 50% 75%; transform: translateY(1px); }
+        }
 
-.day-night-indicator {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 8px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  margin-top: 2px;
-}
+        @keyframes underlineGrow {
+            0% { transform: scaleX(0); }
+            100% { transform: scaleX(1); }
+        }
 
-.day-night-icon {
-  font-size: 20px;
-  animation: glow 2s ease-in-out infinite alternate;
-  margin-bottom: 4px;
-}
+        @keyframes badgeAppear {
+            0% { opacity: 0; transform: scale(0.8) rotate(-10deg); }
+            100% { opacity: 1; transform: scale(1) rotate(-8deg); }
+        }
 
-.is-day .day-night-indicator {
-  color: #fbbf24;
-}
+        /* Hover effects */
+        .title-text {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
 
-.is-night .day-night-indicator {
-  color: #7c3aed;
-}
+        .title-text:hover {
+            transform: scale(1.02);
+        }
 
-@keyframes glow {
-  from { filter: drop-shadow(0 0 5px currentColor); }
-  to { filter: drop-shadow(0 0 10px currentColor); }
-}
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
 
-/* Day/Night Cycle Background Overlay */
-.day-night-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 0;
-  transition: all 1s ease;
-  mix-blend-mode: multiply;
-}
+        .loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
 
-.day-night-overlay.day {
-  background: linear-gradient(135deg, rgba(255, 223, 0, 0.1) 0%, rgba(255, 165, 0, 0.05) 100%);
-}
+        .crown-loader {
+            font-size: 4rem;
+            color: var(--primary);
+            animation: crownSpin 2s ease-in-out infinite, crownGlow 1.5s ease-in-out infinite alternate;
+            margin-bottom: 24px;
+            filter: drop-shadow(0 4px 16px rgba(88, 101, 242, 0.4));
+        }
 
-.day-night-overlay.night {
-  background: linear-gradient(135deg, rgba(30, 30, 60, 0.3) 0%, rgba(15, 15, 40, 0.2) 100%);
-}
+        .loading-text {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            animation: loadingPulse 2s ease-in-out infinite;
+        }
 
-/* Map-specific Night Overlay */
-.map-night-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1000;
-  background: radial-gradient(circle at center, 
-    rgba(15, 23, 42, 0.0) 0%,
-    rgba(15, 23, 42, 0.3) 30%,
-    rgba(15, 23, 42, 0.6) 60%,
-    rgba(15, 23, 42, 0.8) 100%);
-  transition: opacity 2s ease;
-  display: none;
-  border-radius: 8px;
-}
+        @keyframes crownSpin {
+            0%, 100% { transform: rotateY(0deg) scale(1); }
+            50% { transform: rotateY(180deg) scale(1.1); }
+        }
 
-/* Responsive adjustments for round clock in map */
-@media (max-width: 768px) {
-  .world-clock {
-    top: 15px;
-    right: 15px;
-    width: 80px;
-    height: 80px;
-  }
-  
-  .clock-time {
-    font-size: 12px;
-  }
-  
-  .day-night-icon {
-    font-size: 16px;
-  }
-  
-  .day-night-indicator {
-    font-size: 10px;
-  }
-}
+        @keyframes crownGlow {
+            0% { filter: drop-shadow(0 4px 16px rgba(88, 101, 242, 0.4)); }
+            100% { filter: drop-shadow(0 8px 24px rgba(124, 58, 237, 0.6)); }
+        }
 
-@media (max-width: 480px) {
-  .world-clock {
-    top: 12px;
-    right: 12px;
-    width: 70px;
-    height: 70px;
-  }
-  
-  .clock-time {
-    font-size: 11px;
-  }
-  
-  .day-night-icon {
-    font-size: 14px;
-  }
-  
-  .day-night-indicator {
-    font-size: 9px;
-  }
-}
+        @keyframes loadingPulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
 
-/* Enhanced weather visual effects */
-.weather-marker div {
-  transition: all 0.3s ease !important;
-}
+        /* Mobile and Tablet Responsiveness */
+        @media (max-width: 768px) {
+            .title-icon {
+                width: 48px;
+                height: 48px;
+            }
 
-.weather-marker:hover div {
-  transform: scale(1.2) !important;
-  background: rgba(255, 255, 255, 0.95) !important;
-  border-width: 3px !important;
-  animation-duration: 1s !important;
-}
+            .title-icon::before {
+                font-size: 20px;
+            }
 
-.weather-circle.severity-5 {
-  animation: severeStormPulse 1.5s ease-in-out infinite !important;
-}
+            .title-text {
+                font-size: clamp(2.5rem, 8vw, 4rem);
+                letter-spacing: -1px;
+            }
 
-.weather-circle.severity-4 {
-  animation: dangerousStormPulse 2s ease-in-out infinite !important;
-}
+            .title-badge {
+                font-size: 0.65rem;
+                padding: 3px 8px;
+                top: -8px;
+                right: -16px;
+            }
 
-.weather-circle.blocking {
-  box-shadow: 0 0 25px rgba(220, 38, 38, 0.5) !important;
-}
+            .hero {
+                padding: 80px 0 100px;
+            }
 
-@keyframes severeStormPulse {
-  0% { opacity: 0.8; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(1.02); }
-  100% { opacity: 0.8; transform: scale(1); }
-}
+            .brand-title {
+                margin-bottom: 32px;
+                gap: 8px;
+            }
 
-@keyframes dangerousStormPulse {
-  0% { opacity: 0.7; }
-  50% { opacity: 0.3; }
-  100% { opacity: 0.7; }
-}
+            .crown-loader {
+                font-size: 3rem;
+            }
+        }
 
-/* FINAL OVERRIDE - Map Controls Must Be Black Text on White Background */
-.map-controls {
-  background: white !important;
-}
+        @media (max-width: 480px) {
+            .title-text {
+                font-size: clamp(2rem, 10vw, 3rem);
+                letter-spacing: 0;
+            }
 
-.map-controls .panel {
-  background: white !important;
-  color: black !important;
-}
+            .title-icon {
+                width: 40px;
+                height: 40px;
+            }
 
-.map-controls *,
-.map-controls label,
-.map-controls input,
-.map-controls div,
-.map-controls span,
-.map-controls .heading,
-#centerName {
-  color: black !important;
-}
-</style>
+            .title-icon::before {
+                font-size: 18px;
+            }
+
+            .hero {
+                padding: 60px 0 80px;
+            }
+
+            .container {
+                padding: 0 16px;
+            }
+
+            .crown-loader {
+                font-size: 2.5rem;
+            }
+
+            .loading-text {
+                font-size: 1rem;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .title-text {
+                font-size: clamp(4rem, 6vw, 5rem);
+            }
+
+            .title-icon {
+                width: 56px;
+                height: 56px;
+            }
+
+            .title-icon::before {
+                font-size: 24px;
+            }
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 20%, rgba(88, 101, 242, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(124, 58, 237, 0.15) 0%, transparent 50%);
+            z-index: -1;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.1); }
+        }
+
+        .hero h1 {
+            font-size: clamp(48px, 8vw, 72px);
+            font-weight: 700;
+            margin-bottom: 24px;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 20px;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto 48px;
+        }
+
+        .cta-group {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 80px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 32px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--gradient);
+            color: white;
+            box-shadow: 0 8px 32px rgba(88, 101, 242, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(88, 101, 242, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-light);
+            color: var(--text-light);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
+        }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 48px;
+            text-align: center;
+        }
+
+        .stat h3 {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .stat p {
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+
+        /* Features */
+        .features {
+            padding: 120px 0;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        .section-header h2 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .section-header p {
+            font-size: 18px;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 32px;
+        }
+
+        .feature-card {
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            transition: all 0.2s ease;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(88, 101, 242, 0.3);
+            transform: translateY(-4px);
+        }
+
+        .feature-icon {
+            width: 64px;
+            height: 64px;
+            background: var(--gradient);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            font-size: 24px;
+            color: white;
+        }
+
+        .feature-card h3 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* FAQ */
+        .faq {
+            padding: 120px 0;
+            background: var(--bg-light);
+        }
+
+        .faq-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .faq-question {
+            padding: 24px;
+            background: var(--bg-dark);
+            cursor: pointer;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            font-weight: 600;
+            transition: background 0.2s ease;
+        }
+
+        .faq-question:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .faq-question i {
+            margin-left: auto;
+            transition: transform 0.2s ease;
+        }
+
+        .faq-item.active .faq-question i {
+            transform: rotate(180deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.2s ease;
+            background: var(--bg-light);
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 300px;
+            padding: 24px;
+        }
+
+        .faq-answer p {
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .faq-answer code {
+            background: var(--bg-dark);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        /* Footer */
+        .footer {
+            padding: 80px 0 40px;
+            text-align: center;
+            border-top: 1px solid var(--border);
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--text-light);
+        }
+
+        .footer p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero {
+                padding: 60px 0 80px;
+            }
+
+            .cta-group {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 280px;
+                justify-content: center;
+            }
+
+            .stats {
+                gap: 32px;
+            }
+
+            .features {
+                padding: 80px 0;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .section-header h2 {
+                font-size: 36px;
+            }
+
+            .faq {
+                padding: 80px 0;
+            }
+        }
+
+        /* Loading optimizations */
+        .hero, .features, .faq {
+            will-change: transform;
+        }
+
+        img {
+            loading: lazy;
+        }
+    </style>
 </head>
 <body>
-<div id="app">
-  <!-- Day/Night Cycle Overlay -->
-  <div class="day-night-overlay" id="dayNightOverlay"></div>
-  
-  
-  <div id="map">
-    <!-- Boss Particle Effects Canvas -->
-    <canvas id="bossParticleCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 500; border-radius: 15px;"></canvas>
-    
-    <!-- World Clock removed per user request -->
-    <!-- Map-specific night overlay -->
-    <div class="map-night-overlay" id="mapNightOverlay"></div>
-  </div>
-  <div class="sidebar">
-    <div class="logo-text">
-      <h1>QuestCord</h1>
-      <p>Adventure Bot</p>
-      <div class="version">v1.1.0</div>
-      <div class="developer">Developed by CUB</div>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="crown-loader">👑</div>
+        <div class="loading-text">Loading QuestCord...</div>
     </div>
-    <div class="heading">Player</div>
-    <div id="authBox" class="row auth"></div>
-    <div class="row">Health</div>
-    <div class="bar"><div id="healthBar" class="health" style="width:0%"></div></div>
-    <div class="row">Stamina</div>
-    <div class="bar"><div id="staminaBar" class="stamina" style="width:0%"></div></div>
-    <div id="adminBox" class="admin"></div>
-    
-    <div class="bot-buttons">
-      <a href="/profile" class="bot-btn profile-btn" id="profileBtn" style="display: none; background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); color: white;">
-        View Profile
-      </a>
-      <a href="/admin" class="bot-btn admin-btn" id="adminBtn" style="display: none;">
-        Admin Panel
-      </a>
-      <a href="/status" class="bot-btn status-btn" id="statusBtn">
-        System Status
-      </a>
-      <a href="#" class="bot-btn add-bot" id="addBotBtn">
-        Add Bot to Server
-      </a>
-      <a href="#" class="bot-btn join-discord" id="joinDiscordBtn">
-        Join Discord Server
-      </a>
-      <div class="legal-buttons">
-        <a href="/terms" class="bot-btn legal-btn">
-          Terms of Service
-        </a>
-        <a href="/privacy" class="bot-btn legal-btn">
-          Privacy Policy
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
 
-
-<!-- Mobile controls toggle button -->
-<button class="mobile-controls-toggle" id="mobileControlsToggle" style="display: none;">⚙️</button>
-
-<div class="map-controls">
-  <div class="panel">
-    <div class="heading">Map Controls</div>
-    <label style="display:block"><input type="radio" name="mode" value="nearest" checked> Nearest 50</label>
-    <label style="display:block"><input type="radio" name="mode" value="global"> Global</label>
-    <label style="display:block"><input type="checkbox" id="discoverableOnly" checked> Only Discoverable</label>
-    <label style="display:block"><input type="checkbox" id="bossActiveOnly"> Only Boss-Active</label>
-    <label style="display:block"><input type="checkbox" id="showLandmarks"> Show Landmarks</label>
-    <div id="adminMapControls" style="display:none;">
-      <div class="heading">Admin Controls</div>
-      <button id="toggleEditMapBtn" style="display:block; width:100%; margin:5px 0; padding:8px; background:#5865F2; color:white; border:none; border-radius:4px; cursor:pointer;">Toggle - Edit Map</button>
-      <label style="display:block"><input type="checkbox" id="showArchivedMap"> Show Archived</label>
-    </div>
-    <div class="heading">Center</div>
-    <div id="centerName">unknown</div>
-  </div>
-</div>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-<script>
-(function(){
-  let CSRF = null;
-  async function getCsrf(){ const r = await fetch('/api/csrf'); const j = await r.json(); CSRF = j.csrf; }
-
-
-  function guildFromPath(){
-    const m = location.pathname.match(/^\/(\d{5,})/);
-    return m ? m[1] : null;
-  }
-  const fromGuildId = guildFromPath();
-
-  const modeRadios = [...document.querySelectorAll('input[name="mode"]')];
-  const discoverableOnly = document.getElementById('discoverableOnly');
-  const bossActiveOnly = document.getElementById('bossActiveOnly');
-  const showLandmarks = document.getElementById('showLandmarks');
-
-  // Configure map for mobile and desktop
-  const isMobile = window.innerWidth <= 768;
-  const map = L.map('map', { 
-    worldCopyJump: true,
-    tap: true, // Enable tap on mobile
-    tapTolerance: 15, // Increase tap tolerance for mobile
-    touchZoom: true, // Enable touch zoom
-    doubleClickZoom: true,
-    scrollWheelZoom: !isMobile, // Disable scroll zoom on mobile by default
-    zoomControl: false, // Remove zoom controls (+ and - buttons)
-    attributionControl: false // Remove attribution on mobile to save space
-  }).setView([0, 0], 2);
-  
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
-    maxZoom: 19, 
-    attribution: isMobile ? '' : '&copy; OpenStreetMap' // Hide attribution on mobile
-  }).addTo(map);
-  
-  // Mobile controls setup (zoom controls removed)
-  if (isMobile) {
-    // Show mobile controls toggle
-    const toggleBtn = document.getElementById('mobileControlsToggle');
-    const mapControls = document.querySelector('.map-controls');
-    toggleBtn.style.display = 'flex';
-    
-    // Handle mobile controls toggle
-    let controlsVisible = false;
-    toggleBtn.addEventListener('click', () => {
-      controlsVisible = !controlsVisible;
-      if (controlsVisible) {
-        mapControls.classList.add('show');
-        toggleBtn.innerHTML = '✕';
-      } else {
-        mapControls.classList.remove('show');
-        toggleBtn.innerHTML = '⚙️';
-      }
-    });
-    
-    // Hide controls when clicking outside
-    document.addEventListener('click', (e) => {
-      if (controlsVisible && !mapControls.contains(e.target) && e.target !== toggleBtn) {
-        mapControls.classList.remove('show');
-        toggleBtn.innerHTML = '⚙️';
-        controlsVisible = false;
-      }
-    });
-  }
-
-  let markers = [];
-  let weatherMarkers = [];
-  window.markers = markers; // Expose markers globally for particle system
-  function clearMarkers(){ markers.forEach(m=>map.removeLayer(m)); markers = []; window.markers = markers; }
-  function clearWeather(){ weatherMarkers.forEach(m=>map.removeLayer(m)); weatherMarkers = []; }
-
-  // --- Travel overlay (per-user) ---
-  let travelLine = null;
-  let travelMarker = null;
-  function clearTravel(){
-    if (travelLine) { map.removeLayer(travelLine); travelLine = null; }
-    if (travelMarker) { map.removeLayer(travelMarker); travelMarker = null; }
-    
-    // Clear boss particles when travel state changes
-    try {
-      if (typeof bossParticles !== 'undefined') {
-        bossParticles.clearBossMarkers();
-      }
-    } catch (error) {
-      console.warn('[travel] Failed to clear boss particles:', error);
-    }
-  }
-  function updateTravelOverlay(meData){
-    try {
-      // Check if we can update existing marker instead of recreating
-      const canUpdate = travelMarker && 
-                       travelMarker._travelData && 
-                       meData && 
-                       meData.travel && 
-                       meData.travel.position &&
-                       meData.travel.from && 
-                       meData.travel.to;
-                       
-      console.log('[travel] Update check:', {
-        hasTravelMarker: !!travelMarker,
-        hasTravelData: !!(travelMarker && travelMarker._travelData),
-        hasMeData: !!meData,
-        hasTravel: !!(meData && meData.travel),
-        hasPosition: !!(meData && meData.travel && meData.travel.position),
-        hasFromTo: !!(meData && meData.travel && meData.travel.from && meData.travel.to),
-        canUpdate: canUpdate
-      });
-                       
-      if (canUpdate) {
-        try {
-          // Update existing marker smoothly
-          const rawPos = [meData.travel.position.lat, meData.travel.position.lon];
-          const pos = [
-            Math.round(rawPos[0] * 1000000) / 1000000, 
-            Math.round(rawPos[1] * 1000000) / 1000000
-          ];
-          
-          console.log('[travel] Updating marker position to:', pos);
-          
-          // Smooth position update
-          travelMarker.setLatLng(pos);
-        
-        // Update ETA and content
-        const etaMs = (meData.travel.arrivalAt || 0) - Date.now();
-        const etaMin = Math.max(0, Math.ceil(etaMs / 60000));
-        
-        const avatarUrl = (meData.user && meData.user.avatar)
-          ? `https://cdn.discordapp.com/avatars/${meData.user.id}/${meData.user.avatar}.png`
-          : 'https://cdn.discordapp.com/embed/avatars/0.png';
-        
-        const userRole = meData.roleLevel || 'User';
-        const isPremiumPlus = (userRole === 'Premium' || userRole === 'Staff' || userRole === 'Developer');
-        const planeIcon = isPremiumPlus ? '✈️' : '✈️'; // Always use plane emoji
-        const planeColor = isPremiumPlus ? '#FFD700' : '#87CEEB';
-        
-        // Calculate direction of travel for plane rotation
-        let planeRotation = 0;
-        if (meData.travel.from && meData.travel.to) {
-          const fromLat = meData.travel.from.lat * Math.PI / 180;
-          const fromLon = meData.travel.from.lon * Math.PI / 180;
-          const toLat = meData.travel.to.lat * Math.PI / 180;
-          const toLon = meData.travel.to.lon * Math.PI / 180;
-          
-          const dLon = toLon - fromLon;
-          const y = Math.sin(dLon) * Math.cos(toLat);
-          const x = Math.cos(fromLat) * Math.sin(toLat) - Math.sin(fromLat) * Math.cos(toLat) * Math.cos(dLon);
-          
-          planeRotation = Math.atan2(y, x) * 180 / Math.PI;
-        }
-        
-        const htmlPin = `<div class="travel-pin">
-          <img src="${avatarUrl}" alt="me"/>
-          <div class="plane-indicator" style="filter: drop-shadow(0 0 3px ${planeColor}); animation: flyDirectional 2s ease-in-out infinite alternate;">
-            <div style="transform: rotate(${planeRotation}deg);">${planeIcon}</div>
-          </div>
-          <div class="eta">ETA: ${etaMin}m</div>
-        </div>`;
-        
-        // Update marker content
-        travelMarker.setIcon(L.divIcon({ 
-          className: 'travel-marker', 
-          html: htmlPin, 
-          iconSize: [32,32], 
-          iconAnchor: [16,16],
-          popupAnchor: [0, -16]
-        }));
-        
-        // Update stored data
-        travelMarker._travelData.position = pos;
-        travelMarker._travelData.progress = meData.travel.progress || 0;
-        travelMarker._travelData.from = [meData.travel.from.lat, meData.travel.from.lon];
-        travelMarker._travelData.to = [meData.travel.to.lat, meData.travel.to.lon];
-        
-          console.log('[travel] Marker updated successfully');
-          return; // Exit early, marker updated successfully
-        } catch (updateError) {
-          console.warn('[travel] Failed to update existing marker:', updateError);
-          // Fall through to create new marker
-        }
-      }
-      
-      // Otherwise clear and create new marker
-      console.log('[travel] Creating new marker instead of updating');
-      clearTravel();
-      if (!meData || !meData.travel || !meData.travel.from || !meData.travel.to) return;
-      const from = [meData.travel.from.lat, meData.travel.from.lon];
-      const to   = [meData.travel.to.lat,   meData.travel.to.lon];
-      
-      // Skip creating the travel line to prevent visual movement issues
-      // travelLine = L.polyline([from, to], { 
-      //   dashArray: '6,8',
-      //   color: '#ff6b35',
-      //   weight: 3,
-      //   opacity: 0.7
-      // }).addTo(map);
-      
-      // Show player at current travel position
-      let pos;
-      if (meData.travel.position) {
-        // Use current travel position to show where player actually is
-        const rawPos = [meData.travel.position.lat, meData.travel.position.lon];
-        pos = [
-          Math.round(rawPos[0] * 1000000) / 1000000, 
-          Math.round(rawPos[1] * 1000000) / 1000000
-        ];
-      } else {
-        // Fallback to start position if no current position available
-        pos = from;
-      }
-      
-      const etaMs = (meData.travel.arrivalAt || 0) - Date.now();
-      const etaMin = Math.max(0, Math.ceil(etaMs / 60000));
-      const avatarUrl = (meData.user && meData.user.avatar)
-        ? `https://cdn.discordapp.com/avatars/${meData.user.id}/${meData.user.avatar}.png`
-        : 'https://cdn.discordapp.com/embed/avatars/0.png';
-      
-      // Determine plane icon based on role
-      const userRole = meData.roleLevel || 'User';
-      const isPremiumPlus = (userRole === 'Premium' || userRole === 'Staff' || userRole === 'Developer');
-      const planeIcon = isPremiumPlus ? '✈️' : '✈️'; // Always use plane emoji
-      const planeColor = isPremiumPlus ? '#FFD700' : '#87CEEB';
-      
-      // Calculate direction of travel for plane rotation
-      let planeRotation = 0;
-      if (meData.travel.from && meData.travel.to) {
-        const fromLat = meData.travel.from.lat * Math.PI / 180;
-        const fromLon = meData.travel.from.lon * Math.PI / 180;
-        const toLat = meData.travel.to.lat * Math.PI / 180;
-        const toLon = meData.travel.to.lon * Math.PI / 180;
-        
-        const dLon = toLon - fromLon;
-        const y = Math.sin(dLon) * Math.cos(toLat);
-        const x = Math.cos(fromLat) * Math.sin(toLat) - Math.sin(fromLat) * Math.cos(toLat) * Math.cos(dLon);
-        
-        planeRotation = Math.atan2(y, x) * 180 / Math.PI;
-      }
-      
-      const htmlPin = `<div class="travel-pin">
-        <img src="${avatarUrl}" alt="me"/>
-        <div class="plane-indicator" style="filter: drop-shadow(0 0 3px ${planeColor}); animation: flyDirectional 2s ease-in-out infinite alternate;">
-          <div style="transform: rotate(${planeRotation}deg);">${planeIcon}</div>
-        </div>
-        <div class="eta">ETA: ${etaMin}m</div>
-      </div>`;
-      
-      // Create marker with precise positioning
-      travelMarker = L.marker(pos, { 
-        icon: L.divIcon({ 
-          className: 'travel-marker', 
-          html: htmlPin, 
-          iconSize: [32,32], 
-          iconAnchor: [16,16], // Center the icon precisely
-          popupAnchor: [0, -16] // Popup appears above the marker
-        }),
-        // Ensure marker stays in place during zoom
-        interactive: false,
-        riseOnHover: false,
-        zIndexOffset: 1000 // Keep travel marker on top
-      }).addTo(map);
-      
-      // Store travel data for position updates
-      travelMarker._travelData = {
-        from: from,
-        to: to,
-        position: pos,
-        progress: meData.travel.progress || 0
-      };
-      
-      console.log('[travel] New marker created at position:', pos);
-      
-      // Ensure boss particles are properly managed during travel
-      try {
-        if (typeof bossParticles !== 'undefined') {
-          bossParticles.setupCanvas(); // Ensure canvas is properly sized
-          bossParticles.updateFromMap(); // Update particle positions
-        }
-      } catch (error) {
-        console.warn('[travel] Failed to update boss particles:', error);
-      }
-
-    } catch (e) { 
-      console.warn('Travel overlay error:', e); 
-    }
-  }
-
-
-  let roleLevel = 'User';
-  let showArchived = false;
-
-  let __didInitialCenter = false;
-  let __userMovedMap = false;
-  let __lastUserMoveTime = 0;
-  let __lastAutoCenterTime = Date.now(); // Track last auto-center time
-  
-  // Reset user move tracking on page load
-  window.addEventListener('load', function() {
-    __userMovedMap = false;
-    __lastUserMoveTime = 0;
-    __lastAutoCenterTime = Date.now();
-  });
-
-  // Track when user manually moves the map
-  let __currentlyTraveling = false; // Track travel state for movement detection
-  map.on('movestart', function(e) {
-    // Don't track user movement during travel - let travel centering work
-    if (e.originalEvent && !__currentlyTraveling) { 
-      __userMovedMap = true;
-      __lastUserMoveTime = Date.now();
-    }
-  });
-  
-  // Handle zoom events to ensure travel marker stays positioned correctly
-  map.on('zoomend', function() {
-    if (travelMarker && travelMarker._travelData) {
-      // Refresh travel marker position after zoom to ensure it stays at current position
-      const data = travelMarker._travelData;
-      if (data.position) {
-        const precisePos = [
-          Math.round(data.position[0] * 1000000) / 1000000,
-          Math.round(data.position[1] * 1000000) / 1000000
-        ];
-        travelMarker.setLatLng(precisePos);
-      }
-    }
-  });
-  
-  // Handle move events to keep travel marker centered
-  map.on('moveend', function() {
-    if (travelMarker && travelMarker._travelData) {
-      // Ensure travel marker icon stays properly centered after map movements
-      const data = travelMarker._travelData;
-      if (data.position) {
-        const precisePos = [
-          Math.round(data.position[0] * 1000000) / 1000000,
-          Math.round(data.position[1] * 1000000) / 1000000
-        ];
-        travelMarker.setLatLng(precisePos);
-      }
-    }
-  });
-
-  function updateCenterDisplay(data) {
-    // Update center name display without any map centering
-    const centerNameEl = document.getElementById('centerName');
-    
-    if (data.currentLocationServer) {
-      // User is at a server or landmark - display only
-      if (data.currentLocationServer.guildId && data.currentLocationServer.guildId.startsWith('landmark_')) {
-        const landmarkName = data.currentLocationServer.name.replace(/^landmark_/, '').replace(/_/g, ' ')
-          .replace(/\b\w/g, l => l.toUpperCase()); // Convert to Title Case
-        centerNameEl.textContent = `Player location: Landmark ${landmarkName}`;
-      } else {
-        centerNameEl.textContent = `Player location: Server ${data.currentLocationServer.name}`;
-      }
-      centerNameEl.style.color = '#000000';
-    } else {
-      centerNameEl.textContent = 'Player location unknown';
-      centerNameEl.style.color = '#000000';
-    }
-  }
-
-  function centerMapFromMe(data) {
-    // Travel-only centering: Only auto-center during active travel
-    const isTraveling = data.travel && data.travel.arrivalAt && Date.now() < data.travel.arrivalAt;
-    
-    // Only center the map if user is actively traveling
-    if (!isTraveling) {
-      // Still update the display, but no map centering for static locations
-      updateCenterDisplay(data);
-      return;
-    }
-    
-    // During travel, ensure smooth centering without being too frequent
-    const now = Date.now();
-    if (now - __lastAutoCenterTime < 2000) { // Minimum 2 seconds between travel centers
-      console.log('[Map] Preventing travel auto-center: too frequent');
-      return;
-    }
-
-    // Update center name based on user status
-    const centerNameEl = document.getElementById('centerName');
-    
-    if (data.travel && data.travel.arrivalAt && Date.now() < data.travel.arrivalAt) {
-      // User is traveling - update display and center on current travel position
-      const etaMs = (data.travel.arrivalAt || 0) - Date.now();
-      const etaMin = Math.max(0, Math.ceil(etaMs / 60000));
-      centerNameEl.innerHTML = `<span style="color: #ff6b35;">✈️ Traveling:</span> ${data.travel.from.name} → ${data.travel.to.name}<br><span style="color: #ff6b35; font-weight: bold;">ETA: ${etaMin}m</span>`;
-      centerNameEl.style.color = '#333';
-      
-      // Center on current travel position to follow player movement
-      if (data.travel.position) {
-        const currentZoom = map.getZoom();
-        
-        // Use panTo for smooth following without jarring movement
-        map.panTo([data.travel.position.lat, data.travel.position.lon]);
-        console.log('[Map] Auto-centered during travel to:', data.travel.position.lat, data.travel.position.lon);
-        
-        // Adjust zoom if needed
-        if (currentZoom < 6) {
-          map.setZoom(6);
-        }
-        
-        // Update last auto-center time
-        __lastAutoCenterTime = Date.now();
-      }
-    }
-
-    __didInitialCenter = true;
-  }
-  // --- Weather System ---
-  function updateWeatherOverlay(){
-    try {
-      fetch('/api/weather')
-        .then(r => r.json())
-        .then(data => {
-          clearWeather();
-          
-          if (!data.weather || data.weather.length === 0) return;
-          
-          data.weather.forEach(weather => {
-            const pos = [weather.centerLat, weather.centerLon];
-            const radiusMeters = weather.radius * 1000; // Convert km to meters (radius already 5x from backend)
-            
-            // Create enhanced weather circle with severity-based styling
-            const baseOpacity = weather.blockTravel ? 0.8 : 0.6;
-            const fillOpacity = weather.blockTravel ? 0.4 : 0.2;
-            const strokeWidth = weather.severity >= 4 ? 4 : weather.severity >= 3 ? 3 : 2;
-            const dashPattern = weather.blockTravel ? '10,5' : weather.severity >= 3 ? '15,10' : null;
-            
-            const weatherCircle = L.circle(pos, {
-              radius: radiusMeters,
-              color: weather.color,
-              weight: strokeWidth,
-              opacity: baseOpacity,
-              fillColor: weather.color,
-              fillOpacity: fillOpacity,
-              dashArray: dashPattern,
-              className: `weather-circle severity-${weather.severity} ${weather.blockTravel ? 'blocking' : 'slowing'}`
-            });
-            
-            // Time remaining display
-            const timeRemaining = Math.floor(weather.timeRemaining / 1000 / 60);
-            const timeText = timeRemaining > 60 
-              ? `${Math.floor(timeRemaining / 60)}h ${timeRemaining % 60}m`
-              : `${timeRemaining}m`;
-            
-            // Weather popup - styled for light background
-            const popupContent = `
-              <div style="text-align: center; min-width: 180px; color: #374151 !important; padding: 12px;">
-                <div style="font-size: 2.5rem; margin-bottom: 8px; filter: drop-shadow(0 0 4px ${weather.color});">${weather.icon}</div>
-                <div style="font-weight: bold; font-size: 1.2rem; margin-bottom: 6px; color: #1f2937 !important; text-shadow: none;">${weather.name}</div>
-                <div style="color: #4b5563 !important; font-size: 0.9rem; margin-bottom: 10px; font-style: italic;">${weather.description}</div>
-                <div style="background: ${weather.blockTravel ? 'rgba(239, 68, 68, 0.15)' : 'rgba(34, 197, 94, 0.15)'}; padding: 6px 10px; border-radius: 6px; margin-bottom: 8px; color: ${weather.blockTravel ? '#dc2626 !important' : '#16a34a !important'}; border: 1px solid ${weather.blockTravel ? 'rgba(239, 68, 68, 0.3)' : 'rgba(34, 197, 94, 0.3)'};">
-                  <strong>${weather.blockTravel ? 'BLOCKS TRAVEL' : 'Affects Travel'}</strong>
+    <main>
+        <section class="hero">
+            <div class="container">
+                <div class="brand-title">
+                    <div class="title-text">QuestCord</div>
+                    <div class="title-badge">Beta</div>
                 </div>
-                <div style="font-size: 0.85rem; color: #374151 !important; background: rgba(0,0,0,0.05); padding: 8px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.1);">
-                  <div style="margin: 3px 0; display: flex; justify-content: space-between; align-items: center;">
-                    <span>Duration:</span>
-                    <strong style="color: #d97706 !important;">${timeText} remaining</strong>
-                  </div>
-                  <div style="margin: 3px 0; display: flex; justify-content: space-between; align-items: center;">
-                    <span>Radius:</span>
-                    <strong style="color: #2563eb !important;">${weather.radius}km</strong>
-                  </div>
-                  <div style="margin: 3px 0; display: flex; justify-content: space-between; align-items: center;">
-                    <span>Severity:</span>
-                    <strong style="color: #dc2626 !important;">${weather.severity}/5</strong>
-                  </div>
+                <h1>Your Discord Adventure Awaits</h1>
+                <p>Transform your Discord server into an epic quest destination where members can travel, trade, and battle their way to glory.</p>
+
+                <div class="cta-group">
+                    <a href="https://discord.com/api/oauth2/authorize?client_id=1403949996868374558&permissions=8&scope=bot%20applications.commands" class="btn btn-primary">
+                        <i class="fab fa-discord"></i>
+                        Add to Discord
+                    </a>
+                    <a href="https://discord.gg/ACGKvKkZ5Z" class="btn btn-secondary">
+                        <i class="fas fa-users"></i>
+                        Join Community
+                    </a>
                 </div>
-              </div>
-            `;
-            
-            weatherCircle.bindPopup(popupContent);
-            
-            // Create enhanced weather center marker with dynamic styling
-            const isBlocking = weather.blockTravel;
-            const severityClass = weather.severity >= 4 ? 'severe' : weather.severity >= 3 ? 'dangerous' : 'moderate';
-            
-            const weatherMarker = L.marker(pos, {
-              icon: L.divIcon({
-                className: 'weather-marker',
-                html: `<div style="
-                  font-size: ${weather.severity >= 4 ? '32px' : weather.severity >= 3 ? '28px' : '24px'}; 
-                  text-shadow: 2px 2px 6px rgba(0,0,0,0.8);
-                  filter: drop-shadow(0 0 ${weather.severity >= 4 ? '8px' : '6px'} ${weather.color});
-                  animation: ${isBlocking ? 'severePulse' : 'weatherPulse'} ${weather.severity >= 4 ? '1.5s' : '2s'} ease-in-out infinite;
-                  width: ${weather.severity >= 4 ? '40px' : weather.severity >= 3 ? '35px' : '30px'};
-                  height: ${weather.severity >= 4 ? '40px' : weather.severity >= 3 ? '35px' : '30px'};
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  position: relative;
-                  z-index: 1000;
-                  ${isBlocking ? 'background: radial-gradient(circle, rgba(255,0,0,0.2), transparent 70%);' : ''}
-                ">${weather.icon}</div>`,
-                iconSize: [weather.severity >= 4 ? 40 : weather.severity >= 3 ? 35 : 30, weather.severity >= 4 ? 40 : weather.severity >= 3 ? 35 : 30],
-                iconAnchor: [weather.severity >= 4 ? 20 : weather.severity >= 3 ? 17 : 15, weather.severity >= 4 ? 20 : weather.severity >= 3 ? 17 : 15]
-              })
-            });
-            
-            weatherMarker.bindPopup(popupContent);
-            
-            weatherCircle.addTo(map);
-            weatherMarker.addTo(map);
-            
-            weatherMarkers.push(weatherCircle, weatherMarker);
-          });
-        })
-        .catch(e => console.warn('Failed to load weather data:', e));
-    } catch (e) {
-      console.warn('Weather overlay error:', e);
-    }
-  }
 
-async function loadMe(){
-    const r = await fetch('/api/whoami');
-    const data = await r.json();
-    updateTravelOverlay(data);
-  try { centerMapFromMe(data); } catch {}
-    const box = document.getElementById('authBox');
-    box.innerHTML = '';
-    roleLevel = data.roleLevel || 'User';
-    
-    // Hide/show player sections based on login status
-    if (!data.user){
-      // Hide all player sections including headings and auth box
-      document.querySelectorAll('.sidebar .row:not(.auth)').forEach(el => el.style.display = 'none');
-      document.querySelectorAll('.sidebar .bar').forEach(el => el.style.display = 'none');
-      document.querySelectorAll('.sidebar .heading').forEach(el => el.style.display = 'none'); // Hide ALL headings including "Player"
-      box.style.display = 'none'; // Hide the auth box entirely
-      
-      // Add login button to bot-buttons container instead
-      const botButtonsContainer = document.querySelector('.bot-buttons');
-      const existingLoginBtn = botButtonsContainer.querySelector('.discord-signin');
-      if (!existingLoginBtn) {
-        const a = document.createElement('a'); 
-        a.href='/auth/login'; 
-        a.className = 'bot-btn discord-signin';
-        a.innerHTML = 'Sign in with Discord';
-        botButtonsContainer.insertBefore(a, botButtonsContainer.firstChild); // Add as first button
-      }
-      
-      // Hide profile button for guests
-      const profileBtn = document.getElementById('profileBtn');
-      if (profileBtn) {
-        profileBtn.style.display = 'none';
-      }
-      
-      // Hide admin button for guests
-      const adminBtn = document.getElementById('adminBtn');
-      if (adminBtn) {
-        adminBtn.style.display = 'none';
-      }
-      
-      
-      // Remove border since there's no content above for guests
-      botButtonsContainer.classList.add('no-border');
-    } else {
-      // Show player-specific sections and auth box
-      document.querySelectorAll('.sidebar .row:not(.auth)').forEach(el => el.style.display = 'block');
-      document.querySelectorAll('.sidebar .bar').forEach(el => el.style.display = 'block');
-      document.querySelectorAll('.sidebar .heading').forEach(el => el.style.display = 'block');
-      box.style.display = 'flex'; // Show the auth box again
-      
-      // Remove login button from bot-buttons container
-      const botButtonsContainer = document.querySelector('.bot-buttons');
-      const loginBtnInBotButtons = botButtonsContainer.querySelector('.discord-signin');
-      if (loginBtnInBotButtons) {
-        loginBtnInBotButtons.remove();
-      }
-      
-      // Show profile button for logged in users
-      const profileBtn = document.getElementById('profileBtn');
-      if (profileBtn) {
-        profileBtn.style.display = 'flex';
-      }
-      
-      
-      // Show admin panel button for staff/developers
-      const adminBtn = document.getElementById('adminBtn');
-      if (adminBtn && (roleLevel === 'Developer' || roleLevel === 'Staff')) {
-        adminBtn.style.display = 'flex';
-      }
-      
-      // Restore border since there's content above for logged-in users
-      botButtonsContainer.classList.remove('no-border');
-      const img = document.createElement('img');
-      const avatar = data.user.avatar ? `https://cdn.discordapp.com/avatars/${data.user.id}/${data.user.avatar}.png` : 'https://cdn.discordapp.com/embed/avatars/0.png';
-      img.src = avatar;
-      // Create user info container
-      const userInfo = document.createElement('div');
-      userInfo.style.display = 'flex';
-      userInfo.style.flexDirection = 'column';
-      userInfo.style.gap = '4px';
-      
-      // Role and name
-      const roleNameSpan = document.createElement('span');
-      roleNameSpan.style.fontWeight = 'bold';
-      roleNameSpan.textContent = `[${roleLevel}] ${data.user.username}`;
-      
-      // Current location
-      const locationSpan = document.createElement('span');
-      locationSpan.style.fontSize = '12px';
-      locationSpan.style.color = '#000000';
-      
-      // Check if user is traveling
-      if (data.travel && data.travel.arrivalAt && Date.now() < data.travel.arrivalAt) {
-        locationSpan.textContent = `Traveling: ${data.travel.from.name} → ${data.travel.to.name}`;
-        locationSpan.style.color = '#ff6b35'; // Orange for traveling
-      } else if (data.currentLocationServer) {
-        // Check if current location is a landmark
-        if (data.currentLocationServer.guildId && data.currentLocationServer.guildId.startsWith('landmark_')) {
-          const landmarkName = data.currentLocationServer.name.replace(/^landmark_/, '').replace(/_/g, ' ')
-            .replace(/\b\w/g, l => l.toUpperCase()); // Convert to Title Case
-          locationSpan.textContent = `Current location: Landmark ${landmarkName}`;
-        } else {
-          locationSpan.textContent = `Current location: Server ${data.currentLocationServer.name}`;
-        }
-      } else if (data.player && data.player.locationGuildId) {
-        // Check if locationGuildId is a landmark
-        if (data.player.locationGuildId.startsWith('landmark_')) {
-          const landmarkName = data.player.locationGuildId.replace(/^landmark_/, '').replace(/_/g, ' ')
-            .replace(/\b\w/g, l => l.toUpperCase()); // Convert to Title Case
-          locationSpan.textContent = `Current location: Landmark ${landmarkName}`;
-        } else {
-          locationSpan.textContent = `Current location: Server (${data.player.locationGuildId})`;
-        }
-      } else {
-        locationSpan.textContent = 'Current location: Unknown';
-      }
-      
-      userInfo.appendChild(roleNameSpan);
-      userInfo.appendChild(locationSpan);
-      
-      const out = document.createElement('a'); out.href='/auth/logout'; out.textContent='Logout'; out.title='Sign out of your account';
-      box.append(img, userInfo, out);
-
-      // Stats
-      const hp = Math.max(0, Math.min(100, (data.player?.health ?? 0)));
-      const st = Math.max(0, Math.min(100, (data.player?.stamina ?? 0)));
-      document.getElementById('healthBar').style.width = hp + '%';
-      document.getElementById('staminaBar').style.width = st + '%';
-
-    }
-
-    // Admin tools moved to map controls
-    const adminBox = document.getElementById('adminBox');
-    adminBox.innerHTML = '';
-    
-    // Show admin controls in map controls for staff/developers
-    const adminMapControls = document.getElementById('adminMapControls');
-    if (roleLevel === 'Developer' || roleLevel === 'Staff'){
-      await getCsrf();
-      if (adminMapControls) {
-        adminMapControls.style.display = 'block';
-        
-        // Wire up toggle edit map button
-        const toggleEditBtn = document.getElementById('toggleEditMapBtn');
-        if (toggleEditBtn) {
-          toggleEditBtn.onclick = () => { 
-            editMode = !editMode; 
-            toggleEditBtn.textContent = editMode ? 'Toggle - Editing' : 'Toggle - Edit Map';
-            debouncedLoadMap(); 
-          };
-        }
-        
-        // Wire up show archived checkbox
-        const showArchivedChk = document.getElementById('showArchivedMap');
-        if (showArchivedChk) {
-          showArchivedChk.onchange = () => { showArchived = showArchivedChk.checked; debouncedLoadMap(); };
-        }
-      }
-    } else {
-      if (adminMapControls) {
-        adminMapControls.style.display = 'none';
-      }
-    }
-    return data;
-  }
-
-  let editMode = false;
-  async function loadMap(){
-    const params = new URLSearchParams();
-    params.set('limit', '50');
-    params.set('mode', modeRadios.find(r=>r.checked).value);
-    params.set('discoverableOnly', discoverableOnly.checked ? '1' : '0');
-    params.set('bossActiveOnly', bossActiveOnly.checked ? '1' : '0');
-    if (fromGuildId) params.set('fromGuildId', fromGuildId);
-    if (showArchived) params.set('includeArchived', '1');
-    const res = await fetch(`/api/map/servers?${params.toString()}`);
-    const data = await res.json();
-    clearMarkers();
-
-    if (data.mode === 'global'){
-      document.getElementById('centerName').textContent = 'Global overview';
-      map.setView([0,0], 2);
-    } else {
-      const c = data.center;
-      document.getElementById('centerName').textContent = c ? (c.name || c.guildId) : 'unknown';
-      map.setView(c ? [c.lat, c.lon] : [0,0], c ? 4 : 2);
-    }
-
-    const myGuild = (data.me && (!data.me.travelArrivalAt || Date.now() >= data.me.travelArrivalAt)) ? data.me.locationGuildId : null;
-
-    (data.servers||[]).forEach(s => {
-      const isMe = myGuild && (s.guildId === myGuild);
-      const bossClasses = s.bossActive ? `boss-active tier-${s.bossTier || 1}` : '';
-      const bossIndicator = s.bossActive ? ` [BOSS ACTIVE]` : '';
-      const html = `
-        <div class="server-marker ${isMe ? 'me' : ''} ${s.archived? 'archived' : ''} ${bossClasses}">
-          <div class="visitors">${s.visitors || 0} Users Visiting</div>
-          <img src="${s.iconUrl || 'https://cdn.discordapp.com/embed/avatars/0.png'}" alt="icon" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'"/>
-          <div class="name">${s.name || s.guildId}${s.archived ? ' (archived)' : ''}${bossIndicator}</div>
-        </div>`;
-      const icon = L.divIcon({ html, className: '', iconSize: [48,48], iconAnchor:[24,24] });
-      const m = L.marker([s.lat, s.lon], { 
-        icon, 
-        draggable: editMode && (roleLevel==='Developer' || roleLevel==='Staff')
-      }).addTo(map);
-      
-      // Store server data for reference
-      m._serverData = s;
-      
-      m.bindPopup(`<b>${s.name || s.guildId}</b>`);
-      m.on('click', async () => {
-        try{
-          const r = await fetch(`/api/map/visitors?guildId=${encodeURIComponent(s.guildId)}&limit=10`);
-        const j = await r.json();
-          let content = `<div class="vis-list">
-            <div class="vis-title">${s.name || s.guildId} 
-              <span style="font-size: 11px; font-weight: 400; color: #999;">— Click users to view profiles</span>
+                <div class="stats">
+                    <div class="stat">
+                        <h3 id="home-servers">Loading...</h3>
+                        <p>Active Servers</p>
+                    </div>
+                    <div class="stat">
+                        <h3 id="home-users">Loading...</h3>
+                        <p>Happy Users</p>
+                    </div>
+                    <div class="stat">
+                        <h3 id="home-travels">Loading...</h3>
+                        <p>Total Adventures</p>
+                    </div>
+                </div>
             </div>
-            <div style="margin-bottom: 12px; text-align: center;">
-              <a href="/server/${encodeURIComponent(s.guildId)}" target="_blank" style="display: inline-block; background: #4f46e5; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 600;">
-                View Server Details
-              </a>
-            </div>`;
-          if ((j.total||0) > 10){
-            content += `<div class="vis-note">There are too many users to display (${j.total}).</div>`;
-          } else if (!j.users || j.users.length === 0){
-            content += `<div class="vis-note">No visitors right now.</div>`;
-          } else {
-            content += j.users.map(u => `<a href="/profile/${u.id}" class="vis-user-link" target="_blank" title="Click to view ${u.name || u.id}'s profile"><div class="vis-row"><img src="${u.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png'}" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'"/><span>${u.name || u.id}</span><span class="profile-arrow">→</span></div></a>`).join('');
-          }
-          content += `</div>`;
-          m.bindPopup(content, { maxWidth: 280 }).openPopup();
-        }catch(e){
-          m.bindPopup(`<b>${s.name || s.guildId}</b><div class="vis-note">Could not load visitors.</div>`).openPopup();
-        }
-      });
+        </section>
 
-      if (m.dragging.enabled()){
-        m.on('dragend', async (ev)=>{
-          const ll = ev.target.getLatLng();
-          await fetch('/api/admin/set-coords', {
-            method: 'PATCH',
-            headers: { 'Content-Type':'application/json', 'x-csrf': CSRF || '' },
-            body: JSON.stringify({ guildId: s.guildId, lat: ll.lat, lon: ll.lng })
-          });
-        });
-      }
-      markers.push(m);
-    });
-    
-    // Load and display landmarks (always show user's current landmark, optionally show others)
-    try {
-      const landmarksRes = await fetch('/api/map/landmarks');
-      const landmarksData = await landmarksRes.json();
-      
-      if (landmarksData.landmarks) {
-        // Get current user's location to check if they're at a landmark
-        let userCurrentLandmark = null;
-        if (meData && meData.locationGuildId && meData.locationGuildId.startsWith('landmark_')) {
-          const landmarkId = meData.locationGuildId.replace('landmark_', '');
-          userCurrentLandmark = landmarksData.landmarks.find(l => l.id === landmarkId);
-        }
-        
-        // Filter landmarks based on settings and user location
-        let landmarksToShow = [];
-        if (showLandmarks.checked) {
-          // Show all landmarks if checkbox is enabled
-          landmarksToShow = landmarksData.landmarks;
-        } else if (userCurrentLandmark) {
-          // Only show the landmark the user is currently visiting
-          landmarksToShow = [userCurrentLandmark];
-        }
-        
-        if (landmarksToShow.length > 0) {
-          // Add visitor counts to landmarks
-          const landmarksWithVisitors = await Promise.all(
-            landmarksToShow.map(async (landmark) => {
-              try {
-                const visitorsRes = await fetch(`/api/map/landmark-visitors?landmarkId=${landmark.id}&limit=1`);
-                const visitorsData = await visitorsRes.json();
-                const isUserLocation = userCurrentLandmark && landmark.id === userCurrentLandmark.id;
-                return { ...landmark, visitorCount: visitorsData.total || 0, isUserLocation };
-              } catch (error) {
-                const isUserLocation = userCurrentLandmark && landmark.id === userCurrentLandmark.id;
-                return { ...landmark, visitorCount: 0, isUserLocation };
-              }
-            })
-          );
-          
-          landmarksWithVisitors.forEach(landmark => {
-            // Add special styling for user's current landmark
-            const userLocationClass = landmark.isUserLocation ? ' user-current-landmark' : '';
-            const userLocationBadge = landmark.isUserLocation ? '<div class="current-location-badge">📍 You are here</div>' : '';
-            const gemCost = landmark.isUserLocation ? 'Currently visiting' : `${landmark.visitCost} 💎 gems to visit`;
-            const landmarkHtml = `
-              <div class="server-marker landmark-marker${userLocationClass}">
-                ${userLocationBadge}
-                <div class="visitors">${gemCost}</div>
-                <img src="${landmark.imageUrl}" 
-                     alt="${landmark.name}" 
-                     style="width: 48px; height: 48px; object-fit: cover;"
-                     onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;48&quot; height=&quot;48&quot; viewBox=&quot;0 0 48 48&quot;><circle cx=&quot;24&quot; cy=&quot;24&quot; r=&quot;20&quot; fill=&quot;%23ff6b6b&quot; stroke=&quot;%23fff&quot; stroke-width=&quot;3&quot;/><text x=&quot;24&quot; y=&quot;32&quot; text-anchor=&quot;middle&quot; font-size=&quot;18&quot;>${landmark.emoji}</text></svg>'; console.log('Landmark image failed for ${landmark.name}, using emoji fallback')"/>
-                <div class="name">${landmark.emoji} ${landmark.name}</div>
-              </div>`;
-            
-          const landmarkIcon = L.divIcon({ 
-            html: landmarkHtml, 
-            className: '', 
-            iconSize: [48, 48], 
-            iconAnchor: [24, 24] 
-          });
-          
-          const landmarkMarker = L.marker([landmark.lat, landmark.lon], { 
-            icon: landmarkIcon,
-            draggable: false
-          }).addTo(map);
-          
-          // Store landmark data for reference
-          landmarkMarker._landmarkData = landmark;
-          
-          landmarkMarker.bindPopup(`<b>${landmark.emoji} ${landmark.name}</b>`);
-          landmarkMarker.on('click', async () => {
-            try {
-              const r = await fetch(`/api/map/landmark-visitors?landmarkId=${encodeURIComponent(landmark.id)}&limit=10`);
-              const j = await r.json();
-              let content = `<div class="vis-list">
-                <div class="vis-title">${landmark.emoji} ${landmark.name} 
-                  <span style="font-size: 11px; font-weight: 400; color: #999;">— Click users to view profiles</span>
+        <section class="features" id="features">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Everything you need for epic adventures</h2>
+                    <p>QuestCord brings RPG mechanics to Discord with travel, combat, and trading systems that keep your community engaged.</p>
                 </div>
-                <div style="margin-bottom: 12px; text-align: center;">
-                  <a href="/landmark/${encodeURIComponent(landmark.id)}" target="_blank" style="display: inline-block; background: #ff6b6b; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 600;">
-                    View Landmark Details
-                  </a>
-                </div>`;
-              if ((j.total||0) > 10){
-                content += `<div class="vis-note">Too many visitors to display (${j.total} total).</div>`;
-              } else if (!j.users || j.users.length === 0){
-                content += `<div class="vis-note">No travelers have visited yet. Be the first!</div>`;
-              } else {
-                content += j.users.map(u => `<a href="/profile/${u.id}" class="vis-user-link" target="_blank" title="Click to view ${u.name || u.id}'s profile"><div class="vis-row"><img src="${u.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png'}" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'"/><span>${u.name || u.id}</span><span class="profile-arrow">→</span></div></a>`).join('');
-              }
-              content += `
-                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee; font-size: 12px; color: #666;">
-                  <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                    <span>🌍 ${landmark.country}</span>
-                    <span>💎 ${landmark.visitCost} gems</span>
-                  </div>
-                  <div style="text-align: center; margin-top: 8px;">
-                    <code>/travel landmark ${landmark.name}</code>
-                  </div>
+
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-globe"></i>
+                        </div>
+                        <h3>World Travel</h3>
+                        <p>Explore a vast world by traveling between Discord servers. Each destination offers unique biomes, resources, and challenges to discover.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <h3>Dynamic Economy</h3>
+                        <p>Trade items with other players through our global marketplace. Buy, sell, and collect rare items to build your wealth and power.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-dragon"></i>
+                        </div>
+                        <h3>Epic Boss Battles</h3>
+                        <p>Team up with your server to take down massive world bosses. Coordinate attacks and earn exclusive rewards for victory.</p>
+                    </div>
                 </div>
-              </div>`;
-              landmarkMarker.bindPopup(content, { maxWidth: 280 }).openPopup();
-            }catch(e){
-              landmarkMarker.bindPopup(`<b>${landmark.emoji} ${landmark.name}</b><div class="vis-note">Could not load visitor data.</div>`).openPopup();
-            }
-          });
-          
-          markers.push(landmarkMarker);
-        });
-        }
-      } catch (error) {
-        console.warn('Failed to load landmarks:', error);
-      }
-    }
-    
-    // Update global markers reference for particle system
-    window.markers = markers;
-  }
+            </div>
+        </section>
 
-  // Debounce map loading to prevent rapid API calls
-  let mapLoadTimeout;
-  function debouncedLoadMap() {
-    clearTimeout(mapLoadTimeout);
-    mapLoadTimeout = setTimeout(loadMap, 500); // Wait 500ms after last change
-  }
+        <section class="faq" id="faq">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Frequently Asked Questions</h2>
+                    <p>Everything you need to know about getting started with QuestCord</p>
+                </div>
 
-  modeRadios.forEach(r=>r.addEventListener('change', debouncedLoadMap));
-  discoverableOnly.addEventListener('change', debouncedLoadMap);
-  bossActiveOnly.addEventListener('change', debouncedLoadMap);
-  showLandmarks.addEventListener('change', debouncedLoadMap);
-  
-  // Bot buttons event handlers
-  document.getElementById('addBotBtn').addEventListener('click', function(e) {
-    e.preventDefault();
-    // Discord bot invite URL with necessary permissions
-    const botInviteUrl = 'https://discord.com/oauth2/authorize?client_id=1411793854235021322&permissions=2147863552&integration_type=0&scope=bot+applications.commands';
-    window.open(botInviteUrl, '_blank');
-  });
-  
-  document.getElementById('joinDiscordBtn').addEventListener('click', function(e) {
-    e.preventDefault();
-    // Your Discord server invite link
-    const discordInviteUrl = 'https://discord.gg/ACGKvKkZ5Z';
-    window.open(discordInviteUrl, '_blank');
-  });
-  
-  let currentlyTraveling = false;
-  let mapRefreshCounter = 0;
-  
-  // Optimized refresh - only refresh what's needed
-  function scheduleNextRefresh() {
-    // Always check user status (lightweight)
-    fetch('/api/whoami')
-      .then(r => r.json())
-      .then(data => {
-        const isTraveling = data.travel && data.travel.arrivalAt && Date.now() < data.travel.arrivalAt;
-        const travelStateChanged = isTraveling !== currentlyTraveling;
-        currentlyTraveling = isTraveling;
-        __currentlyTraveling = isTraveling; // Update movement detection state
-        
-        // Update user info and center appropriately
-        updateTravelOverlay(data);
-        // Always center to track player (traveling or not)
-        try { centerMapFromMe(data); } catch {}
-        
-        // Update user display (no extra API call)
-        updateUserDisplay(data);
-        
-        // Only refresh map servers occasionally or when needed
-        mapRefreshCounter++;
-        const needsMapRefresh = mapRefreshCounter >= (isTraveling ? 24 : 12); // Every 2min when traveling, 2min when not (reduced frequency)
-        
-        if (needsMapRefresh || travelStateChanged) {
-          loadMap();
-          // Only update weather when travel state changes or on very infrequent refreshes
-          // This prevents weather markers from being recreated constantly during travel
-          if (travelStateChanged || mapRefreshCounter >= 24) { // Update weather every ~4 hours during travel
-            updateWeatherOverlay();
-          }
-          mapRefreshCounter = 0;
-          
-          // Force particle system update when travel state changes
-          if (travelStateChanged) {
+                <div class="faq-container">
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>How do I get started with QuestCord?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p>Simply click "Add to Discord" above to invite QuestCord to your server, then use <code>/help</code> to see all available commands. The bot will guide you through your first adventure!</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>What commands does QuestCord have?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p>Key commands include:</p>
+                            <ul>
+                                <li><code>/travel</code> - Explore and move between Discord servers</li>
+                                <li><code>/inventory</code> - Manage your items and equipment</li>
+                                <li><code>/market</code> - Trade items with other players</li>
+                                <li><code>/boss</code> - Engage in epic boss battles</li>
+                                <li><code>/stats</code> - Check your health, stamina, and progress</li>
+                                <li><code>/help</code> - View all available commands by category</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>Is QuestCord free to use?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p>Yes! QuestCord is completely free with all core features available. We also offer optional premium features for enhanced customization and exclusive content.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>How do I get support or report bugs?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p>Join our support Discord using the "Join Community" button above and create a ticket. Our team responds quickly to help resolve any issues.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-links">
+                <a href="/status">Status</a>
+                <a href="/privacy">Privacy</a>
+                <a href="/terms">Terms</a>
+                <a href="https://discord.gg/ACGKvKkZ5Z">Support</a>
+            </div>
+            <p>&copy; 2025 QuestCord. Made with ❤️ by CUB and Scarlett for Discord communities.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Real-time stats loading
+        async function loadStats() {
             try {
-              if (typeof bossParticles !== 'undefined') {
-                if (isTraveling) {
-                  // Clear particles when starting travel
-                  bossParticles.clearBossMarkers();
-                } else {
-                  // Refresh particles when ending travel
-                  setTimeout(() => {
-                    bossParticles.setupCanvas();
-                    bossParticles.updateFromMap();
-                  }, 500);
-                }
-              }
+                const response = await fetch('/api/realtime/bot-stats');
+                const data = await response.json();
+
+                document.getElementById('home-servers').textContent =
+                    data.statistics.servers?.toLocaleString() || 'N/A';
+                document.getElementById('home-users').textContent =
+                    data.statistics.users >= 1000 ?
+                        Math.round(data.statistics.users / 1000) + 'K+' :
+                        data.statistics.users?.toLocaleString() + '+' || 'N/A';
+                document.getElementById('home-travels').textContent =
+                    data.statistics.totalTravels >= 1000 ?
+                        Math.round(data.statistics.totalTravels / 1000) + 'K+' :
+                        data.statistics.totalTravels?.toLocaleString() + '+' || 'N/A';
             } catch (error) {
-              console.warn('[refresh] Failed to update boss particles on travel state change:', error);
+                console.error('Failed to load stats:', error);
             }
-          }
         }
-        
-        let refreshRate;
-        if (isTraveling) {
-          refreshRate = 5000; // 5 seconds when traveling
-        } else if (travelStateChanged) {
-          refreshRate = 3000; // 3 seconds right after stopping travel
-        } else {
-          refreshRate = 10000; // 10 seconds when not traveling
-        }
-        
-        setTimeout(scheduleNextRefresh, refreshRate);
-      })
-      .catch(() => {
-        // Fallback refresh on error
-        setTimeout(scheduleNextRefresh, 15000);
-      });
-  }
 
-  // Extract user display update to avoid code duplication
-  function updateUserDisplay(data) {
-    const box = document.getElementById('authBox');
-    box.innerHTML = '';
-    roleLevel = data.roleLevel || 'User';
-    
-    // Hide/show player sections based on login status
-    if (!data.user){
-      // Hide all player sections including headings and auth box
-      document.querySelectorAll('.sidebar .row:not(.auth)').forEach(el => el.style.display = 'none');
-      document.querySelectorAll('.sidebar .bar').forEach(el => el.style.display = 'none');
-      document.querySelectorAll('.sidebar .heading').forEach(el => el.style.display = 'none'); // Hide ALL headings including "Player"
-      box.style.display = 'none'; // Hide the auth box entirely
-      
-      // Add login button to bot-buttons container instead
-      const botButtonsContainer = document.querySelector('.bot-buttons');
-      const existingLoginBtn = botButtonsContainer.querySelector('.discord-signin');
-      if (!existingLoginBtn) {
-        const a = document.createElement('a'); 
-        a.href='/auth/login'; 
-        a.className = 'bot-btn discord-signin';
-        a.innerHTML = 'Sign in with Discord';
-        botButtonsContainer.insertBefore(a, botButtonsContainer.firstChild); // Add as first button
-      }
-      
-      // Hide profile button for guests
-      const profileBtn = document.getElementById('profileBtn');
-      if (profileBtn) {
-        profileBtn.style.display = 'none';
-      }
-      
-      // Hide admin button for guests
-      const adminBtn = document.getElementById('adminBtn');
-      if (adminBtn) {
-        adminBtn.style.display = 'none';
-      }
-      
-      
-      // Remove border since there's no content above for guests
-      botButtonsContainer.classList.add('no-border');
-    } else {
-      // Show player-specific sections and auth box
-      document.querySelectorAll('.sidebar .row:not(.auth)').forEach(el => el.style.display = 'block');
-      document.querySelectorAll('.sidebar .bar').forEach(el => el.style.display = 'block');
-      document.querySelectorAll('.sidebar .heading').forEach(el => el.style.display = 'block');
-      box.style.display = 'flex'; // Show the auth box again
-      
-      // Remove login button from bot-buttons container
-      const botButtonsContainer = document.querySelector('.bot-buttons');
-      const loginBtnInBotButtons = botButtonsContainer.querySelector('.discord-signin');
-      if (loginBtnInBotButtons) {
-        loginBtnInBotButtons.remove();
-      }
-      
-      // Show profile button for logged in users
-      const profileBtn = document.getElementById('profileBtn');
-      if (profileBtn) {
-        profileBtn.style.display = 'flex';
-      }
-      
-      
-      // Show admin panel button for staff/developers
-      const adminBtn = document.getElementById('adminBtn');
-      if (adminBtn && (roleLevel === 'Developer' || roleLevel === 'Staff')) {
-        adminBtn.style.display = 'flex';
-      }
-      
-      // Restore border since there's content above for logged-in users
-      botButtonsContainer.classList.remove('no-border');
-      const img = document.createElement('img');
-      const avatar = data.user.avatar ? `https://cdn.discordapp.com/avatars/${data.user.id}/${data.user.avatar}.png` : 'https://cdn.discordapp.com/embed/avatars/0.png';
-      img.src = avatar;
-      // Create user info container
-      const userInfo = document.createElement('div');
-      userInfo.style.display = 'flex';
-      userInfo.style.flexDirection = 'column';
-      userInfo.style.gap = '4px';
-      
-      // Role and name
-      const roleNameSpan = document.createElement('span');
-      roleNameSpan.style.fontWeight = 'bold';
-      roleNameSpan.textContent = `[${roleLevel}] ${data.user.username}`;
-      
-      // Current location
-      const locationSpan = document.createElement('span');
-      locationSpan.style.fontSize = '12px';
-      locationSpan.style.color = '#000000';
-      
-      // Check if user is traveling
-      if (data.travel && data.travel.arrivalAt && Date.now() < data.travel.arrivalAt) {
-        locationSpan.textContent = `Traveling: ${data.travel.from.name} → ${data.travel.to.name}`;
-        locationSpan.style.color = '#ff6b35'; // Orange for traveling
-      } else if (data.currentLocationServer) {
-        // Check if current location is a landmark
-        if (data.currentLocationServer.guildId && data.currentLocationServer.guildId.startsWith('landmark_')) {
-          const landmarkName = data.currentLocationServer.name.replace(/^landmark_/, '').replace(/_/g, ' ')
-            .replace(/\b\w/g, l => l.toUpperCase()); // Convert to Title Case
-          locationSpan.textContent = `Current location: Landmark ${landmarkName}`;
-        } else {
-          locationSpan.textContent = `Current location: Server ${data.currentLocationServer.name}`;
-        }
-      } else if (data.player && data.player.locationGuildId) {
-        // Check if locationGuildId is a landmark
-        if (data.player.locationGuildId.startsWith('landmark_')) {
-          const landmarkName = data.player.locationGuildId.replace(/^landmark_/, '').replace(/_/g, ' ')
-            .replace(/\b\w/g, l => l.toUpperCase()); // Convert to Title Case
-          locationSpan.textContent = `Current location: Landmark ${landmarkName}`;
-        } else {
-          locationSpan.textContent = `Current location: Server (${data.player.locationGuildId})`;
-        }
-      } else {
-        locationSpan.textContent = 'Current location: Unknown';
-      }
-      
-      userInfo.appendChild(roleNameSpan);
-      userInfo.appendChild(locationSpan);
-      
-      const out = document.createElement('a'); out.href='/auth/logout'; out.textContent='Logout'; out.title='Sign out of your account';
-      box.append(img, userInfo, out);
+        // FAQ functionality
+        function initFAQ() {
+            document.querySelectorAll('.faq-item').forEach(item => {
+                const question = item.querySelector('.faq-question');
+                question.addEventListener('click', () => {
+                    const isActive = item.classList.contains('active');
 
-      // Stats
-      const hp = Math.max(0, Math.min(100, (data.player?.health ?? 0)));
-      const st = Math.max(0, Math.min(100, (data.player?.stamina ?? 0)));
-      const healthBar = document.getElementById('healthBar');
-      const staminaBar = document.getElementById('staminaBar');
-      if (healthBar) healthBar.style.width = hp+'%';
-      if (staminaBar) staminaBar.style.width = st+'%';
+                    // Close all items
+                    document.querySelectorAll('.faq-item').forEach(faq =>
+                        faq.classList.remove('active'));
 
-    }
-
-  }
-  
-
-  // Start the refresh cycle (get CSRF first, then start)
-
-  getCsrf().then(() => {
-    loadMe().then(loadMap);
-    setTimeout(scheduleNextRefresh, 2000);
-  });
-
-  // Real-Time Clock and Day/Night Cycle System (New Zealand Standard Time)
-  let clockInterval;
-  
-  // ============ REAL-TIME CLOCK CONFIGURATION ============
-  // Based on New Zealand Standard Time (NZST/NZDT)
-  
-  const CLOCK_CONFIG = {
-    // Update frequency in milliseconds
-    UPDATE_INTERVAL: 1000, // Update every second for real-time accuracy
-    
-    // Day/night cycle timing (NZST hours, 24-hour format)
-    DAWN_HOUR: 6,     // Dawn starts at 6:00 AM NZST
-    DAY_HOUR: 8,      // Full day starts at 8:00 AM NZST  
-    DUSK_HOUR: 18,    // Dusk starts at 6:00 PM NZST
-    NIGHT_HOUR: 20,   // Full night starts at 8:00 PM NZST
-    
-    // Visual effects configuration for map overlay
-    MAX_NIGHT_OPACITY: 0.7,    // How dark the night overlay gets (0.0 - 1.0)
-    MAX_DAWN_OPACITY: 0.4,     // Starting darkness during dawn (0.0 - 1.0)
-    SMOOTH_TRANSITIONS: true,   // Enable smooth opacity transitions
-    
-    // Time zone configuration
-    TIMEZONE: 'Pacific/Auckland', // New Zealand timezone (handles NZST/NZDT automatically)
-    LOCALE: 'en-NZ' // New Zealand locale for formatting
-  };
-  
-  // Convert hours to minutes for precise timing
-  const CYCLE_TIMES = {
-    DAWN_START: CLOCK_CONFIG.DAWN_HOUR * 60,
-    DAY_START: CLOCK_CONFIG.DAY_HOUR * 60,
-    DUSK_START: CLOCK_CONFIG.DUSK_HOUR * 60,
-    NIGHT_START: CLOCK_CONFIG.NIGHT_HOUR * 60
-  };
-  
-  function updateRealTimeClock() {
-    // Clock display removed, only updating day/night cycle
-    try {
-      const now = new Date();
-      const nzTime24 = new Date(now.toLocaleString("en-US", {timeZone: CLOCK_CONFIG.TIMEZONE}));
-      const hours = nzTime24.getHours();
-      const minutes = nzTime24.getMinutes();
-      
-      // Only update day/night cycle for map lighting
-      updateDayNightCycle(hours, minutes);
-      
-    } catch (error) {
-      console.error('Error updating day/night cycle:', error);
-    }
-  }
-  
-  function updateDayNightCycle(hours, minutes) {
-    // Clock element removed per user request
-    const overlayElement = document.getElementById('dayNightOverlay');
-    const mapNightOverlay = document.getElementById('mapNightOverlay');
-    
-    let phase, icon, text, isDay, overlayOpacity = 0, mapOpacity = 0;
-    
-    // Calculate time in minutes for precise cycle timing
-    const timeInMinutes = hours * 60 + minutes;
-    
-    if (timeInMinutes >= CYCLE_TIMES.DAWN_START && timeInMinutes < CYCLE_TIMES.DAY_START) {
-      // Dawn (6:00 AM - 8:00 AM) - 2 game hours
-      phase = 'dawn';
-      icon = 'Dawn';
-      text = 'Dawn';
-      isDay = true;
-      // Gradual lightening during dawn
-      const dawnProgress = (timeInMinutes - CYCLE_TIMES.DAWN_START) / (CYCLE_TIMES.DAY_START - CYCLE_TIMES.DAWN_START);
-      overlayOpacity = Math.max(0, CLOCK_CONFIG.MAX_DAWN_OPACITY * (1 - dawnProgress));
-      mapOpacity = Math.max(0, CLOCK_CONFIG.MAX_NIGHT_OPACITY * (1 - dawnProgress));
-    } else if (timeInMinutes >= CYCLE_TIMES.DAY_START && timeInMinutes < CYCLE_TIMES.DUSK_START) {
-      // Day (8:00 AM - 6:00 PM) - 10 game hours  
-      phase = 'day';
-      icon = 'Day';
-      text = 'Day';
-      isDay = true;
-      overlayOpacity = 0; // Bright daylight
-      mapOpacity = 0;
-    } else if (timeInMinutes >= CYCLE_TIMES.DUSK_START && timeInMinutes < CYCLE_TIMES.NIGHT_START) {
-      // Dusk (6:00 PM - 8:00 PM) - 2 game hours
-      phase = 'dusk';
-      icon = 'Dusk';
-      text = 'Dusk';
-      isDay = false;
-      // Gradual darkening during dusk
-      const duskProgress = (timeInMinutes - CYCLE_TIMES.DUSK_START) / (CYCLE_TIMES.NIGHT_START - CYCLE_TIMES.DUSK_START);
-      overlayOpacity = duskProgress * CLOCK_CONFIG.MAX_DAWN_OPACITY;
-      mapOpacity = duskProgress * CLOCK_CONFIG.MAX_NIGHT_OPACITY;
-    } else {
-      // Night (8:00 PM - 6:00 AM) - 10 game hours
-      phase = 'night';
-      icon = 'Night';
-      text = 'Night';
-      isDay = false;
-      overlayOpacity = CLOCK_CONFIG.MAX_DAWN_OPACITY; // General night darkness
-      mapOpacity = CLOCK_CONFIG.MAX_NIGHT_OPACITY; // Map-specific night darkness
-    }
-    
-    // Update overlay with smooth transitions
-    overlayElement.className = `day-night-overlay ${isDay ? 'day' : 'night'}`;
-    overlayElement.style.opacity = overlayOpacity;
-    
-    // Update map night overlay
-    if (mapNightOverlay) {
-      mapNightOverlay.style.opacity = mapOpacity;
-      mapNightOverlay.style.display = mapOpacity > 0 ? 'block' : 'none';
-    }
-    
-    // Clock indicator elements removed
-  }
-  
-  function startRealTimeClock() {
-    // Update immediately
-    updateRealTimeClock();
-    
-    // Update at configured interval for real-time accuracy
-    clockInterval = setInterval(updateRealTimeClock, CLOCK_CONFIG.UPDATE_INTERVAL);
-    
-    console.log('Real-Time Clock and Day/Night Cycle started (New Zealand Time)');
-    console.log(`Timezone: ${CLOCK_CONFIG.TIMEZONE}`);
-    console.log(`Day/Night timing: Dawn ${CLOCK_CONFIG.DAWN_HOUR}:00, Day ${CLOCK_CONFIG.DAY_HOUR}:00, Dusk ${CLOCK_CONFIG.DUSK_HOUR}:00, Night ${CLOCK_CONFIG.NIGHT_HOUR}:00 NZST`);
-    console.log(`Update interval: ${CLOCK_CONFIG.UPDATE_INTERVAL}ms, Smooth transitions: ${CLOCK_CONFIG.SMOOTH_TRANSITIONS}`);
-    console.log(`Map night opacity: ${CLOCK_CONFIG.MAX_NIGHT_OPACITY}, Dawn opacity: ${CLOCK_CONFIG.MAX_DAWN_OPACITY}`);
-  }
-  
-  function stopRealTimeClock() {
-    if (clockInterval) {
-      clearInterval(clockInterval);
-      clockInterval = null;
-    }
-  }
-  
-  // Clean up on page unload
-  window.addEventListener('beforeunload', stopRealTimeClock);
-  
-  // Start the real-time clock
-  startRealTimeClock();
-  
-  // ============ BOSS PARTICLE EFFECTS SYSTEM ============
-  
-  class BossParticleSystem {
-    constructor() {
-      this.canvas = document.getElementById('bossParticleCanvas');
-      this.ctx = this.canvas.getContext('2d');
-      this.particles = [];
-      this.bossMarkers = [];
-      this.isRunning = false;
-      this.lastTime = 0;
-      
-      // Setup canvas
-      this.setupCanvas();
-      window.addEventListener('resize', () => this.setupCanvas());
-    }
-    
-    setupCanvas() {
-      if (!this.canvas) return;
-      
-      const mapElement = document.getElementById('map');
-      const rect = mapElement.getBoundingClientRect();
-      
-      // Only resize if dimensions actually changed to avoid unnecessary clearing
-      if (this.canvas.width !== rect.width || this.canvas.height !== rect.height) {
-        this.canvas.width = rect.width;
-        this.canvas.height = rect.height;
-        
-        // Clear particles when canvas is resized to prevent sticking
-        this.particles = [];
-      }
-      
-      // Position canvas over the map
-      this.canvas.style.position = 'absolute';
-      this.canvas.style.top = '0';
-      this.canvas.style.left = '0';
-      this.canvas.style.pointerEvents = 'none';
-      this.canvas.style.zIndex = '1000';
-    }
-    
-    addBossMarker(x, y, tier = 1, lat = null, lon = null) {
-      // Store both screen coordinates and geographic coordinates
-      const marker = {
-        x, y, tier, lat, lon,
-        particles: [],
-        lastEmit: 0,
-        intensity: Math.min(tier * 0.3 + 0.5, 2.0)
-      };
-      this.bossMarkers.push(marker);
-      
-      if (!this.isRunning) {
-        this.start();
-      }
-    }
-    
-    // Update marker screen positions based on current map view
-    updateMarkerPositions() {
-      if (!window.map) return;
-      
-      this.bossMarkers.forEach(marker => {
-        if (marker.lat !== null && marker.lon !== null) {
-          // Store old position
-          const oldX = marker.x;
-          const oldY = marker.y;
-          
-          // Convert geographic coordinates to screen coordinates
-          const point = window.map.latLngToContainerPoint([marker.lat, marker.lon]);
-          marker.x = point.x;
-          marker.y = point.y;
-          
-          // Update existing particles to maintain relative positions
-          const deltaX = marker.x - oldX;
-          const deltaY = marker.y - oldY;
-          
-          // Only update particles if the position actually changed
-          if (Math.abs(deltaX) > 1 || Math.abs(deltaY) > 1) {
-            this.particles.forEach(particle => {
-              // Check if this particle belongs to this marker (within reasonable distance)
-              const distToOld = Math.sqrt((particle.x - oldX) ** 2 + (particle.y - oldY) ** 2);
-              if (distToOld < 100) { // Particles within 100px of old marker position
-                particle.x += deltaX;
-                particle.y += deltaY;
-              }
+                    // Open clicked item if it wasn't active
+                    if (!isActive) {
+                        item.classList.add('active');
+                    }
+                });
             });
-          }
         }
-      });
-    }
-    
-    clearBossMarkers() {
-      this.bossMarkers = [];
-      this.particles = [];
-      
-      // Clear the canvas completely
-      if (this.canvas && this.ctx) {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      }
-      
-      if (this.bossMarkers.length === 0) {
-        this.stop();
-      }
-    }
-    
-    createParticle(x, y, tier) {
-      const colors = {
-        1: ['#ff6b35', '#ff8c42'],
-        2: ['#ff8c00', '#ffa500'],  
-        3: ['#ff4444', '#ff6666'],
-        4: ['#cc0000', '#ff0000'],
-        5: ['#8b0000', '#ff0000', '#ffa500']
-      };
-      
-      const tierColors = colors[tier] || colors[1];
-      const color = tierColors[Math.floor(Math.random() * tierColors.length)];
-      
-      return {
-        x: x + (Math.random() - 0.5) * 30,
-        y: y + (Math.random() - 0.5) * 30,
-        vx: (Math.random() - 0.5) * 2,
-        vy: -Math.random() * 3 - 1,
-        life: 1.0,
-        decay: 0.01 + Math.random() * 0.02,
-        size: 2 + Math.random() * 4,
-        color,
-        tier
-      };
-    }
-    
-    update(deltaTime) {
-      const now = Date.now();
-      
-      // Emit particles from boss markers
-      this.bossMarkers.forEach(marker => {
-        if (now - marker.lastEmit > 50) { // Emit every 50ms
-          const particleCount = Math.floor(marker.intensity * 3);
-          for (let i = 0; i < particleCount; i++) {
-            this.particles.push(this.createParticle(marker.x, marker.y, marker.tier));
-          }
-          marker.lastEmit = now;
-        }
-      });
-      
-      // Update particles
-      this.particles = this.particles.filter(p => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.1; // Gravity
-        p.life -= p.decay;
-        p.size *= 0.99;
-        
-        return p.life > 0 && p.size > 0.5;
-      });
-    }
-    
-    render() {
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      
-      this.particles.forEach(p => {
-        this.ctx.save();
-        
-        // Set particle properties
-        const alpha = Math.max(0, p.life);
-        this.ctx.globalAlpha = alpha;
-        this.ctx.fillStyle = p.color;
-        
-        // Add glow effect for higher tiers
-        if (p.tier >= 3) {
-          this.ctx.shadowBlur = 10;
-          this.ctx.shadowColor = p.color;
-        }
-        
-        // Draw particle
-        this.ctx.beginPath();
-        this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        this.ctx.fill();
-        
-        this.ctx.restore();
-      });
-    }
-    
-    animate(currentTime) {
-      if (!this.isRunning) return;
-      
-      const deltaTime = currentTime - this.lastTime;
-      this.lastTime = currentTime;
-      
-      // Update marker positions based on current map view (throttled)
-      if (!this._lastPositionUpdate || (currentTime - this._lastPositionUpdate) > 100) {
-        this.updateMarkerPositions();
-        this._lastPositionUpdate = currentTime;
-      }
-      
-      this.update(deltaTime);
-      this.render();
-      
-      requestAnimationFrame((time) => this.animate(time));
-    }
-    
-    start() {
-      if (this.isRunning) return;
-      this.isRunning = true;
-      this.lastTime = performance.now();
-      requestAnimationFrame((time) => this.animate(time));
-    }
-    
-    stop() {
-      if (this.animationId) {
-        cancelAnimationFrame(this.animationId);
-        this.animationId = null;
-      }
-      this.isRunning = false;
-      
-      // Clear all particles and canvas when stopping
-      this.particles = [];
-      if (this.canvas && this.ctx) {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      }
-    }
-    
-    updateFromMap() {
-      this.clearBossMarkers();
-      
-      // Find all boss-active markers on the map
-      const bossMarkers = document.querySelectorAll('.server-marker.boss-active');
-      
-      bossMarkers.forEach(markerElement => {
-        let found = false;
-        
-        // Get the Leaflet marker associated with this DOM element
-        if (window.markers && window.markers.length > 0) {
-          window.markers.forEach(leafletMarker => {
-            if (found) return; // Skip if already found
-            
-            const markerIcon = leafletMarker.getElement();
-            if (markerIcon && markerIcon.querySelector('.server-marker.boss-active') === markerElement) {
-              const latLng = leafletMarker.getLatLng();
-              const point = map.latLngToContainerPoint(latLng);
-              
-              // Extract tier from class
-              const classes = markerElement.className.split(' ');
-              const tierClass = classes.find(c => c.startsWith('tier-'));
-              const tier = tierClass ? parseInt(tierClass.replace('tier-', '')) : 1;
-              
-              // Pass both screen coordinates and geographic coordinates
-              this.addBossMarker(point.x, point.y, tier, latLng.lat, latLng.lng);
-              found = true;
+
+        // Smooth scrolling for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Loading screen controller
+        function hideLoadingScreen() {
+            const loadingScreen = document.getElementById('loadingScreen');
+            if (loadingScreen) {
+                loadingScreen.classList.add('hidden');
+                // Remove from DOM after transition
+                setTimeout(() => {
+                    loadingScreen.remove();
+                }, 500);
             }
-          });
         }
-        
-        // Fallback: if we couldn't find the Leaflet marker, try to get coordinates from data attributes
-        if (!found && markerElement.dataset.lat && markerElement.dataset.lon) {
-          const lat = parseFloat(markerElement.dataset.lat);
-          const lon = parseFloat(markerElement.dataset.lon);
-          const point = map.latLngToContainerPoint([lat, lon]);
-          
-          // Extract tier from class
-          const classes = markerElement.className.split(' ');
-          const tierClass = classes.find(c => c.startsWith('tier-'));
-          const tier = tierClass ? parseInt(tierClass.replace('tier-', '')) : 1;
-          
-          this.addBossMarker(point.x, point.y, tier, lat, lon);
-        }
-      });
-      
-      // Set up map event listeners to update positions when map moves
-      if (window.map && !this._mapListenersSet) {
-        map.on('move zoom', () => this.updateMarkerPositions());
-        this._mapListenersSet = true;
-      }
-    }
-  }
-  
-  // Initialize particle system
-  const bossParticles = new BossParticleSystem();
-  
-  // Hook into map loading to update particle effects
-  const originalLoadMap = loadMap;
-  loadMap = async function() {
-    await originalLoadMap();
-    // Update particle system after map loads
-    setTimeout(() => {
-      bossParticles.setupCanvas();
-      bossParticles.updateFromMap();
-    }, 100);
-  };
-  
-  // Initialize weather on page load
-  setTimeout(() => {
-    updateWeatherOverlay();
-  }, 1000);
-})();
-</script>
+
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            initFAQ();
+
+            // Auto-refresh stats every 5 minutes
+            setInterval(loadStats, 300000);
+
+            // Hide loading screen after content loads
+            setTimeout(hideLoadingScreen, 2000);
+
+            // Happy messages for title hover
+            const happyMessages = [
+                "You're Amazing! ✨",
+                "Keep Shining! ⭐",
+                "You've Got This! 💪",
+                "Spread Joy Today! 😊",
+                "Be Awesome! 🚀",
+                "You Matter! ❤️",
+                "Stay Wonderful! 🌟",
+                "Dream Big! 🌈",
+                "You're Incredible! 🎉",
+                "Make Magic Happen! ✨",
+                "Believe In Yourself! 💎",
+                "You're Unstoppable! ⚡",
+                "Radiate Positivity! ☀️",
+                "You're Phenomenal! 🎊",
+                "Chase Your Dreams! 🦋"
+            ];
+
+            let originalText = 'QuestCord';
+            let isHovering = false;
+
+            // Title hover functionality
+            const titleText = document.querySelector('.title-text');
+            if (titleText) {
+                titleText.addEventListener('mouseenter', () => {
+                    if (!isHovering) {
+                        isHovering = true;
+                        const randomMessage = happyMessages[Math.floor(Math.random() * happyMessages.length)];
+                        titleText.textContent = randomMessage;
+                    }
+                });
+
+                titleText.addEventListener('mouseleave', () => {
+                    isHovering = false;
+                    titleText.textContent = originalText;
+                });
+            }
+        });
+    </script>
 </body>
 </html>

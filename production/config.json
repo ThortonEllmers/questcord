@@ -1,4 +1,7 @@
 {
+  "_comment": "QuestCord Configuration File",
+  "_lastUpdated": "2025-09-25",
+
   "environments": {
     "development": {
       "tokens": 10,
@@ -16,59 +19,29 @@
       "healthRegen": 5
     }
   },
+
   "web": {
     "port": 3000,
     "publicBaseUrl": "https://questcord.fun"
   },
-  "auth": {
-    "discord": {
-      "clientId": "DISCORD_CLIENT_ID",
-      "clientSecret": "DISCORD_CLIENT_SECRET",
-      "scope": "identify",
-      "prompt": "none"
-    },
-    "stateSecret": "9c621461b84c703387ab0b8c02ddcd9f"
+
+  "economy": {
+    "currencyName": "Drakari",
+    "marketTaxPct": 5,
+    "tradeBlacklist": []
   },
-  "currencyName": "Drakari",
-  "marketTaxPct": 5,
-  "tradeBlacklist": [],
-  "billing": {
-    "paypal": {
-      "environment": "sandbox",
-      "clientId": "PAYPAL-SANDBOX-CLIENT-ID",
-      "clientSecret": "PAYPAL-SANDBOX-SECRET",
-      "webhookId": "PAYPAL-SANDBOX-WEBHOOK-ID",
-      "prices": {
-        "paypal_pack10": {
-          "tokens": 10,
-          "amount": "5.00",
-          "currency": "USD",
-          "name": "10 Tokens"
-        },
-        "paypal_pack25": {
-          "tokens": 25,
-          "amount": "10.00",
-          "currency": "USD",
-          "name": "25 Tokens"
-        },
-        "paypal_pack60": {
-          "tokens": 60,
-          "amount": "20.00",
-          "currency": "USD",
-          "name": "60 Tokens"
-        }
-      }
-    }
-  },
-  "rarityMultipliers": {
+
+  "game": {
+    "rarityMultipliers": {
     "common": 1,
     "uncommon": 1.5,
     "rare": 2,
     "epic": 3,
     "legendary": 5,
-    "mythic": 10
-  },
-  "lootRarityWeights": {
+      "mythic": 10
+    },
+
+    "lootRarityWeights": {
     "1": {
       "common": 60,
       "uncommon": 30,

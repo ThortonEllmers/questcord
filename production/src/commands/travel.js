@@ -355,6 +355,17 @@ module.exports = {
     db.prepare('UPDATE players SET travelArrivalAt=?, travelStartAt=?, locationGuildId=?, travelFromGuildId=? WHERE userId=?').run(
       arrival, Date.now(), dest.guildId, fromServer ? fromServer.guildId : null, interaction.user.id
     );
+
+    // Record travel activity for real-time statistics
+    try {
+      const realtimeStats = require('../web/routes/realtime-stats');
+      if (realtimeStats && realtimeStats.recordTravel) {
+        realtimeStats.recordTravel(interaction.user.id, fromServer ? fromServer.guildId : null, dest.guildId);
+      }
+    } catch (statsError) {
+      // Don't let stats tracking errors affect travel execution
+      console.warn('Failed to record travel activity:', statsError.message);
+    }
     
     // Get web base URL for map links (if configured)
     const base = (config.web && config.web.publicBaseUrl || '').replace(/\/$/, '');
@@ -368,37 +379,43 @@ module.exports = {
       haversine(fromServer.lat, fromServer.lon, dest.lat, dest.lon) : 0;
     
     const travelEmbed = new EmbedBuilder()
-      .setTitle(`Traveling to ${dest.name}`)
-      .setColor(isPremiumUser ? 0xFFD700 : 0xFF6B35)
+      .setTitle(`🏛️ Traveling to ${dest.name}`)
+      .setDescription(`${dest.alreadyVisited ? '🔄 Returning to a familiar landmark' : '✨ Discovering a new landmark for the first time!'}`)
+      .setColor(isPremiumUser ? 0xFFD700 : 0x5865F2)
+      .setAuthor({
+        name: `${interaction.user.displayName} - Explorer`,
+        iconURL: interaction.user.displayAvatarURL()
+      })
+      .setThumbnail(`https://cdn.discordapp.com/emojis/${dest.emoji ? '1234567890123456789' : '1234567890123456789'}.png`)
       .addFields(
         {
-          name: 'Vehicle',
-          value: isPremiumUser ? 'Private Jet' : 'Commercial Flight',
+          name: '✈️ Transportation',
+          value: `**${isPremiumUser ? 'Private Jet' : 'Commercial Flight'}**\n• Speed: ${speedMult}x multiplier`,
           inline: true
         },
         {
-          name: 'Destination',
-          value: `${dest.name}\n${dest.country}`,
+          name: '🎯 Destination',
+          value: `**${dest.name}** ${dest.emoji}\n🗺️ ${dest.country}`,
           inline: true
         },
         {
-          name: 'Details',
-          value: `Distance: ${Math.round(distance)} km\nETA: ${Math.round(timeSec / 60)} minutes`,
+          name: '📏 Travel Details',
+          value: `**Distance:** ${Math.round(distance)} km\n**ETA:** ${Math.round(timeSec / 60)} minutes`,
           inline: true
         },
         {
-          name: 'Cost',
-          value: `${dest.visitCost} gems`,
+          name: '💰 Journey Cost',
+          value: `**${dest.visitCost}** 💎 gems\n⚡ **${config.stamina?.travelCost ?? 10}** stamina`,
           inline: true
         },
         {
-          name: 'Status',
-          value: dest.alreadyVisited ? 'Return Visit' : 'First Discovery',
+          name: '🎆 Visit Status',
+          value: dest.alreadyVisited ? '✅ **Return Visit**\nFamiliar territory' : '🎆 **First Discovery**\nUncharted adventure!',
           inline: true
         },
         {
-          name: 'Speed',
-          value: `${speedMult}x multiplier\n${config.stamina?.travelCost ?? 10} stamina used`,
+          name: '🕰️ Arrival Time',
+          value: `<t:${Math.floor((Date.now() + timeSec * 1000) / 1000)}:t>\n<t:${Math.floor((Date.now() + timeSec * 1000) / 1000)}:R>`,
           inline: true
         }
       );
@@ -408,14 +425,14 @@ module.exports = {
     }
 
     travelEmbed.setFooter({
-      text: `Landing in ${Math.round(timeSec / 60)} minutes`,
+      text: `QuestCord • Landing in ${Math.round(timeSec / 60)} minutes`,
       iconURL: interaction.client.user.displayAvatarURL()
     }).setTimestamp();
 
     if (base) {
       travelEmbed.addFields({
-        name: 'Live Tracking',
-        value: `[View on Map](${base})`,
+        name: '🗺️ Live Tracking',
+        value: `[👁️ View Journey on Map](${base})`,
         inline: false
       });
     }
@@ -490,6 +507,17 @@ module.exports = {
     }
     const arrival = Date.now() + timeSec * 1000;
     db.prepare('UPDATE players SET travelArrivalAt=?, travelStartAt=?, locationGuildId=?, travelFromGuildId=? WHERE userId=?').run(arrival, Date.now(), dest.guildId, fromServer ? fromServer.guildId : null, interaction.user.id);
+
+    // Record travel activity for real-time statistics
+    try {
+      const realtimeStats = require('../web/routes/realtime-stats');
+      if (realtimeStats && realtimeStats.recordTravel) {
+        realtimeStats.recordTravel(interaction.user.id, fromServer ? fromServer.guildId : null, dest.guildId);
+      }
+    } catch (statsError) {
+      // Don't let stats tracking errors affect travel execution
+      console.warn('Failed to record travel activity:', statsError.message);
+    }
     const base = (config.web && config.web.publicBaseUrl || '').replace(/\/$/, '');
     const isPremiumUser = await isPremium(interaction.client, interaction.user.id);
     const speedMult = await vehicleSpeed(interaction.client, interaction.user.id);
@@ -504,77 +532,78 @@ module.exports = {
     const staminaCost = config.stamina?.travelCost ?? 10;
     
     const travelEmbed = new EmbedBuilder()
-      .setTitle('Traveling to Server')
-      .setColor(isPremiumUser ? 0xFFD700 : 0x00AE86)
+      .setTitle(`🌍 Journey to ${dest.name}`)
+      .setDescription(`${userPrefix} Embarking on an adventure to a new Discord server`)
+      .setColor(isPremiumUser ? 0xFFD700 : 0x5865F2)
       .setAuthor({
-        name: `${userPrefix} - Traveler`,
+        name: `${interaction.user.displayName} - Adventurer`,
         iconURL: interaction.user.displayAvatarURL()
       })
       .addFields(
         {
-          name: 'Vehicle',
-          value: isPremiumUser ? 'Private Jet' : 'Commercial Flight',
+          name: '✈️ Vehicle Type',
+          value: `**${isPremiumUser ? 'Private Jet 🚁' : 'Commercial Flight ✈️'}**\n${isPremiumUser ? 'Premium travel experience' : 'Standard transportation'}`,
           inline: true
         },
         {
-          name: 'Destination',
-          value: dest.name,
+          name: '🎯 Destination Server',
+          value: `**${dest.name}**`,
           inline: true
         },
         {
-          name: 'Travel Time',
-          value: `${Math.floor(timeSec/60)}m ${timeSec%60}s`,
+          name: '⏱️ Travel Duration',
+          value: `**${Math.floor(timeSec/60)}m ${timeSec%60}s**\nETA: <t:${Math.floor(arrival / 1000)}:t>`,
           inline: true
         }
       );
 
     if (distance > 0) {
       travelEmbed.addFields({
-        name: 'Distance',
-        value: `${distance.toFixed(1)} km`,
+        name: '🗺️ Distance',
+        value: `**${distance.toFixed(1)} km**`,
         inline: true
       });
     }
 
     if (fromServer) {
       travelEmbed.addFields({
-        name: 'Departure',
-        value: `${fromServer.name || fromServer.guildId}`,
+        name: '📍 Departure Point',
+        value: `**${fromServer.name || fromServer.guildId}**`,
         inline: true
       });
     }
 
     travelEmbed.addFields({
-      name: 'Arrival',
-      value: new Date(arrival).toLocaleTimeString(),
+      name: '🕰️ Arrival Time',
+      value: `<t:${Math.floor(arrival / 1000)}:t>\n<t:${Math.floor(arrival / 1000)}:R>`,
       inline: true
     });
 
     travelEmbed.addFields({
-      name: 'Stamina Cost',
-      value: `${staminaCost} used, ${Math.max(0, currentStamina - staminaCost)} remaining`,
+      name: '⚡ Energy Usage',
+      value: `**${staminaCost}** stamina used\n**${Math.max(0, currentStamina - staminaCost)}** remaining`,
       inline: true
     });
 
     if (isPremiumUser) {
       travelEmbed.addFields({
-        name: 'Premium Benefits',
-        value: `${speedMult}x faster travel`,
+        name: '🌟 Premium Perks',
+        value: `• **${speedMult}x** faster travel speed\n• Luxury accommodations\n• Priority boarding`,
         inline: false
       });
     }
 
     if (base) {
       travelEmbed.addFields({
-        name: 'Map View',
-        value: `[View Destination](${base}/${dest.guildId})`,
+        name: '🗺️ Live Tracking',
+        value: `[👁️ View on Interactive Map](${base}/${dest.guildId})`,
         inline: false
       });
     }
 
     if (weatherMessage) {
       travelEmbed.addFields({
-        name: 'Weather',
+        name: '🌦️ Weather Conditions',
         value: weatherMessage.replace(/^\n/, ''),
         inline: false
       });
@@ -582,7 +611,7 @@ module.exports = {
 
     travelEmbed
       .setFooter({
-        text: `QuestCord`,
+        text: `QuestCord • Safe travels and new discoveries await!`,
         iconURL: interaction.client.user.displayAvatarURL()
       })
       .setTimestamp();

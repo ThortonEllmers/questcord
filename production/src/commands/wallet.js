@@ -54,43 +54,57 @@ module.exports = {
     }
 
     const embed = new EmbedBuilder()
-      .setTitle('Wallet')
+      .setTitle(`💰 ${userPrefix} Treasury`)
+      .setDescription(`Your current financial status and wealth overview`)
       .setColor(isPremiumUser ? 0xFFD700 : wealthColor)
       .setAuthor({
-        name: `${userPrefix} - ${wealthTier}`,
+        name: interaction.user.displayName,
         iconURL: interaction.user.displayAvatarURL()
       })
+      .setThumbnail('https://cdn.discordapp.com/emojis/1234567890123456789.png')
       .addFields(
         {
-          name: 'Current Balance',
-          value: `${balance.toLocaleString()} ${config.currencyName}\n${wealthIcon} ${wealthTier}`,
+          name: `💵 Current Balance`,
+          value: `**${balance.toLocaleString()} ${config.currencyName}**\n${wealthIcon} *${wealthTier}*`,
           inline: true
         },
         {
-          name: 'Account Status',
+          name: '📈 Account Tier',
           value: isPremiumUser
-            ? 'Premium Member'
-            : 'Standard Account',
+            ? '**Premium Member** 🌟\n• Enhanced benefits\n• Exclusive access'
+            : '**Standard Account**\n• Full features available\n• Upgrade to Premium',
           inline: true
         },
         {
-          name: 'Quick Actions',
-          value: 'View /market listings\nBuy premium items\nTrade with players',
+          name: '🛠️ Quick Actions',
+          value: '• `/market browse` - Shop items\n• `/market sell` - List items\n• `/travel` - Explore worlds',
           inline: true
         }
       );
 
     if (balance >= 10000) {
       embed.addFields({
-        name: 'Wealth Analysis',
-        value: `• Portfolio value: ${balance.toLocaleString()} ${config.currencyName}\n• Top tier adventurer status\n• Consider investing in rare equipment\n• Premium items available`,
+        name: '📊 Financial Insights',
+        value: `• **Portfolio Value:** ${balance.toLocaleString()} ${config.currencyName}\n• **Status:** Elite adventurer tier \n• **Recommendation:** Invest in legendary equipment\n• **Access:** Premium marketplace unlocked`,
+        inline: false
+      });
+    } else if (balance >= 1000) {
+      embed.addFields({
+        name: '📈 Growth Opportunities',
+        value: `• **Progress:** Well on your way to wealth!\n• **Next Goal:** Reach 10,000 ${config.currencyName}\n• **Tip:** Sell rare items on the market`,
+        inline: false
+      });
+    } else {
+      embed.addFields({
+        name: '🌱 Getting Started',
+        value: `• **Explore:** Use /travel to find loot\n• **Battle:** Fight bosses for rewards\n• **Trade:** Use the market system`,
         inline: false
       });
     }
 
     embed
       .setFooter({
-        text: `QuestCord Treasury`,
+        text: `QuestCord Treasury • Wealth builds adventures`,
         iconURL: interaction.client.user.displayAvatarURL()
       })
       .setTimestamp();

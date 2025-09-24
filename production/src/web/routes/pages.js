@@ -1,29 +1,17 @@
 /**
  * QuestCord Web Page Routes
  * =========================
- * Handles routing for all static HTML pages in the QuestCord web interface.
- * This file serves the various HTML pages that make up the web application:
- * 
- * **Public Pages:**
+ * Handles routing for the QuestCord landing page and essential web pages.
+ *
+ * **Available Pages:**
+ * - Landing page (main application interface)
  * - Terms of Service and Privacy Policy (legal compliance)
- * - Interactive map (main application interface)
  * - Status page (service health monitoring)
- * 
- * **User-Specific Pages:**
- * - User profiles (own and others)
- * - Server information pages
- * - Landmark detail pages
- * 
- * **Administrative Pages:**
- * - Admin dashboard (restricted access)
- * 
- * **Single Page Application (SPA) Support:**
- * - Catch-all routing for client-side navigation
+ *
+ * **Features:**
  * - Subdomain routing for status page
- * - Parameter-based routing for dynamic content
- * 
- * All routes serve static HTML files from the web/public directory.
- * The actual functionality is handled by client-side JavaScript and API calls.
+ * - Single Page Application (SPA) support
+ * - Static HTML file serving
  */
 
 // Import Express framework for creating web page routes
@@ -55,64 +43,10 @@ router.get('/privacy', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'web', 'public', 'privacy.html'));
 });
 
-/**
- * User Profile Page (Own Profile)
- * GET /profile
- * Serves the user profile page when accessing their own profile
- * Shows personal statistics, achievements, and account settings
- */
-router.get('/profile', (req, res) => {
-  // Serve the static profile.html file - client-side JS will determine if it's own profile
-  res.sendFile(path.join(process.cwd(), 'web', 'public', 'profile.html'));
-});
 
-/**
- * User Profile Page (Other User's Profile)
- * GET /profile/:userId
- * Serves the user profile page for viewing another user's public profile
- * Shows public statistics, achievements, and profile information
- * @param {string} userId - Discord user ID of the profile to display
- */
-router.get('/profile/:userId', (req, res) => {
-  // Serve the same profile.html - client-side JS will use the userId parameter
-  res.sendFile(path.join(process.cwd(), 'web', 'public', 'profile.html'));
-});
 
-/**
- * Admin Dashboard Page
- * GET /admin
- * Serves the administrative dashboard for authorized users
- * Provides tools for server management, user moderation, and system monitoring
- * Access control is handled by client-side authentication checks
- */
-router.get('/admin', (req, res) => {
-  // Serve the admin.html file - authentication is checked client-side
-  res.sendFile(path.join(process.cwd(), 'web', 'public', 'admin.html'));
-});
 
-/**
- * Discord Server Information Page
- * GET /server/:guildId
- * Serves detailed information page for a specific Discord server
- * Shows server stats, member count, location on map, and boss battles
- * @param {string} guildId - Discord server/guild ID to display information for
- */
-router.get('/server/:guildId', (req, res) => {
-  // Serve the server.html file - client-side JS will use the guildId parameter
-  res.sendFile(path.join(process.cwd(), 'web', 'public', 'server.html'));
-});
 
-/**
- * Landmark Information Page
- * GET /landmark/:landmarkId
- * Serves detailed information page for a specific map landmark
- * Shows landmark description, visitors, and related activities
- * @param {string} landmarkId - Unique identifier for the landmark to display
- */
-router.get('/landmark/:landmarkId', (req, res) => {
-  // Serve the landmark.html file - client-side JS will use the landmarkId parameter
-  res.sendFile(path.join(process.cwd(), 'web', 'public', 'landmark.html'));
-});
 
 /**
  * Service Status Page

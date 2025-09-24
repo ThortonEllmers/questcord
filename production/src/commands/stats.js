@@ -4,8 +4,8 @@ const { getUserPrefix, isPremium } = require('../utils/roles');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('stats')
-    .setDescription('Show your current health and stamina')
-    .addBooleanOption(o => o.setName('public').setDescription('Show to everyone (default: no)')),
+    .setDescription('💪 View your character\'s health, stamina, and current status')
+    .addBooleanOption(o => o.setName('public').setDescription('🌐 Share your stats with everyone in the channel')),
 
   async execute(interaction) {
     const { db } = require('../utils/store_sqlite');
@@ -24,33 +24,50 @@ module.exports = {
 
     const bar = (v, m) => {
       const pct = m ? Math.round((v/m)*100) : 0;
-      const ticks = Math.max(0, Math.min(20, Math.round((pct/100)*20)));
-      return `\`${'█'.repeat(ticks).padEnd(20,'·')}\` ${Math.round(v)}/${Math.round(m)}  (${pct}%)`;
+      const ticks = Math.max(0, Math.min(10, Math.round((pct/100)*10)));
+      const filledBar = '█'.repeat(ticks);
+      const emptyBar = '▒'.repeat(10 - ticks);
+      return `\`${filledBar}${emptyBar}\` **${Math.round(v)}/${Math.round(m)}** (${pct}%)`;
     };
 
     const userPrefix = await getUserPrefix(interaction.client, interaction.user);
     
     const embed = new EmbedBuilder()
-      .setTitle('Stats')
-      .setColor(userIsPremium ? 0xFFD700 : 0x00AE86)
+      .setTitle(`💪 ${userPrefix} Character Stats`)
+      .setDescription('View your current health, stamina, and status information')
+      .setColor(userIsPremium ? 0xFFD700 : 0x5865F2)
+      .setAuthor({
+        name: interaction.user.displayName,
+        iconURL: interaction.user.displayAvatarURL()
+      })
       .addFields(
         {
-          name: 'Health',
-          value: bar(row.health || 0, maxH),
+          name: '❤️ Health Status',
+          value: `${bar(row.health || 0, maxH)}\n**Regeneration:** ${userIsPremium ? '2x faster' : 'Standard rate'}`,
           inline: false
         },
         {
-          name: 'Stamina',
-          value: bar(row.stamina || 0, maxS),
+          name: '⚡ Stamina Level',
+          value: `${bar(row.stamina || 0, maxS)}\n**Usage:** Required for travel and combat`,
           inline: false
         },
         {
-          name: 'Premium',
-          value: userIsPremium ? 'Active' : 'Inactive',
+          name: '🌟 Account Status',
+          value: userIsPremium ?
+            '**Premium Member** \n• 1.5x health capacity\n• Faster regeneration\n• Priority features' :
+            '**Standard Account**\n• Base health capacity\n• Standard regeneration\n• All core features',
+          inline: true
+        },
+        {
+          name: '📊 Quick Actions',
+          value: '• `/travel` - Explore servers\n• `/inventory` - Check items\n• `/market browse` - Buy equipment',
           inline: true
         }
       )
-      .setFooter({ text: 'Stats regenerate over time' })
+      .setFooter({
+        text: 'QuestCord • Stats auto-regenerate over time',
+        iconURL: interaction.client.user.displayAvatarURL()
+      })
       .setTimestamp();
 
     const pub = interaction.options.getBoolean('public') || false;

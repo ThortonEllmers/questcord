@@ -130,6 +130,24 @@ function mountRoutes(app) {
     logger.error('[routes] status mount failed %s', e && e.stack || e);
   }
 
+  // REAL-TIME STATS API router (handles /api/realtime/* endpoints)
+  try {
+    const realtimeStats = safeRequire('./realtime-stats');
+    if (realtimeStats) {
+      if (typeof realtimeStats === 'function' || (realtimeStats && typeof realtimeStats.handle === 'function')) {
+        app.use('/api/realtime', realtimeStats);
+        logger.info('[routes] realtime-stats mounted');
+      } else if (realtimeStats && realtimeStats.default && (typeof realtimeStats.default === 'function' || typeof realtimeStats.default.handle === 'function')) {
+        app.use('/api/realtime', realtimeStats.default);
+        logger.info('[routes] realtime-stats mounted (default export)');
+      } else {
+        logger.warn('[routes] realtime-stats export not a router, skipping');
+      }
+    }
+  } catch (e) {
+    logger.error('[routes] realtime-stats mount failed %s', e && e.stack || e);
+  }
+
   // PAGES router (handles root path)
   try {
     const pages = safeRequire('./pages');

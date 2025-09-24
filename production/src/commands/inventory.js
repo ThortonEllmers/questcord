@@ -11,31 +11,31 @@ function metaFor(id) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('inventory')
-    .setDescription('Show your inventory with sorting options')
+    .setDescription('🎒 View your inventory with advanced sorting and filtering options')
     .addStringOption(o => o
       .setName('sort')
-      .setDescription('How to sort your inventory')
+      .setDescription('📊 How to sort your inventory items')
       .setRequired(false)
       .addChoices(
-        { name: 'Name (A-Z)', value: 'name' },
-        { name: 'Quantity (High-Low)', value: 'quantity' },
-        { name: 'Rarity (Rare-Common)', value: 'rarity' },
-        { name: 'Category', value: 'category' },
-        { name: 'Equipment Type', value: 'equipslot' }
+        { name: '📝 Name (A-Z)', value: 'name' },
+        { name: '📈 Quantity (High to Low)', value: 'quantity' },
+        { name: '✨ Rarity (Rare to Common)', value: 'rarity' },
+        { name: '📂 Category', value: 'category' },
+        { name: '⚔️ Equipment Type', value: 'equipslot' }
       ))
     .addStringOption(o => o
       .setName('filter')
-      .setDescription('Filter items by type')
+      .setDescription('🔍 Filter items by category')
       .setRequired(false)
       .addChoices(
-        { name: 'All Items', value: 'all' },
-        { name: 'Equipment Only', value: 'equipment' },
-        { name: 'Weapons', value: 'weapon' },
-        { name: 'Armor', value: 'armor' },
-        { name: 'Materials', value: 'material' },
-        { name: 'Consumables', value: 'consumable' },
-        { name: 'Vehicles', value: 'vehicle' },
-        { name: 'Artifacts', value: 'artifact' }
+        { name: '📦 All Items', value: 'all' },
+        { name: '⚔️ Equipment Only', value: 'equipment' },
+        { name: '🗡️ Weapons', value: 'weapon' },
+        { name: '🛡️ Armor & Protection', value: 'armor' },
+        { name: '🔩 Materials & Resources', value: 'material' },
+        { name: '🧪 Consumables & Potions', value: 'consumable' },
+        { name: '🚗 Vehicles & Mounts', value: 'vehicle' },
+        { name: '💎 Artifacts & Relics', value: 'artifact' }
       )),
   /**
    * Main execution handler for inventory command

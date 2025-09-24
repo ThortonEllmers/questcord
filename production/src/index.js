@@ -286,7 +286,24 @@ client.once(Events.ClientReady, async () => {
     console.error('Water check failed:', error.message);
   }
   
-  createWebServer();
+  // Create web server and pass the Discord client for real-time stats
+  const webServerResult = createWebServer();
+  if (webServerResult && webServerResult.app) {
+    webServerResult.app.locals.discordClient = client;
+  }
+
+  // Start periodic uptime status recording
+  setInterval(() => {
+    try {
+      const realtimeStats = require('./web/routes/realtime-stats');
+      if (realtimeStats && realtimeStats.recordUptimeStatus) {
+        // Record online status every 5 minutes
+        realtimeStats.recordUptimeStatus('online', 0);
+      }
+    } catch (error) {
+      console.warn('Failed to record periodic uptime status:', error.message);
+    }
+  }, 5 * 60 * 1000); // Record every 5 minutes
 
   // Ensure all guilds have a biome assigned
   try {
@@ -617,9 +634,30 @@ client.on(Events.InteractionCreate, async (interaction) => {
     
     await cmd.execute(interaction);
     logger.info('cmd: %s by %s in %s', interaction.commandName, interaction.user.id, interaction.guildId);
+
+    // Record command usage for real-time statistics
+    try {
+      const realtimeStats = require('./web/routes/realtime-stats');
+      if (realtimeStats && realtimeStats.recordCommandUsage) {
+        realtimeStats.recordCommandUsage(interaction.commandName, interaction.user.id, interaction.guildId, true);
+      }
+    } catch (statsError) {
+      // Don't let stats tracking errors affect command execution
+      console.warn('Failed to record command usage:', statsError.message);
+    }
   } catch (e) {
     console.error(e);
-    
+
+    // Record failed command usage for statistics
+    try {
+      const realtimeStats = require('./web/routes/realtime-stats');
+      if (realtimeStats && realtimeStats.recordCommandUsage) {
+        realtimeStats.recordCommandUsage(interaction.commandName, interaction.user.id, interaction.guildId, false);
+      }
+    } catch (statsError) {
+      console.warn('Failed to record failed command usage:', statsError.message);
+    }
+
     // Log command error to webhook
     try {
       await logCommandError(interaction.commandName, interaction.user.id, interaction.guildId, e);

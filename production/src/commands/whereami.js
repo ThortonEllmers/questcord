@@ -29,26 +29,39 @@ module.exports = {
       const arrivalTime = new Date(player.travelArrivalAt);
       
       const travelEmbed = new EmbedBuilder()
-        .setTitle('Currently Traveling')
-        .setColor(0x3498DB)
+        .setTitle('✈️ Travel in Progress')
+        .setDescription(`${userPrefix} You are currently traveling between servers`)
+        .setColor(0x5865F2)
+        .setAuthor({
+          name: interaction.user.displayName,
+          iconURL: interaction.user.displayAvatarURL()
+        })
         .addFields(
           {
-            name: 'From',
-            value: fromName,
+            name: '📍 Departure',
+            value: `**${fromName}**`,
             inline: true
           },
           {
-            name: 'To',
-            value: toName,
+            name: '🎯 Destination',
+            value: `**${toName}**`,
             inline: true
           },
           {
-            name: 'ETA',
-            value: `${timeLeft} minutes`,
+            name: '⏰ Time Remaining',
+            value: `**${timeLeft} minutes**\nArrival: <t:${Math.floor(arrivalTime.getTime() / 1000)}:t>`,
             inline: true
+          },
+          {
+            name: '💡 While Traveling',
+            value: '• Check your `/inventory`\n• Browse the `/market`\n• View your `/achievements`',
+            inline: false
           }
         )
-        .setFooter({ text: 'QuestCord' })
+        .setFooter({
+          text: 'QuestCord • Travel will complete automatically',
+          iconURL: interaction.client.user.displayAvatarURL()
+        })
         .setTimestamp();
       
       await interaction.reply({ embeds: [travelEmbed] });
@@ -86,26 +99,39 @@ module.exports = {
         'Unknown Region';
       
       const locationEmbed = new EmbedBuilder()
-        .setTitle('Current Location')
-        .setColor(0x00AE86)
+        .setTitle(`🏛️ ${userPrefix} Current Location`)
+        .setDescription('Your present location and local environment details')
+        .setColor(0x5865F2)
+        .setAuthor({
+          name: interaction.user.displayName,
+          iconURL: interaction.user.displayAvatarURL()
+        })
         .addFields(
           {
-            name: 'Server',
-            value: displayName,
+            name: '🌍 Server',
+            value: `**${displayName}**`,
             inline: true
           },
           {
-            name: 'Region', 
-            value: region,
+            name: '📍 Region',
+            value: `**${region}**`,
             inline: true
           },
           {
-            name: 'Biome',
-            value: biome,
+            name: '🌿 Biome',
+            value: `**${biome}**`,
             inline: true
+          },
+          {
+            name: '🚀 Travel Options',
+            value: '• `/travel` - Visit other servers\n• `/nearby` - View nearby destinations\n• `/waypoints` - Quick travel locations',
+            inline: false
           }
         )
-        .setFooter({ text: 'Use /travel to visit other servers' })
+        .setFooter({
+          text: 'QuestCord • Explore the world of Discord servers',
+          iconURL: interaction.client.user.displayAvatarURL()
+        })
         .setTimestamp();
       
       await interaction.reply({ embeds: [locationEmbed] });
