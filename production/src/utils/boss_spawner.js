@@ -186,33 +186,27 @@ function getEligibleServersForBoss() {
     // - Not archived
     // - Have coordinates
     // - Not the spawn server
-    // - Eligible based on guild ID hash (1 in 3 servers can have bosses)
     // - No active boss currently
     // - Not on cooldown
-    
+
     const spawnGuildId = process.env.SPAWN_GUILD_ID;
     const now = Date.now();
     const cooldownMs = (config.boss?.cooldownSeconds || 3600) * 1000; // Default 1 hour cooldown
-    
+
     const servers = db.prepare(`
-      SELECT s.*, b.id as activeBossId 
+      SELECT s.*, b.id as activeBossId
       FROM servers s
       LEFT JOIN bosses b ON s.guildId = b.guildId AND b.active = 1
-      WHERE s.archived = 0 
-        AND s.lat IS NOT NULL 
+      WHERE s.archived = 0
+        AND s.lat IS NOT NULL
         AND s.lon IS NOT NULL
         AND s.guildId != ?
         AND b.id IS NULL
         AND (s.lastBossAt IS NULL OR s.lastBossAt < ?)
     `).all(spawnGuildId || '', now - cooldownMs);
-    
-    // Filter by eligibility hash (1 in 3 servers)
-    const eligibleServers = servers.filter(server => {
-      const serverHash = parseInt(server.guildId.slice(-8), 16);
-      return (serverHash % 3) === 0;
-    });
-    
-    return eligibleServers;
+
+    // All servers (except spawn server) are now eligible for boss spawns
+    return servers;
   } catch (error) {
     console.error('[boss_spawner] Error getting eligible servers:', error.message);
     return [];
@@ -339,15 +333,15 @@ async function notifyBossSpawn(bossData, client) {
         value: '• Join the server where the boss spawned\n• Use `/boss attack` to deal damage\n• Work together with other players!\n• Defeat it for valuable rewards',
         inline: false
       })
-      .setFooter({ 
-        text: 'Only one boss can exist at a time • QuestCord',
+      .setFooter({
+        text: 'Boss spawned on server • QuestCord',
         iconURL: client.user?.displayAvatarURL()
       })
       .setTimestamp();
 
-    // Send notification with role mention
+    // Send notification with boss role ping and custom format
     await channel.send({
-      content: `<@&${BOSS_CONFIG.BOSS_ROLE_ID}> 🚨 **BOSS ALERT** 🚨`,
+      content: `<@&${BOSS_CONFIG.BOSS_ROLE_ID}> @╭───𒌋𒀖 「🜲・Boss Notification」 🔥 NEW BOSS ALERT 🔥`,
       embeds: [embed]
     });
 
@@ -359,13 +353,11 @@ async function notifyBossSpawn(bossData, client) {
 }
 
 /**
- * Get next spawn interval with randomization (4-6 hours)
+ * Get next spawn interval with randomization (1 hour)
  */
 function getNextSpawnInterval() {
-  const minHours = 4;
-  const maxHours = 6;
-  const randomHours = minHours + Math.random() * (maxHours - minHours);
-  return randomHours * 60 * 60 * 1000; // Convert to milliseconds
+  const hours = 1;
+  return hours * 60 * 60 * 1000; // Convert to milliseconds (1 hour)
 }
 
 /**
@@ -430,7 +422,7 @@ async function runBossSpawningCycle(client = null) {
     }
     
     // Calculate how many bosses to potentially spawn based on current count and global limit
-    const bossesToSpawn = Math.min(dynamicBossLimit - currentCount, BOSS_CONFIG.MAX_BOSSES_PER_CYCLE);
+    const bossesToSpawn = Math.min(BOSS_CONFIG.MAX_GLOBAL_BOSSES - currentCount, BOSS_CONFIG.MAX_BOSSES_PER_CYCLE);
     
     if (bossesToSpawn <= 0) {
       console.log('[boss_spawner] Dynamic boss limit reached, no bosses to spawn');
