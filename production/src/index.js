@@ -248,7 +248,7 @@ client.once(Events.ClientReady, async () => {
   
   // Set up randomized spawning intervals
   function scheduleNextBossSpawn() {
-    const nextInterval = getNextSpawnInterval(); // 4-6 hours randomized
+    const nextInterval = getNextSpawnInterval(); // 1 hour intervals
     const hoursFromNow = (nextInterval / (1000 * 60 * 60)).toFixed(1);
     logger.info(`[boss_spawner] Next boss spawn scheduled in ${hoursFromNow} hours`);
     
@@ -263,7 +263,7 @@ client.once(Events.ClientReady, async () => {
   }
   
   scheduleNextBossSpawn(); // Start the randomized scheduling
-  logger.info('[boss_spawner] Automatic boss spawning system initialized - 4-6 hour randomized intervals with chance-based spawning (15 global limit)');
+  logger.info('[boss_spawner] Automatic boss spawning system initialized - 1 hour intervals with chance-based spawning (all servers eligible)');
   
   for (const [id, guild] of client.guilds.cache) {
     const iconUrl = guild.iconURL({ extension: 'png', size: 64 });
