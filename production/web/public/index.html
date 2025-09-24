@@ -489,7 +489,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 24px;
+            margin: 0 auto 24px;
             font-size: 24px;
             color: white;
         }
@@ -538,12 +538,14 @@
             background: rgba(255, 255, 255, 0.05);
         }
 
-        .faq-question i {
+        .faq-toggle {
             margin-left: auto;
             transition: transform 0.2s ease;
+            color: var(--primary);
+            font-size: 14px;
         }
 
-        .faq-item.active .faq-question i {
+        .faq-item.active .faq-toggle {
             transform: rotate(180deg);
         }
 
@@ -709,7 +711,7 @@
                 <div class="features-grid">
                     <div class="feature-card">
                         <div class="feature-icon">
-                            <i class="fas fa-globe"></i>
+                            🌍
                         </div>
                         <h3>World Travel</h3>
                         <p>Explore a vast world by traveling between Discord servers. Each destination offers unique biomes, resources, and challenges to discover.</p>
@@ -717,7 +719,7 @@
 
                     <div class="feature-card">
                         <div class="feature-icon">
-                            <i class="fas fa-coins"></i>
+                            💰
                         </div>
                         <h3>Dynamic Economy</h3>
                         <p>Trade items with other players through our global marketplace. Buy, sell, and collect rare items to build your wealth and power.</p>
@@ -725,7 +727,7 @@
 
                     <div class="feature-card">
                         <div class="feature-icon">
-                            <i class="fas fa-dragon"></i>
+                            🐉
                         </div>
                         <h3>Epic Boss Battles</h3>
                         <p>Team up with your server to take down massive world bosses. Coordinate attacks and earn exclusive rewards for victory.</p>
@@ -745,7 +747,7 @@
                     <div class="faq-item">
                         <div class="faq-question">
                             <span>How do I get started with QuestCord?</span>
-                            <i class="fas fa-chevron-down"></i>
+                            <span class="faq-toggle">▼</span>
                         </div>
                         <div class="faq-answer">
                             <p>Simply click "Add to Discord" above to invite QuestCord to your server, then use <code>/help</code> to see all available commands. The bot will guide you through your first adventure!</p>
@@ -755,7 +757,7 @@
                     <div class="faq-item">
                         <div class="faq-question">
                             <span>What commands does QuestCord have?</span>
-                            <i class="fas fa-chevron-down"></i>
+                            <span class="faq-toggle">▼</span>
                         </div>
                         <div class="faq-answer">
                             <p>Key commands include:</p>
@@ -773,7 +775,7 @@
                     <div class="faq-item">
                         <div class="faq-question">
                             <span>Is QuestCord free to use?</span>
-                            <i class="fas fa-chevron-down"></i>
+                            <span class="faq-toggle">▼</span>
                         </div>
                         <div class="faq-answer">
                             <p>Yes! QuestCord is completely free with all core features available. We also offer optional premium features for enhanced customization and exclusive content.</p>
@@ -783,7 +785,7 @@
                     <div class="faq-item">
                         <div class="faq-question">
                             <span>How do I get support or report bugs?</span>
-                            <i class="fas fa-chevron-down"></i>
+                            <span class="faq-toggle">▼</span>
                         </div>
                         <div class="faq-answer">
                             <p>Join our support Discord using the "Join Community" button above and create a ticket. Our team responds quickly to help resolve any issues.</p>
