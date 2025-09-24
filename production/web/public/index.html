@@ -24,6 +24,8 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         body {
@@ -34,10 +36,16 @@
             overflow-x: hidden;
         }
 
+        html {
+            overflow-x: hidden;
+        }
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 24px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         /* Header */
@@ -256,6 +264,27 @@
             50% { opacity: 1; }
         }
 
+        /* Extra small mobile devices */
+        @media (max-width: 375px) {
+            .container {
+                padding: 0 16px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .title-text {
+                font-size: clamp(2rem, 9vw, 2.8rem);
+            }
+        }
+
         /* Mobile and Tablet Responsiveness */
         @media (max-width: 768px) {
             .title-icon {
@@ -464,7 +493,7 @@
 
         .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 32px;
         }
 
@@ -675,11 +704,11 @@
 
                 <div class="cta-group">
                     <a href="https://discord.com/api/oauth2/authorize?client_id=1403949996868374558&permissions=8&scope=bot%20applications.commands" class="btn btn-primary">
-                        <i class="fab fa-discord"></i>
+                        <span class="btn-icon">🤖</span>
                         Add to Discord
                     </a>
                     <a href="https://discord.gg/ACGKvKkZ5Z" class="btn btn-secondary">
-                        <i class="fas fa-users"></i>
+                        <span class="btn-icon">👥</span>
                         Join Community
                     </a>
                 </div>
