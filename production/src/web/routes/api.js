@@ -3407,4 +3407,311 @@ router.get('/api/profile/:userId', rateLimit(30, 60000), async (req, res) => {
   }
 });
 
+// Boss timer endpoint for real-time countdown
+router.get('/api/boss-timer', rateLimit(60, 60000), async (req, res) => {
+  try {
+    const { db } = require('../../utils/store_sqlite');
+
+    // Get the next active boss
+    const activeBoss = db.prepare(`
+      SELECT b.*, s.name as serverName, s.biome
+      FROM bosses b
+      LEFT JOIN servers s ON b.guildId = s.guildId
+      WHERE b.active = 1 AND b.expiresAt > ?
+      ORDER BY b.expiresAt ASC
+      LIMIT 1
+    `).get(Date.now());
+
+    if (activeBoss) {
+      // Active boss found - show time remaining
+      const timeRemaining = activeBoss.expiresAt - Date.now();
+      const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
+      const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+
+      res.json({
+        status: 'active',
+        boss: {
+          name: activeBoss.name,
+          tier: activeBoss.tier,
+          serverName: activeBoss.serverName || 'Unknown Server',
+          biome: activeBoss.biome || 'unknown',
+          timeRemaining: {
+            total: timeRemaining,
+            hours: hours,
+            minutes: minutes,
+            formatted: `${hours}h ${minutes}m`
+          }
+        }
+      });
+    } else {
+      // No active boss - calculate next spawn time (hourly)
+      const now = Date.now();
+      const currentHour = new Date(now).getHours();
+      const nextHour = (currentHour + 1) % 24;
+
+      // Calculate time until next hour
+      const nextSpawn = new Date(now);
+      nextSpawn.setHours(nextHour, 0, 0, 0);
+      if (nextSpawn.getTime() <= now) {
+        nextSpawn.setDate(nextSpawn.getDate() + 1);
+      }
+
+      const timeToNext = nextSpawn.getTime() - now;
+      const hours = Math.floor(timeToNext / (1000 * 60 * 60));
+      const minutes = Math.floor((timeToNext % (1000 * 60 * 60)) / (1000 * 60));
+
+      res.json({
+        status: 'waiting',
+        nextSpawn: {
+          time: nextSpawn.getTime(),
+          timeRemaining: {
+            total: timeToNext,
+            hours: hours,
+            minutes: minutes,
+            formatted: `${hours}h ${minutes}m`
+          }
+        }
+      });
+    }
+
+  } catch (error) {
+    console.error('GET /api/boss-timer error:', error);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// Weather events endpoint for real-time weather data
+router.get('/api/weather-events', rateLimit(60, 60000), async (req, res) => {
+  try {
+    const { getActiveWeather, WEATHER_TYPES } = require('../../utils/weather');
+    const { db } = require('../../utils/store_sqlite');
+
+    const activeWeather = getActiveWeather();
+
+    // Get weather events with region and server information
+    const weatherData = activeWeather.map(weather => {
+      // Get server information
+      const server = db.prepare('SELECT name, biome, lat, lon FROM servers WHERE guildId = ? AND archived = 0').get(weather.guildId);
+
+      return {
+        id: weather.id,
+        type: weather.type,
+        name: WEATHER_TYPES[weather.type]?.name || weather.type,
+        icon: WEATHER_TYPES[weather.type]?.icon || '🌤️',
+        color: WEATHER_TYPES[weather.type]?.color || '#808080',
+        severity: weather.severity,
+        region: server?.biome || 'Unknown Region',
+        serverName: server?.name || 'Unknown Server',
+        coordinates: server ? { lat: server.lat, lon: server.lon } : null,
+        expiresAt: weather.expiresAt,
+        timeRemaining: weather.expiresAt - Date.now()
+      };
+    }).filter(weather => weather.timeRemaining > 0); // Only show active weather
+
+    res.json({
+      events: weatherData,
+      totalActive: weatherData.length,
+      lastUpdate: Date.now()
+    });
+
+  } catch (error) {
+    console.error('GET /api/weather-events error:', error);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// Travel routes endpoint for popular travel destinations
+router.get('/api/travel-routes', rateLimit(60, 60000), async (req, res) => {
+  try {
+    const { db } = require('../../utils/store_sqlite');
+
+    // Get most popular travel routes from the last 24 hours
+    const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+
+    const popularRoutes = db.prepare(`
+      SELECT
+        s1.name as fromName,
+        s2.name as toName,
+        s1.biome as fromBiome,
+        s2.biome as toBiome,
+        COUNT(*) as travelCount
+      FROM travel_history th
+      LEFT JOIN servers s1 ON th.from_guild_id = s1.guildId
+      LEFT JOIN servers s2 ON th.to_guild_id = s2.guildId
+      WHERE th.timestamp >= ?
+        AND s1.name IS NOT NULL
+        AND s2.name IS NOT NULL
+        AND s1.archived = 0
+        AND s2.archived = 0
+      GROUP BY th.from_guild_id, th.to_guild_id
+      ORDER BY travelCount DESC
+      LIMIT 5
+    `).all(oneDayAgo);
+
+    res.json({
+      routes: popularRoutes,
+      totalRoutes: popularRoutes.length,
+      timeFrame: '24h',
+      lastUpdate: Date.now()
+    });
+
+  } catch (error) {
+    console.error('GET /api/travel-routes error:', error);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// Market trends endpoint for item price movements
+router.get('/api/market-trends', rateLimit(60, 60000), async (req, res) => {
+  try {
+    const { db } = require('../../utils/store_sqlite');
+
+    // Get recent market transactions to calculate trends
+    const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+    const twoDaysAgo = Date.now() - (48 * 60 * 60 * 1000);
+
+    // Get trending items based on transaction volume and price changes
+    const trendingItems = db.prepare(`
+      SELECT
+        itemName,
+        AVG(CASE WHEN createdAt >= ? THEN price END) as currentAvgPrice,
+        AVG(CASE WHEN createdAt >= ? AND createdAt < ? THEN price END) as previousAvgPrice,
+        COUNT(CASE WHEN createdAt >= ? THEN 1 END) as recentTransactions
+      FROM market_listings
+      WHERE createdAt >= ?
+        AND price > 0
+        AND itemName IS NOT NULL
+      GROUP BY itemName
+      HAVING recentTransactions >= 2
+      ORDER BY recentTransactions DESC, currentAvgPrice DESC
+      LIMIT 5
+    `).all(oneDayAgo, twoDaysAgo, oneDayAgo, oneDayAgo, twoDaysAgo);
+
+    // Calculate price change percentages
+    const trendsWithChanges = trendingItems.map(item => {
+      const priceChange = item.previousAvgPrice ?
+        ((item.currentAvgPrice - item.previousAvgPrice) / item.previousAvgPrice * 100) : 0;
+
+      return {
+        name: item.itemName,
+        currentPrice: Math.round(item.currentAvgPrice || 0),
+        priceChange: Math.round(priceChange * 10) / 10, // Round to 1 decimal
+        transactions: item.recentTransactions,
+        trend: priceChange > 5 ? 'up' : priceChange < -5 ? 'down' : 'stable'
+      };
+    });
+
+    res.json({
+      trends: trendsWithChanges,
+      totalItems: trendsWithChanges.length,
+      timeFrame: '24h',
+      lastUpdate: Date.now()
+    });
+
+  } catch (error) {
+    console.error('GET /api/market-trends error:', error);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// Server population endpoint for most active servers
+router.get('/api/server-population', rateLimit(60, 60000), async (req, res) => {
+  try {
+    const { db } = require('../../utils/store_sqlite');
+
+    // Get server activity based on recent player actions
+    const oneHourAgo = Date.now() - (60 * 60 * 1000);
+
+    const serverActivity = db.prepare(`
+      SELECT
+        s.name as serverName,
+        s.biome,
+        s.guildId,
+        COUNT(DISTINCT p.userId) as uniquePlayers,
+        COUNT(*) as totalActivity
+      FROM (
+        SELECT locationGuildId as guildId, userId, lastActiveAt as activityTime FROM players WHERE lastActiveAt >= ?
+        UNION ALL
+        SELECT from_guild_id as guildId, user_id as userId, timestamp as activityTime FROM travel_history WHERE timestamp >= ?
+        UNION ALL
+        SELECT guild_id as guildId, user_id as userId, timestamp as activityTime FROM command_usage WHERE timestamp >= ?
+      ) activity
+      JOIN servers s ON activity.guildId = s.guildId
+      JOIN players p ON activity.userId = p.userId
+      WHERE s.archived = 0
+        AND s.name IS NOT NULL
+      GROUP BY s.guildId, s.name, s.biome
+      ORDER BY uniquePlayers DESC, totalActivity DESC
+      LIMIT 5
+    `).all(oneHourAgo, oneHourAgo, oneHourAgo);
+
+    res.json({
+      servers: serverActivity,
+      totalServers: serverActivity.length,
+      timeFrame: '1h',
+      lastUpdate: Date.now()
+    });
+
+  } catch (error) {
+    console.error('GET /api/server-population error:', error);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// Live leaderboard endpoint for top daily players
+router.get('/api/live-leaderboard', rateLimit(60, 60000), async (req, res) => {
+  try {
+    const { db } = require('../../utils/store_sqlite');
+
+    // Get top players based on activity in last 24 hours (commands + travels + boss fights)
+    const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+
+    const topPlayers = db.prepare(`
+      SELECT
+        p.name as playerName,
+        p.userId,
+        COUNT(DISTINCT activity.activity_type) * 10 + COUNT(*) as dailyScore,
+        COUNT(*) as totalActivity
+      FROM (
+        SELECT user_id as userId, 'command' as activity_type, timestamp as activityTime FROM command_usage WHERE timestamp >= ?
+        UNION ALL
+        SELECT user_id as userId, 'travel' as activity_type, timestamp as activityTime FROM travel_history WHERE timestamp >= ?
+        UNION ALL
+        SELECT userId, 'boss' as activity_type, createdAt as activityTime FROM boss_participants
+        JOIN bosses ON boss_participants.bossId = bosses.id
+        WHERE bosses.startedAt >= ?
+      ) activity
+      JOIN players p ON activity.userId = p.userId
+      WHERE p.name IS NOT NULL
+        AND p.name != ''
+      GROUP BY p.userId, p.name
+      ORDER BY dailyScore DESC, totalActivity DESC
+      LIMIT 5
+    `).all(oneDayAgo, oneDayAgo, oneDayAgo);
+
+    // Add rank and medal emojis
+    const leaderboardData = topPlayers.map((player, index) => {
+      const medals = ['🥇', '🥈', '🥉', '🏅', '🎖️'];
+      return {
+        rank: index + 1,
+        name: player.playerName,
+        score: player.dailyScore,
+        activities: player.totalActivity,
+        medal: medals[index] || '⭐'
+      };
+    });
+
+    res.json({
+      leaderboard: leaderboardData,
+      totalPlayers: leaderboardData.length,
+      timeFrame: 'Today',
+      lastUpdate: Date.now()
+    });
+
+  } catch (error) {
+    console.error('GET /api/live-leaderboard error:', error);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
 // [removed deprecated checkout handler]
