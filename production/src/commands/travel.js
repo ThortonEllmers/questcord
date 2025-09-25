@@ -431,8 +431,8 @@ module.exports = {
 
     if (base) {
       travelEmbed.addFields({
-        name: '🗺️ Live Tracking',
-        value: `[👁️ View Journey on Map](${base})`,
+        name: '🌐 Live Updates',
+        value: `[🎮 Visit Website](${base})`,
         inline: false
       });
     }
@@ -595,8 +595,8 @@ module.exports = {
 
     if (base) {
       travelEmbed.addFields({
-        name: '🗺️ Live Tracking',
-        value: `[👁️ View on Interactive Map](${base}/${dest.guildId})`,
+        name: '🌐 Live Updates',
+        value: `[🎮 Visit Website](${base})`,
         inline: false
       });
     }
