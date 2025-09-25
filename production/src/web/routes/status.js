@@ -238,4 +238,83 @@ router.get('/api/health', async (req, res) => {
   });
 });
 
+// Enhanced statistics endpoint for detailed status page
+router.get('/enhanced-stats', async (req, res) => {
+  try {
+    const startTime = Date.now();
+
+    // Get comprehensive player statistics
+    const totalPlayers = db.prepare('SELECT COUNT(*) as count FROM players').get();
+    const totalDrakari = db.prepare('SELECT SUM(drakari) as total FROM players').get();
+    const totalGems = db.prepare('SELECT SUM(gems) as total FROM players').get();
+    const avgLoginStreak = db.prepare('SELECT AVG(loginStreak) as avg FROM players WHERE loginStreak > 0').get();
+
+    // Get today's achievements
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const achievementsToday = db.prepare(
+      'SELECT COUNT(*) as count FROM achievements WHERE unlockedAt >= ?'
+    ).get(todayStart.getTime());
+
+    // Get crafting statistics
+    const totalItemsCrafted = db.prepare('SELECT SUM(itemsCrafted) as total FROM players').get();
+
+    // Get POI visit statistics
+    const totalPoiVisits = db.prepare('SELECT COUNT(*) as count FROM poi_visits').get();
+
+    // Get market and economy statistics
+    const activeMarketListings = db.prepare(
+      'SELECT COUNT(*) as count FROM market_listings WHERE expiresAt > ?'
+    ).get(Date.now());
+
+    const premiumUsers = db.prepare('SELECT COUNT(*) as count FROM premium_users WHERE expiresAt > ? OR expiresAt IS NULL').get(Date.now());
+
+    const dailyGemTransactions = db.prepare(
+      'SELECT COUNT(*) as count FROM gem_transactions WHERE timestamp >= ?'
+    ).get(todayStart.getTime());
+
+    const totalInventoryItems = db.prepare('SELECT SUM(qty) as total FROM inventory').get();
+
+    const bannedUsers = db.prepare('SELECT COUNT(*) as count FROM bans WHERE expiresAt > ? OR expiresAt IS NULL').get(Date.now());
+
+    // Get additional useful statistics
+    const totalBossKills = db.prepare('SELECT SUM(bossKills) as total FROM players').get();
+    const totalServersVisited = db.prepare('SELECT SUM(serversVisited) as total FROM players').get();
+
+    const responseTime = Date.now() - startTime;
+
+    res.json({
+      playerStats: {
+        totalPlayers: totalPlayers.count || 0,
+        totalDrakari: totalDrakari.total || 0,
+        totalGems: totalGems.total || 0,
+        avgLoginStreak: Math.round((avgLoginStreak.avg || 0) * 10) / 10,
+        totalItemsCrafted: totalItemsCrafted.total || 0,
+        totalBossKills: totalBossKills.total || 0,
+        totalServersVisited: totalServersVisited.total || 0
+      },
+      engagementStats: {
+        achievementsToday: achievementsToday.count || 0,
+        totalPoiVisits: totalPoiVisits.count || 0
+      },
+      economyStats: {
+        activeMarketListings: activeMarketListings.count || 0,
+        premiumUsers: premiumUsers.count || 0,
+        dailyGemTransactions: dailyGemTransactions.count || 0,
+        totalInventoryItems: totalInventoryItems.total || 0,
+        bannedUsers: bannedUsers.count || 0
+      },
+      responseTime: responseTime,
+      timestamp: Date.now()
+    });
+
+  } catch (error) {
+    console.error('Enhanced stats error:', error);
+    res.status(500).json({
+      error: 'Failed to fetch enhanced statistics',
+      message: error.message
+    });
+  }
+});
+
 module.exports = router;
