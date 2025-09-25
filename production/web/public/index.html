@@ -142,7 +142,25 @@
             background-clip: text;
             animation: textWave 4s ease-in-out infinite;
             filter: drop-shadow(0 4px 12px rgba(88, 101, 242, 0.2));
+            line-height: 1.1;
+            text-align: center;
+            max-width: 100%;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+            transition: font-size 0.3s ease;
+            min-height: 1.2em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            padding: 20px 40px;
+            margin: -20px -40px;
         }
+
 
         .title-text::after {
             content: '';
@@ -503,6 +521,7 @@
             border-radius: 16px;
             padding: 32px;
             transition: all 0.2s ease;
+            text-align: center;
         }
 
         .feature-card:hover {
@@ -715,15 +734,15 @@
 
                 <div class="stats">
                     <div class="stat">
-                        <h3 id="home-servers">Loading...</h3>
+                        <h3 id="home-servers">...</h3>
                         <p>Active Servers</p>
                     </div>
                     <div class="stat">
-                        <h3 id="home-users">Loading...</h3>
+                        <h3 id="home-users">...</h3>
                         <p>Happy Users</p>
                     </div>
                     <div class="stat">
-                        <h3 id="home-travels">Loading...</h3>
+                        <h3 id="home-travels">...</h3>
                         <p>Total Adventures</p>
                     </div>
                 </div>
@@ -838,24 +857,41 @@
     </footer>
 
     <script>
-        // Real-time stats loading
+        // Real-time stats loading - real data only
         async function loadStats() {
             try {
+                // Only load stats when on a proper server
+                if (location.protocol === 'file:') {
+                    // Don't show fake data for local viewing
+                    document.getElementById('home-servers').textContent = '...';
+                    document.getElementById('home-users').textContent = '...';
+                    document.getElementById('home-travels').textContent = '...';
+                    return;
+                }
+
                 const response = await fetch('/api/realtime/bot-stats');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
                 const data = await response.json();
 
+                // Only show real data - no fake numbers
                 document.getElementById('home-servers').textContent =
-                    data.statistics.servers?.toLocaleString() || 'N/A';
+                    data.statistics.servers?.toLocaleString() || '...';
                 document.getElementById('home-users').textContent =
                     data.statistics.users >= 1000 ?
                         Math.round(data.statistics.users / 1000) + 'K+' :
-                        data.statistics.users?.toLocaleString() + '+' || 'N/A';
+                        data.statistics.users?.toLocaleString() + '+' || '...';
                 document.getElementById('home-travels').textContent =
                     data.statistics.totalTravels >= 1000 ?
                         Math.round(data.statistics.totalTravels / 1000) + 'K+' :
-                        data.statistics.totalTravels?.toLocaleString() + '+' || 'N/A';
+                        data.statistics.totalTravels?.toLocaleString() + '+' || '...';
             } catch (error) {
                 console.error('Failed to load stats:', error);
+                // Show loading indicators instead of fake data
+                document.getElementById('home-servers').textContent = '...';
+                document.getElementById('home-users').textContent = '...';
+                document.getElementById('home-travels').textContent = '...';
             }
         }
 
@@ -901,54 +937,352 @@
             }
         }
 
+        // Hide loading screen immediately when page loads
+        window.addEventListener('load', () => {
+            hideLoadingScreen();
+        });
+
+        // Fallback - hide loading screen after 1 second no matter what
+        setTimeout(() => {
+            hideLoadingScreen();
+        }, 1000);
+
         // Initialize everything
         document.addEventListener('DOMContentLoaded', () => {
-            loadStats();
-            initFAQ();
+            try {
+                loadStats();
+                initFAQ();
 
-            // Auto-refresh stats every 5 minutes
-            setInterval(loadStats, 300000);
-
-            // Hide loading screen after content loads
-            setTimeout(hideLoadingScreen, 2000);
+                // Only set up auto-refresh when on a server (not local file)
+                if (location.protocol !== 'file:') {
+                    // Auto-refresh stats every 5 minutes
+                    setInterval(loadStats, 300000);
+                }
+            } catch (error) {
+                console.error('Error initializing:', error);
+                // Still hide loading screen even if there's an error
+                hideLoadingScreen();
+            }
 
             // Happy messages for title hover
             const happyMessages = [
-                "You're Amazing! ✨",
-                "Keep Shining! ⭐",
-                "You've Got This! 💪",
-                "Spread Joy Today! 😊",
-                "Be Awesome! 🚀",
-                "You Matter! ❤️",
-                "Stay Wonderful! 🌟",
-                "Dream Big! 🌈",
-                "You're Incredible! 🎉",
-                "Make Magic Happen! ✨",
-                "Believe In Yourself! 💎",
-                "You're Unstoppable! ⚡",
-                "Radiate Positivity! ☀️",
-                "You're Phenomenal! 🎊",
-                "Chase Your Dreams! 🦋"
+                "You're Amazing!",
+                "Keep Shining!",
+                "You've Got This!",
+                "Spread Joy Today!",
+                "Be Awesome!",
+                "You Matter!",
+                "Stay Wonderful!",
+                "Dream Big!",
+                "You're Incredible!",
+                "Make Magic Happen!",
+                "Believe In Yourself!",
+                "You're Unstoppable!",
+                "Radiate Positivity!",
+                "You're Phenomenal!",
+                "Chase Your Dreams!",
+                "Scarlett Sees Solutions!",
+                "Scarlett Makes Ideas Real!",
+                "Scarlett Does Impossible!",
+                "Scarlett Shapes Tomorrow!",
+                "Scarlett Is Awesome!",
+                "Epic Quest Awaits!",
+                "Level Up Today!",
+                "You're Boss-Tier!",
+                "Adventure Calling!",
+                "Slay The Day!",
+                "Quest Complete!",
+                "Legendary Status!",
+                "Power Level: MAX!",
+                "Achievement Unlocked!",
+                "Critical Hit!",
+                "Victory Royale!",
+                "Infinite Potential!",
+                "Born To Quest!",
+                "Next Level Human!",
+                "Main Character Energy!",
+                "Plot Armor Activated!",
+                "Respawn Point Secured!",
+                "Loot Drop Incoming!",
+                "Double XP Weekend!",
+                "Rare Drop Rate!",
+                "Boss Fight Ready!",
+                "Speedrun Mode ON!",
+                "Combo Multiplier x99!",
+                "Secret Area Found!",
+                "Cheat Codes Enabled!",
+                "God Mode: Active!",
+                "Infinite Lives!",
+                "Perfect Score!",
+                "High Score Beat!",
+                "Final Boss Defeated!",
+                "New Record Set!",
+                "Legendary Weapon!",
+                "Epic Mount Unlocked!",
+                "Hidden Treasure!",
+                "Portal Discovered!",
+                "Time Bonus!",
+                "Skill Tree Maxed!",
+                "Prestige Mode!",
+                "World First!",
+                "Raid Leader!",
+                "Guild Master!",
+                "Pro Gamer Status!",
+                "Streamer Mode!",
+                "Viewers: Infinite!",
+                "Subscriber Milestone!",
+                "Viral Content!",
+                "Trending Topic!",
+                "Internet Famous!",
+                "Meme Lord Status!",
+                "Comedy Gold!",
+                "Laugh Track Ready!",
+                "Standing Ovation!",
+                "Encore Performance!",
+                "Five Star Review!",
+                "Critics' Choice!",
+                "Bestseller List!",
+                "Award Winner!",
+                "Hall of Fame!",
+                "Record Breaker!",
+                "Trendsetter Alert!",
+                "Innovation Champion!",
+                "Problem Solver!",
+                "Creative Genius!",
+                "Master Craftsperson!",
+                "Skill Unlocked!",
+                "Talent Discovered!",
+                "Hidden Ability!",
+                "Super Power!",
+                "Magic Spell Cast!",
+                "Potion Brewed!",
+                "Enchantment Applied!",
+                "Blessing Received!",
+                "Lucky Charm Active!",
+                "Fortune Favors You!",
+                "Destiny Awaits!",
+                "Prophecy Fulfilled!",
+                "Chosen One Status!",
+                "Hero's Journey!",
+                "Quest Giver!",
+                "NPC Respect +100!",
+                "Faction Leader!",
+                "Alliance Formed!",
+                "Peace Treaty Signed!",
+                "Diplomatic Victory!",
+                "Trade Route Opened!",
+                "Economic Boom!",
+                "Resource Abundant!",
+                "Technology Advanced!",
+                "Research Complete!",
+                "Discovery Made!",
+                "Exploration Bonus!",
+                "Uncharted Territory!",
+                "New Continent!",
+                "First Contact!",
+                "Alien Technology!",
+                "Time Travel Unlocked!",
+                "Parallel Universe!",
+                "Dimension Portal!",
+                "Reality Hacker!",
+                "Matrix Glitch!",
+                "Simulation Breaker!",
+                "Code Cracker!",
+                "System Administrator!",
+                "Root Access Granted!",
+                "Firewall Bypassed!",
+                "Data Miner!",
+                "Cloud: Unlimited!",
+                "Bandwidth: Infinite!",
+                "Connection: Quantum!",
+                "Processing Power: MAX!",
+                "Memory: Upgraded!",
+                "AI Intelligence!",
+                "Learning: Machine!",
+                "Pattern Recognition!",
+                "Algorithm Optimized!",
+                "Big Data Mastery!",
+                "Analytics Guru!",
+                "Insights Unlocked!",
+                "Predictions Accurate!",
+                "Future Secured!",
+                "Timeline Stable!",
+                "Paradox Avoided!",
+                "Butterfly Effect!",
+                "Chaos Theory Master!",
+                "Order From Chaos!",
+                "Balance Restored!",
+                "Harmony Achieved!",
+                "Symphony Conducted!",
+                "Masterpiece Created!",
+                "Renaissance Spirit!",
+                "Cultural Icon!",
+                "Zeitgeist Captured!",
+                "Moment Immortalized!",
+                "Legacy Established!",
+                "History Made!",
+                "Legend Born!",
+                "Myth Status!",
+                "Folklore Hero!",
+                "Tale Worth Telling!",
+                "Story Legendary!",
+                "Chapter Closed!",
+                "New Page Turned!",
+                "Plot Twist Master!",
+                "Character Development!",
+                "Arc Complete!",
+                "Season Finale!",
+                "Cliffhanger Resolved!",
+                "Mystery Solved!",
+                "Case Closed!",
+                "Evidence Found!",
+                "Truth Revealed!",
+                "Justice Served!",
+                "Verdict: Awesome!",
+                "Court Adjourned!",
+                "Freedom Declared!",
+                "Rights Protected!",
+                "Constitution Upheld!",
+                "Democracy Wins!",
+                "Voice Heard!",
+                "Message Received!",
+                "Signal Transmitted!",
+                "Comms Established!",
+                "Network Connected!",
+                "Server Online!",
+                "Database Updated!",
+                "Backup Secured!",
+                "Recovery Complete!",
+                "System Restored!",
+                "Performance Optimized!",
+                "Speed Increased!",
+                "Efficiency Maximized!",
+                "Productivity Boosted!",
+                "Goals Achieved!",
+                "Targets Exceeded!",
+                "Expectations Beat!",
+                "Standards Raised!",
+                "Bar Set Higher!",
+                "Limits Transcended!",
+                "Boundaries Crossed!",
+                "Comfort Zone Left!",
+                "Adventure Begun!",
+                "Journey Started!",
+                "Path Chosen!",
+                "Direction Clear!",
+                "Destination Known!",
+                "Route Mapped!",
+                "GPS Updated!",
+                "Navigation Ready!",
+                "Compass Calibrated!",
+                "True North Found!",
+                "Magnetic Personality!",
+                "Attractive Force!",
+                "Gravitational Pull!",
+                "Orbital Mechanics!",
+                "Planetary Alignment!",
+                "Cosmic Significance!",
+                "Universal Constant!",
+                "Quantum Entangled!",
+                "Wave Collapsed!",
+                "Cat: Alive!",
+                "No Limits!",
+                "Progress Over Perfect!",
+                "Stars Shine In Darkness!",
+                "Be Uniquely You!",
+                "You Are Brave!",
+                "Fall Seven Rise Eight!",
+                "Your Potential Is Endless!",
+                "Champions Train Daily!",
+                "Be The Change!",
+                "Every Expert Started!",
+                "Courage Conquers Fear!",
+                "Your Dreams Are Valid!",
+                "Mistakes Prove Progress!",
+                "Growth Beats Comfort!",
+                "You Were Born To Shine!",
+                "Persistence Beats Everything!",
+                "Your Story Continues!"
             ];
 
             let originalText = 'QuestCord';
             let isHovering = false;
+            let currentMessage = originalText;
 
-            // Title hover functionality
-            const titleText = document.querySelector('.title-text');
-            if (titleText) {
+            // Function to get a new random message
+            function getRandomMessage() {
+                let randomMessage;
+                do {
+                    randomMessage = happyMessages[Math.floor(Math.random() * happyMessages.length)];
+                } while (randomMessage === currentMessage && happyMessages.length > 1);
+                return randomMessage;
+            }
+
+            // Function to adjust font size based on text length for consistency
+            function adjustFontSize(element, text) {
+                // Reset to default
+                element.style.fontSize = '';
+
+                // If text is longer than 25 characters, make it slightly smaller
+                if (text.length > 25) {
+                    const currentSize = window.getComputedStyle(element).fontSize;
+                    const sizeValue = parseFloat(currentSize);
+                    const newSize = sizeValue * 0.9; // 10% smaller
+                    element.style.fontSize = newSize + 'px';
+                }
+            }
+
+            // Simple function to display text instantly
+            function displayText(element, text) {
+                element.textContent = text;
+                adjustFontSize(element, text);
+                isAnimating = false; // No animation, so immediately not animating
+            }
+
+            // Title hover and click functionality with debouncing
+            try {
+                const titleText = document.querySelector('.title-text');
+                let isAnimating = false;
+                let lastQuoteTime = 0;
+                const QUOTE_COOLDOWN = 300; // 300ms minimum between quotes
+
+                if (titleText) {
                 titleText.addEventListener('mouseenter', () => {
-                    if (!isHovering) {
+                    const now = Date.now();
+
+                    // Only start if not already hovering AND enough time has passed
+                    if (!isHovering && (now - lastQuoteTime > QUOTE_COOLDOWN || lastQuoteTime === 0)) {
                         isHovering = true;
-                        const randomMessage = happyMessages[Math.floor(Math.random() * happyMessages.length)];
-                        titleText.textContent = randomMessage;
+                        lastQuoteTime = now;
+                        currentMessage = getRandomMessage();
+                        displayText(titleText, currentMessage);
                     }
                 });
 
                 titleText.addEventListener('mouseleave', () => {
-                    isHovering = false;
-                    titleText.textContent = originalText;
+                    // Quick check to ensure mouse really left
+                    setTimeout(() => {
+                        if (!titleText.matches(':hover')) {
+                            isHovering = false;
+                            currentMessage = originalText;
+                            titleText.textContent = originalText;
+                            titleText.style.fontSize = ''; // Reset to default size
+                        }
+                    }, 50); // Much faster response
                 });
+
+                titleText.addEventListener('click', () => {
+                    const now = Date.now();
+
+                    if (isHovering && (now - lastQuoteTime > 200)) {
+                        lastQuoteTime = now;
+                        currentMessage = getRandomMessage();
+                        displayText(titleText, currentMessage);
+                    }
+                });
+                }
+            } catch (error) {
+                console.error('Error setting up title hover:', error);
             }
         });
     </script>
