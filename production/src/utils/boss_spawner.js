@@ -319,7 +319,7 @@ async function notifyBossSpawn(bossData, client) {
         },
         {
           name: '📍 Location',
-          value: `**${bossData.serverName || 'Unknown Server'}**\n\n🗺️ [View on Map](https://questcord.fun/)`,
+          value: `**${bossData.serverName || 'Unknown Server'}**\n\n🌐 [Visit Website](https://questcord.fun/)`,
           inline: true
         },
         {
