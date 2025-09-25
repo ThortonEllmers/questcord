@@ -262,6 +262,54 @@
         right: -16px;
       }
     }
+
+    /* Professional Scroll Animations */
+    .scroll-animate {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .scroll-animate.animate-in {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Section animations */
+    .brand-title {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .brand-title.animate-in {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Section headers */
+    h2 {
+      opacity: 0;
+      transform: translateX(-30px);
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    h2.animate-in {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* Content paragraphs */
+    p, ul {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    p.animate-in, ul.animate-in {
+      opacity: 1;
+      transform: translateY(0);
+    }
   </style>
 </head>
 <body>
@@ -273,38 +321,38 @@
 
   
   <div class="container">
-    <div class="brand-title">
+    <div class="brand-title scroll-animate">
       <div class="title-text">
         <div>QuestCord</div>
         <div class="title-line-2">Terms of Service</div>
       </div>
       <div class="title-badge">Legal</div>
     </div>
-    <p class="last-updated">Last updated: September 25, 2025</p>
-    
-    <h2>1. Acceptance of Terms</h2>
-    <p>By using QuestCord ("the Service"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the Service.</p>
-    
-    <h2>2. Description of Service</h2>
-    <p>QuestCord is a Discord bot and web application that provides location-based adventure gaming features, including:</p>
-    <ul>
+    <p class="last-updated scroll-animate">Last updated: September 25, 2025</p>
+
+    <h2 class="scroll-animate">1. Acceptance of Terms</h2>
+    <p class="scroll-animate">By using QuestCord ("the Service"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the Service.</p>
+
+    <h2 class="scroll-animate">2. Description of Service</h2>
+    <p class="scroll-animate">QuestCord is a Discord bot and web application that provides location-based adventure gaming features, including:</p>
+    <ul class="scroll-animate">
       <li>Virtual world map exploration</li>
       <li>Player inventory and stats management</li>
       <li>Server-based location tracking</li>
       <li>Gaming interactions and commands</li>
     </ul>
     
-    <h2>3. User Accounts and Data</h2>
-    <p>To use certain features of the Service, you must authenticate with Discord. By doing so, you grant us permission to:</p>
-    <ul>
+    <h2 class="scroll-animate">3. User Accounts and Data</h2>
+    <p class="scroll-animate">To use certain features of the Service, you must authenticate with Discord. By doing so, you grant us permission to:</p>
+    <ul class="scroll-animate">
       <li>Access your Discord profile information</li>
       <li>Store game-related data associated with your account</li>
       <li>Display your username and avatar in game contexts</li>
     </ul>
     
-    <h2>4. Acceptable Use</h2>
-    <p>You agree not to:</p>
-    <ul>
+    <h2 class="scroll-animate">4. Acceptable Use</h2>
+    <p class="scroll-animate">You agree not to:</p>
+    <ul class="scroll-animate">
       <li>Use the Service for any unlawful purpose</li>
       <li>Harass, abuse, or harm other users</li>
       <li>Attempt to gain unauthorized access to the Service</li>
@@ -312,23 +360,23 @@
       <li>Interfere with the proper functioning of the Service</li>
     </ul>
     
-    <h2>5. Content and Conduct</h2>
-    <p>Users are responsible for their conduct while using the Service. We reserve the right to remove users or content that violates these terms or Discord's Terms of Service.</p>
+    <h2 class="scroll-animate">5. Content and Conduct</h2>
+    <p class="scroll-animate">Users are responsible for their conduct while using the Service. We reserve the right to remove users or content that violates these terms or Discord's Terms of Service.</p>
     
-    <h2>6. Privacy</h2>
-    <p>Your privacy is important to us. Please review our Privacy Policy to understand how we collect, use, and protect your information.</p>
+    <h2 class="scroll-animate">6. Privacy</h2>
+    <p class="scroll-animate">Your privacy is important to us. Please review our Privacy Policy to understand how we collect, use, and protect your information.</p>
     
-    <h2>7. Service Availability</h2>
-    <p>We strive to maintain the Service's availability but do not guarantee uninterrupted access. The Service may be temporarily unavailable due to maintenance, updates, or technical issues.</p>
+    <h2 class="scroll-animate">7. Service Availability</h2>
+    <p class="scroll-animate">We strive to maintain the Service's availability but do not guarantee uninterrupted access. The Service may be temporarily unavailable due to maintenance, updates, or technical issues.</p>
     
-    <h2>8. Limitation of Liability</h2>
-    <p>The Service is provided "as is" without warranties. We are not liable for any damages arising from your use of the Service.</p>
+    <h2 class="scroll-animate">8. Limitation of Liability</h2>
+    <p class="scroll-animate">The Service is provided "as is" without warranties. We are not liable for any damages arising from your use of the Service.</p>
     
-    <h2>9. Changes to Terms</h2>
-    <p>We may update these Terms of Service from time to time. Continued use of the Service constitutes acceptance of the updated terms.</p>
+    <h2 class="scroll-animate">9. Changes to Terms</h2>
+    <p class="scroll-animate">We may update these Terms of Service from time to time. Continued use of the Service constitutes acceptance of the updated terms.</p>
     
-    <h2>10. Contact Information</h2>
-    <p>If you have questions about these Terms of Service, please contact us through our Discord server or support channels.</p>
+    <h2 class="scroll-animate">10. Contact Information</h2>
+    <p class="scroll-animate">If you have questions about these Terms of Service, please contact us through our Discord server or support channels.</p>
 
     <div style="text-align: center; margin-top: 40px;">
       <a href="/" class="back-button">Back to Home</a>
@@ -347,8 +395,41 @@
       }
     }
 
-    // Hide loading screen after content loads
-    setTimeout(hideLoadingScreen, 1000);
+    // Hide loading screen after content loads (match status page timing)
+    setTimeout(hideLoadingScreen, 1500);
+
+    // Professional scroll animations
+    function initAnimations() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('animate-in');
+          }
+        });
+      }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+      });
+
+      // Observe all elements with scroll-animate class
+      document.querySelectorAll('.scroll-animate').forEach(element => {
+        observer.observe(element);
+      });
+
+      // Add staggered delays for better animation flow
+      document.querySelectorAll('h2').forEach((heading, index) => {
+        heading.style.transitionDelay = `${index * 0.1}s`;
+      });
+
+      document.querySelectorAll('p, ul').forEach((element, index) => {
+        element.style.transitionDelay = `${index * 0.05}s`;
+      });
+    }
+
+    // Initialize animations when DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      initAnimations();
+    });
   </script>
 </body>
 </html>
