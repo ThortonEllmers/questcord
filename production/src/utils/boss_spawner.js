@@ -339,9 +339,9 @@ async function notifyBossSpawn(bossData, client) {
       })
       .setTimestamp();
 
-    // Send notification with boss role ping and custom format
+    // Send notification with boss role ping
     await channel.send({
-      content: `<@&${BOSS_CONFIG.BOSS_ROLE_ID}> @╭───𒌋𒀖 「🜲・Boss Notification」 🔥 NEW BOSS ALERT 🔥`,
+      content: `<@&${BOSS_CONFIG.BOSS_ROLE_ID}> 🔥 NEW BOSS ALERT 🔥`,
       embeds: [embed]
     });
 
