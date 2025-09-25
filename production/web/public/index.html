@@ -1182,7 +1182,7 @@
                 <p>Transform your Discord server into an epic quest destination where members can travel, trade, and battle their way to glory.</p>
 
                 <div class="cta-group">
-                    <a href="https://discord.com/api/oauth2/authorize?client_id=1403949996868374558&permissions=8&scope=bot%20applications.commands" class="btn btn-primary">
+                    <a href="https://discord.com/oauth2/authorize?client_id=1403949996868374558&permissions=2147863552&integration_type=0&scope=bot+applications.commands" class="btn btn-primary">
                         <span class="btn-icon">🤖</span>
                         Add to Discord
                     </a>
@@ -1255,7 +1255,7 @@
                     <div class="event-widget boss-timer scroll-animate">
                         <div class="widget-header">
                             <div class="widget-icon">🐉</div>
-                            <h3>Next World Boss</h3>
+                            <h3>World Boss Status</h3>
                         </div>
                         <div class="widget-content">
                             <div class="countdown-display">
@@ -1557,36 +1557,89 @@
 
                 const data = await response.json();
 
-                // Update boss info immediately
-                document.getElementById('next-boss').textContent = data.nextBoss.name || 'Unknown Boss';
-                document.getElementById('boss-location').textContent = data.nextBoss.server || 'Unknown Server';
+                if (data.status === 'active' && data.boss) {
+                    // Show current active boss
+                    document.getElementById('next-boss').textContent = data.boss.name || 'Unknown Boss';
+                    document.getElementById('boss-location').textContent = data.boss.serverName || 'Unknown Server';
 
-                // Start countdown with real spawn time
-                const nextSpawnTime = new Date(data.nextSpawnTime);
+                    // Update countdown label to show active boss time remaining
+                    const countdownLabel = document.querySelector('.countdown-label');
+                    if (countdownLabel) countdownLabel.textContent = 'Time remaining';
 
-                function updateCountdown() {
-                    const now = new Date();
-                    const timeLeft = nextSpawnTime - now;
+                    // Start countdown with active boss expiry time
+                    const expiryTime = Date.now() + data.boss.timeRemaining.total;
 
-                    if (timeLeft <= 0) {
-                        document.getElementById('boss-countdown').textContent = 'Spawning now!';
-                        // Refresh boss data when spawn time is reached
-                        setTimeout(() => loadBossCountdown(), 5000);
-                        return;
+                    function updateCountdown() {
+                        const now = Date.now();
+                        const timeLeft = expiryTime - now;
+
+                        if (timeLeft <= 0) {
+                            document.getElementById('boss-countdown').textContent = 'Boss defeated!';
+                            // Refresh boss data when boss expires
+                            setTimeout(() => loadBossCountdown(), 5000);
+                            return;
+                        }
+
+                        const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+                        if (hours > 0) {
+                            document.getElementById('boss-countdown').textContent = `${hours}h ${minutes}m`;
+                        } else if (minutes > 0) {
+                            document.getElementById('boss-countdown').textContent = `${minutes}m ${seconds}s`;
+                        } else {
+                            document.getElementById('boss-countdown').textContent = `${seconds}s`;
+                        }
                     }
 
-                    const minutes = Math.floor(timeLeft / (1000 * 60));
-                    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                    updateCountdown();
+                    const countdownInterval = setInterval(updateCountdown, 1000);
 
-                    if (minutes > 0) {
-                        document.getElementById('boss-countdown').textContent = `${minutes}m ${seconds}s`;
-                    } else {
-                        document.getElementById('boss-countdown').textContent = `${seconds}s`;
+                } else if (data.status === 'waiting' && data.nextSpawn) {
+                    // Show next boss spawn info
+                    document.getElementById('next-boss').textContent = 'Next Boss';
+                    document.getElementById('boss-location').textContent = 'Random Server';
+
+                    // Update countdown label to show next spawn
+                    const countdownLabel = document.querySelector('.countdown-label');
+                    if (countdownLabel) countdownLabel.textContent = 'Until next spawn';
+
+                    // Start countdown with next spawn time
+                    const nextSpawnTime = data.nextSpawn.time;
+
+                    function updateCountdown() {
+                        const now = Date.now();
+                        const timeLeft = nextSpawnTime - now;
+
+                        if (timeLeft <= 0) {
+                            document.getElementById('boss-countdown').textContent = 'Spawning now!';
+                            // Refresh boss data when spawn time is reached
+                            setTimeout(() => loadBossCountdown(), 5000);
+                            return;
+                        }
+
+                        const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+                        if (hours > 0) {
+                            document.getElementById('boss-countdown').textContent = `${hours}h ${minutes}m`;
+                        } else if (minutes > 0) {
+                            document.getElementById('boss-countdown').textContent = `${minutes}m ${seconds}s`;
+                        } else {
+                            document.getElementById('boss-countdown').textContent = `${seconds}s`;
+                        }
                     }
+
+                    updateCountdown();
+                    const countdownInterval = setInterval(updateCountdown, 1000);
+                } else {
+                    // Fallback for unexpected data structure
+                    document.getElementById('boss-countdown').textContent = 'No data';
+                    document.getElementById('next-boss').textContent = 'No Boss';
+                    document.getElementById('boss-location').textContent = 'N/A';
                 }
-
-                updateCountdown();
-                const countdownInterval = setInterval(updateCountdown, 1000);
 
             } catch (error) {
                 console.error('Failed to load boss data:', error);
@@ -1612,13 +1665,13 @@
 
                 const weatherContainer = document.getElementById('weather-events');
 
-                if (data.activeWeather && data.activeWeather.length > 0) {
-                    weatherContainer.innerHTML = data.activeWeather.map(weather => `
+                if (data.events && data.events.length > 0) {
+                    weatherContainer.innerHTML = data.events.map(weather => `
                         <div class="weather-item">
-                            <span class="weather-emoji">${weather.emoji || '🌤️'}</span>
+                            <span class="weather-emoji">${weather.icon || '🌤️'}</span>
                             <div class="weather-info">
                                 <div class="weather-name">${weather.name}</div>
-                                <div class="weather-server">${weather.region || weather.server}</div>
+                                <div class="weather-server">${weather.region} - ${weather.serverName}</div>
                             </div>
                         </div>
                     `).join('');
