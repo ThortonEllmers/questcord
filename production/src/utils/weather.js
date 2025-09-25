@@ -605,7 +605,7 @@ async function notifyDiscordWeatherEvent(weatherEvent, weatherType, client) {
         },
         {
           name: '**Location**',
-          value: `**Coordinates:** ${weatherEvent.centerLat.toFixed(2)}, ${weatherEvent.centerLon.toFixed(2)}\n**Map:** [View on QuestCord Map](https://questcord.fun/)`,
+          value: `**Coordinates:** ${weatherEvent.centerLat.toFixed(2)}, ${weatherEvent.centerLon.toFixed(2)}\n**Website:** [Visit QuestCord](https://questcord.fun/)`,
           inline: true
         }
       )
