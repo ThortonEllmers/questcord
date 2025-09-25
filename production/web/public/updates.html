@@ -1,0 +1,706 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Updates - QuestCord</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #5865f2;
+      --primary-dark: #4752c4;
+      --secondary: #7c3aed;
+      --bg-dark: #0f0f23;
+      --bg-light: #1a1a2e;
+      --text-light: #ffffff;
+      --text-muted: #b9bbbe;
+      --border: rgba(255, 255, 255, 0.1);
+      --shadow: rgba(0, 0, 0, 0.3);
+      --gradient: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-dark);
+      line-height: 1.6;
+      color: var(--text-light);
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 32px;
+      background: var(--bg-light);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      margin-top: 50px;
+      margin-bottom: 50px;
+    }
+
+    h1 {
+      color: var(--text-light);
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2.5em;
+      font-weight: 700;
+    }
+
+    h2 {
+      color: var(--text-light);
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 10px;
+      margin-top: 40px;
+      font-weight: 600;
+    }
+
+    h3 {
+      color: var(--primary);
+      font-weight: 600;
+      margin-top: 30px;
+      margin-bottom: 15px;
+    }
+
+    p, li {
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    ul {
+      padding-left: 20px;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--gradient);
+      color: var(--text-light);
+      padding: 16px 32px;
+      border-radius: 12px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      font-weight: 600;
+      font-size: 16px;
+      box-shadow: 0 8px 32px rgba(88, 101, 242, 0.3);
+      border: none;
+    }
+
+    .back-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(88, 101, 242, 0.4);
+      text-decoration: none;
+      color: var(--text-light);
+    }
+
+    .back-button::before {
+      content: '←';
+      font-size: 18px;
+      transition: transform 0.3s ease;
+    }
+
+    .back-button:hover::before {
+      transform: translateX(-4px);
+    }
+
+    .version-header {
+      background: var(--gradient);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .version-number {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .release-date {
+      opacity: 0.9;
+      font-size: 1.1rem;
+    }
+
+    .update-section {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .update-category {
+      display: inline-block;
+      background: var(--primary);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .update-category.improvement {
+      background: #2ECC71;
+    }
+
+    .update-category.new {
+      background: #3498DB;
+    }
+
+    .update-category.fix {
+      background: #E74C3C;
+    }
+
+    .update-category.ui {
+      background: #9B59B6;
+    }
+
+    .feature-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .feature-list li {
+      position: relative;
+      padding-left: 30px;
+      margin-bottom: 12px;
+      color: var(--text-light);
+    }
+
+    .feature-list li::before {
+      content: '✨';
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+
+    .feature-list.improvements li::before {
+      content: '🔧';
+    }
+
+    .feature-list.fixes li::before {
+      content: '🐛';
+    }
+
+    .feature-list.ui li::before {
+      content: '🎨';
+    }
+
+    .technical-note {
+      background: rgba(124, 58, 237, 0.1);
+      border-left: 4px solid var(--secondary);
+      padding: 16px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+
+    .technical-note p {
+      margin: 0;
+      color: var(--text-light);
+    }
+
+    /* Loading Screen */
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg-dark);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+
+    .loading-screen.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .crown-loader {
+      font-size: 4rem;
+      color: var(--primary);
+      animation: crownSpin 2s ease-in-out infinite;
+      margin-bottom: 24px;
+      filter: drop-shadow(0 4px 16px rgba(88, 101, 242, 0.4));
+    }
+
+    .loading-text {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      animation: loadingPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes crownSpin {
+      0%, 100% { transform: rotateY(0deg) scale(1); }
+      50% { transform: rotateY(180deg) scale(1.1); }
+    }
+
+    @keyframes loadingPulse {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+
+    /* Animated Title Styling */
+    .brand-title {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 32px;
+      font-family: 'Inter', sans-serif;
+      gap: 12px;
+      overflow: visible;
+    }
+
+    .title-text {
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      font-weight: 700;
+      letter-spacing: -2px;
+      position: relative;
+      background: linear-gradient(135deg,
+          var(--primary) 0%,
+          var(--secondary) 25%,
+          #ffffff 50%,
+          var(--secondary) 75%,
+          var(--primary) 100%);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: textWave 4s ease-in-out infinite;
+      filter: drop-shadow(0 4px 12px rgba(88, 101, 242, 0.2));
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+      line-height: 1.1;
+    }
+
+    .title-line-2 {
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+      font-weight: 600;
+      margin-top: 8px;
+    }
+
+    .title-text::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--gradient);
+      border-radius: 1px;
+      transform: scaleX(1);
+      animation: underlineGrow 1.5s ease-out 0.5s forwards;
+    }
+
+    .title-badge {
+      position: absolute;
+      top: -12px;
+      right: -24px;
+      background: linear-gradient(135deg, #2ECC71, #27AE60);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 16px rgba(46, 204, 113, 0.3);
+      opacity: 0;
+      transform: scale(0.8) rotate(-10deg);
+      animation: badgeAppear 0.8s ease-out 1.2s forwards;
+    }
+
+    @keyframes textWave {
+      0%, 100% { background-position: 0% 50%; transform: translateY(0); }
+      25% { background-position: 50% 25%; transform: translateY(-2px); }
+      50% { background-position: 100% 50%; transform: translateY(0); }
+      75% { background-position: 50% 75%; transform: translateY(1px); }
+    }
+
+    @keyframes underlineGrow {
+      0% { transform: scaleX(0); }
+      100% { transform: scaleX(1); }
+    }
+
+    @keyframes badgeAppear {
+      0% { opacity: 0; transform: scale(0.8) rotate(-10deg); }
+      100% { opacity: 1; transform: scale(1) rotate(-8deg); }
+    }
+
+    .title-text:hover {
+      transform: scale(1.02);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .title-text {
+        font-size: clamp(2rem, 8vw, 3rem);
+      }
+
+      .title-badge {
+        font-size: 0.65rem;
+        padding: 3px 8px;
+        top: -8px;
+        right: -16px;
+      }
+
+      .container {
+        margin: 20px;
+        padding: 20px;
+      }
+    }
+
+    /* Professional Scroll Animations */
+    .scroll-animate {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .scroll-animate.animate-in {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .brand-title {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .brand-title.animate-in {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    h2 {
+      opacity: 0;
+      transform: translateX(-30px);
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    h2.animate-in {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .update-section {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .update-section.animate-in {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .version-selector {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .version-previews {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .version-preview {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text-light);
+      text-decoration: none;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .version-preview::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 4px;
+      background: var(--primary);
+      transform: scaleY(0);
+      transition: transform 0.3s ease;
+    }
+
+    .version-preview:hover {
+      background: rgba(88, 101, 242, 0.1);
+      transform: translateX(8px);
+      text-decoration: none;
+      color: var(--text-light);
+      border-color: var(--primary);
+    }
+
+    .version-preview:hover::before {
+      transform: scaleY(1);
+    }
+
+    .version-info {
+      flex: 1;
+    }
+
+    .version-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--text-light);
+      margin-bottom: 4px;
+    }
+
+    .version-date {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .version-snippet {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .version-arrow {
+      font-size: 1.2rem;
+      color: var(--primary);
+      transition: transform 0.3s ease;
+      margin-left: 16px;
+    }
+
+    .version-preview:hover .version-arrow {
+      transform: translateX(4px);
+    }
+
+    .changelog-link {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .version-link.all {
+      display: inline-flex;
+      align-items: center;
+      padding: 12px 24px;
+      background: var(--gradient);
+      border: none;
+      border-radius: 8px;
+      color: var(--text-light);
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .version-link.all:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(88, 101, 242, 0.3);
+      text-decoration: none;
+      color: var(--text-light);
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="crown-loader">👑</div>
+    <div class="loading-text">Loading Updates...</div>
+  </div>
+
+  <div class="container">
+    <div class="brand-title scroll-animate">
+      <div class="title-text">
+        <div>QuestCord</div>
+        <div class="title-line-2">Updates</div>
+      </div>
+      <div class="title-badge">Updated</div>
+    </div>
+
+    <div class="version-header scroll-animate">
+      <div class="version-number">Version 2.1.1</div>
+      <div class="release-date">Released: September 26, 2025</div>
+    </div>
+
+    <div class="update-section scroll-animate">
+      <div class="update-category new">NEW FEATURES</div>
+      <h3>🎮 Enhanced Live Game Events</h3>
+      <ul class="feature-list">
+        <li><strong>6 Real-time Widgets</strong> - Added Travel Routes, Market Trends, Server Activity, and Live Leaderboard</li>
+        <li><strong>Dynamic World Boss Status</strong> - Now shows current active boss and location instead of just next spawn</li>
+        <li><strong>Live Weather System</strong> - Real-time weather events display with server integration</li>
+        <li><strong>Professional Status Page</strong> - Comprehensive system health monitoring with live metrics</li>
+      </ul>
+    </div>
+
+    <div class="update-section scroll-animate">
+      <div class="update-category improvement">IMPROVEMENTS</div>
+      <h3>🔧 System Enhancements</h3>
+      <ul class="feature-list improvements">
+        <li><strong>Professional Command Interface</strong> - Complete redesign of all Discord commands with rich embeds</li>
+        <li><strong>Enhanced Bot Invite System</strong> - Updated with proper permissions and integration settings</li>
+        <li><strong>API Performance</strong> - New endpoints for live data with proper caching and rate limiting</li>
+        <li><strong>Database Optimization</strong> - Improved queries for real-time data aggregation</li>
+        <li><strong>Mobile Responsive Design</strong> - All pages now perfectly adapted for mobile devices</li>
+      </ul>
+    </div>
+
+    <div class="update-section scroll-animate">
+      <div class="update-category ui">UI/UX UPDATES</div>
+      <h3>🎨 Visual & Experience Improvements</h3>
+      <ul class="feature-list ui">
+        <li><strong>Professional Animations</strong> - Smooth scroll-based animations across all pages</li>
+        <li><strong>Loading Screen Consistency</strong> - Unified 1.5s loading experience with crown animation</li>
+        <li><strong>Widget Auto-refresh</strong> - Live data updates every 30 seconds to 5 minutes based on data type</li>
+        <li><strong>Interactive Elements</strong> - Enhanced hover effects and transitions throughout the interface</li>
+        <li><strong>Content Organization</strong> - Better structured layouts with improved readability</li>
+      </ul>
+    </div>
+
+    <div class="update-section scroll-animate">
+      <div class="update-category fix">BUG FIXES</div>
+      <h3>🐛 Resolved Issues</h3>
+      <ul class="feature-list fixes">
+        <li><strong>Duplicate Boss Notifications</strong> - Fixed duplicate boss alerts from multiple notification systems</li>
+        <li><strong>Active Weather Widget</strong> - Resolved data loading issues on VPS deployment</li>
+        <li><strong>Boss Timer Display</strong> - Fixed countdown not showing current boss information</li>
+        <li><strong>Map Link Removal</strong> - Replaced all "View on Map" references with website links</li>
+        <li><strong>Animation Timing</strong> - Synchronized loading screens across all pages</li>
+      </ul>
+    </div>
+
+    <div class="update-section scroll-animate">
+      <div class="update-category improvement">COMMAND SYSTEM OVERHAUL</div>
+      <h3>⚡ Professional Discord Integration</h3>
+      <ul class="feature-list improvements">
+        <li><strong>Rich Embed Responses</strong> - All commands now use professional Discord embeds with color coding</li>
+        <li><strong>Improved Error Handling</strong> - Clear, helpful error messages with actionable suggestions</li>
+        <li><strong>Staff Command Enhancement</strong> - Administrative tools with detailed logging and confirmation</li>
+        <li><strong>Visual Status Indicators</strong> - Progress bars, icons, and status badges for better user experience</li>
+        <li><strong>Contextual Help</strong> - Each command provides relevant next steps and related commands</li>
+      </ul>
+    </div>
+
+    <div class="version-selector scroll-animate">
+      <h3>📚 Previous Versions</h3>
+      <div class="version-previews">
+        <a href="/updates/v2.1.0" class="version-preview">
+          <div class="version-info">
+            <div class="version-title">Version 2.1.0</div>
+            <div class="version-date">September 20, 2025</div>
+            <div class="version-snippet">Core system enhancements with advanced inventory, boss battles, and premium features. Foundation release for real-time systems.</div>
+          </div>
+          <div class="version-arrow">→</div>
+        </a>
+
+        <a href="/updates/v2.0.9" class="version-preview">
+          <div class="version-info">
+            <div class="version-title">Version 2.0.9</div>
+            <div class="version-date">September 15, 2025</div>
+            <div class="version-snippet">Performance improvements and bug fixes. Enhanced error handling and security updates for better stability.</div>
+          </div>
+          <div class="version-arrow">→</div>
+        </a>
+
+        <a href="/updates/v2.0.8" class="version-preview">
+          <div class="version-info">
+            <div class="version-title">Version 2.0.8</div>
+            <div class="version-date">September 10, 2025</div>
+            <div class="version-snippet">Travel system overhaul and command improvements. Fixed major synchronization issues and added new features.</div>
+          </div>
+          <div class="version-arrow">→</div>
+        </a>
+      </div>
+
+      <div class="changelog-link">
+        <a href="/updates/changelog" class="version-link all">📖 View Complete Changelog</a>
+      </div>
+    </div>
+
+    <div class="technical-note scroll-animate">
+      <p><strong>🔧 Technical Note:</strong> This update includes significant backend improvements to our real-time data processing system. All APIs now feature proper error handling, rate limiting, and graceful degradation for improved reliability.</p>
+    </div>
+
+    <div style="text-align: center; margin-top: 40px;">
+      <a href="/" class="back-button">Back to Home</a>
+    </div>
+  </div>
+
+  <script>
+    // Loading screen controller
+    function hideLoadingScreen() {
+      const loadingScreen = document.getElementById('loadingScreen');
+      if (loadingScreen) {
+        loadingScreen.classList.add('hidden');
+        setTimeout(() => {
+          loadingScreen.remove();
+        }, 500);
+      }
+    }
+
+    // Hide loading screen after content loads
+    setTimeout(hideLoadingScreen, 1500);
+
+    // Professional scroll animations
+    function initAnimations() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('animate-in');
+          }
+        });
+      }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+      });
+
+      // Automatically add scroll-animate class to relevant elements
+      document.querySelectorAll('h2, h3, .update-section, .technical-note').forEach(element => {
+        element.classList.add('scroll-animate');
+        observer.observe(element);
+      });
+
+      // Also observe manually added elements
+      document.querySelectorAll('.scroll-animate').forEach(element => {
+        observer.observe(element);
+      });
+
+      // Add staggered delays for better animation flow
+      document.querySelectorAll('h2').forEach((heading, index) => {
+        heading.style.transitionDelay = `${index * 0.1}s`;
+      });
+
+      document.querySelectorAll('.update-section').forEach((section, index) => {
+        section.style.transitionDelay = `${index * 0.08}s`;
+      });
+    }
+
+    // Initialize animations when DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      initAnimations();
+    });
+  </script>
+</body>
+</html>
