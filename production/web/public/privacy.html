@@ -270,6 +270,54 @@
         right: -16px;
       }
     }
+
+    /* Professional Scroll Animations */
+    .scroll-animate {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .scroll-animate.animate-in {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Section animations */
+    .brand-title {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .brand-title.animate-in {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Section headers */
+    h2 {
+      opacity: 0;
+      transform: translateX(-30px);
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    h2.animate-in {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* Content paragraphs */
+    p, ul {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    p.animate-in, ul.animate-in {
+      opacity: 1;
+      transform: translateY(0);
+    }
   </style>
 </head>
 <body>
@@ -281,16 +329,16 @@
 
   
   <div class="container">
-    <div class="brand-title">
+    <div class="brand-title scroll-animate">
       <div class="title-text">
         <div>QuestCord</div>
         <div class="title-line-2">Privacy Policy</div>
       </div>
       <div class="title-badge">Secure</div>
     </div>
-    <p class="last-updated">Last updated: September 25, 2025</p>
-    
-    <div class="highlight">
+    <p class="last-updated scroll-animate">Last updated: September 25, 2025</p>
+
+    <div class="highlight scroll-animate">
       <p><strong>Quick Summary:</strong> We collect minimal information needed to provide our gaming service, primarily through Discord authentication. We don't sell your data and only use it to enhance your gaming experience.</p>
     </div>
     
@@ -395,8 +443,51 @@
       }
     }
 
-    // Hide loading screen after content loads
-    setTimeout(hideLoadingScreen, 1000);
+    // Hide loading screen after content loads (match status page timing)
+    setTimeout(hideLoadingScreen, 1500);
+
+    // Professional scroll animations
+    function initAnimations() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('animate-in');
+          }
+        });
+      }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+      });
+
+      // Automatically add scroll-animate class to all relevant elements
+      document.querySelectorAll('h2, h3, p, ul, .highlight').forEach(element => {
+        element.classList.add('scroll-animate');
+        observer.observe(element);
+      });
+
+      // Also observe manually added elements
+      document.querySelectorAll('.scroll-animate').forEach(element => {
+        observer.observe(element);
+      });
+
+      // Add staggered delays for better animation flow
+      document.querySelectorAll('h2').forEach((heading, index) => {
+        heading.style.transitionDelay = `${index * 0.1}s`;
+      });
+
+      document.querySelectorAll('h3').forEach((heading, index) => {
+        heading.style.transitionDelay = `${index * 0.08}s`;
+      });
+
+      document.querySelectorAll('p, ul').forEach((element, index) => {
+        element.style.transitionDelay = `${index * 0.05}s`;
+      });
+    }
+
+    // Initialize animations when DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      initAnimations();
+    });
   </script>
 </body>
 </html>
