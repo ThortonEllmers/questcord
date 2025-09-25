@@ -623,36 +623,144 @@
 
         /* Footer */
         .footer {
-            padding: 80px 0 40px;
+            background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-dark) 100%);
+            padding: 60px 0 30px;
+            border-top: 2px solid var(--primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            opacity: 0.6;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            align-items: center;
+            gap: 40px;
+            margin-bottom: 20px;
+        }
+
+        .footer-brand {
             text-align: center;
-            border-top: 1px solid var(--border);
+        }
+
+        .footer-logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .footer-tagline {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 16px;
+            opacity: 0.9;
         }
 
         .footer-links {
             display: flex;
             justify-content: center;
-            gap: 32px;
-            margin-bottom: 32px;
+            gap: 8px;
             flex-wrap: wrap;
         }
 
-        .footer-links a {
-            color: var(--text-muted);
+        .footer-copyright {
+            text-align: center;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .footer-copyright a {
+            color: var(--primary);
             text-decoration: none;
             transition: color 0.2s ease;
+            font-weight: 500;
+        }
+
+        .footer-copyright a:hover {
+            color: var(--text-light);
+        }
+
+        .footer-links a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        .footer-links a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transform: translateX(-50%);
+            transition: width 0.3s ease;
         }
 
         .footer-links a:hover {
             color: var(--text-light);
+            background: rgba(255, 255, 255, 0.05);
         }
 
-        .footer p {
-            color: var(--text-muted);
-            font-size: 14px;
+        .footer-links a:hover::after {
+            width: 80%;
         }
+
+        .footer-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+            margin: 30px 0 20px;
+            opacity: 0.6;
+        }
+
 
         /* Mobile */
         @media (max-width: 768px) {
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .footer-brand {
+                text-align: center;
+            }
+
+            .footer-links {
+                justify-content: center;
+            }
+
+            .footer-copyright {
+                text-align: center;
+            }
+
             .nav-links {
                 display: none;
             }
@@ -1438,17 +1546,8 @@
         </section>
     </main>
 
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-links">
-                <a href="/status">Status</a>
-                <a href="/privacy">Privacy</a>
-                <a href="/terms">Terms</a>
-                <a href="https://discord.gg/ACGKvKkZ5Z">Support</a>
-            </div>
-            <p>&copy; 2025 QuestCord. Made with ❤️ by CUB and Scarlett for Discord communities.</p>
-        </div>
-    </footer>
+    <!-- Footer loaded by shared component -->
+    <script src="/shared/footer.js"></script>
 
     <script>
         // Real-time stats loading - real data only
