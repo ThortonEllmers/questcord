@@ -186,17 +186,10 @@ async function sendBossSpawnNotification(client, bossData, serverData, spawnerUs
       })
       .setTimestamp();
     
-    const message = await channel.send({ 
-      embeds: [spawnEmbed],
-      content: `<@&1411051374153826386> A **Tier ${bossData.tier} Boss** has spawned! 🔥⚔️`
-    });
-    
-    // Add reactions to the notification
-    await message.react('⚔️');
-    await message.react('🔥');
-    await message.react(tierEmojis[bossData.tier]);
-    
-    logger.info('boss_notification: Sent spawn notification for %s (tier %s) in %s', bossData.name, bossData.tier, serverData.guildId);
+    // Note: Boss spawn notifications are now handled by the automatic boss_spawner.js system
+    // to avoid duplicate notifications. Manual boss spawns will rely on the spawner's notification.
+
+    logger.info('boss_notification: Boss spawned manually for %s (tier %s) in %s - notification handled by boss_spawner.js', bossData.name, bossData.tier, serverData.guildId);
   } catch (error) {
     console.warn('[boss] Failed to send boss spawn notification:', error.message);
   }
