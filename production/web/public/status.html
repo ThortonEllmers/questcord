@@ -602,6 +602,42 @@
                 justify-content: flex-start;
             }
         }
+
+        /* Professional Scroll Animations */
+        .scroll-animate {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .scroll-animate.animate-in {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Header animations */
+        .header {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .header.animate-in {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Status cards animation */
+        .stat-card, .status-card {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stat-card.animate-in, .status-card.animate-in {
+            opacity: 1;
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body>
@@ -612,7 +648,7 @@
     </div>
 
     <div class="container">
-        <div class="header">
+        <div class="header scroll-animate">
             <div class="brand-title">
                 <div class="title-text">
                     <div>QuestCord</div>
@@ -1161,6 +1197,41 @@
 
         // Hide loading screen after content loads
         setTimeout(hideLoadingScreen, 1500);
+
+        // Professional scroll animations
+        function initAnimations() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('animate-in');
+                    }
+                });
+            }, {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            });
+
+            // Automatically add scroll-animate class to status cards and sections
+            document.querySelectorAll('.status-section, .stat-card, .status-card, .performance-metrics, .system-health-stats').forEach(element => {
+                element.classList.add('scroll-animate');
+                observer.observe(element);
+            });
+
+            // Also observe manually added elements
+            document.querySelectorAll('.scroll-animate').forEach(element => {
+                observer.observe(element);
+            });
+
+            // Add staggered delays for better animation flow
+            document.querySelectorAll('.stat-card, .status-card').forEach((card, index) => {
+                card.style.transitionDelay = `${index * 0.1}s`;
+            });
+        }
+
+        // Initialize animations when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            initAnimations();
+        });
     </script>
 </body>
 </html>
