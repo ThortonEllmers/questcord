@@ -43,6 +43,36 @@ router.get('/privacy', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'web', 'public', 'privacy.html'));
 });
 
+/**
+ * Updates Page
+ * GET /updates
+ * Serves the latest version updates and changelog information
+ * Shows current version features, improvements, and bug fixes
+ */
+router.get('/updates', (req, res) => {
+  // Serve the static updates.html file from the web/public directory
+  res.sendFile(path.join(process.cwd(), 'web', 'public', 'updates.html'));
+});
+
+/**
+ * Specific Version Update Page
+ * GET /updates/:version
+ * Serves specific version update information
+ * Allows users to view historical version changes
+ */
+router.get('/updates/:version', (req, res) => {
+  const version = req.params.version;
+  const versionFile = `updates-${version}.html`;
+
+  try {
+    // Serve the specific version file from the web/public/versions directory
+    res.sendFile(path.join(process.cwd(), 'web', 'public', 'versions', versionFile));
+  } catch (error) {
+    // If specific version file doesn't exist, redirect to main updates page
+    res.redirect('/updates');
+  }
+});
+
 
 
 
