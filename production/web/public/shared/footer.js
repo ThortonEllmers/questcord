@@ -56,6 +56,17 @@ const footerCSS = `
             line-height: 1.4;
         }
 
+        .footer-tagline span:first-child {
+            font-size: 1.2rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: block;
+            margin-bottom: 4px;
+        }
+
         .footer-links {
             display: flex;
             justify-content: center;
@@ -150,10 +161,8 @@ const footerHTML = `
         <div class="container">
             <div class="footer-content">
                 <div class="footer-brand">
-                    <div class="footer-logo">
-                        <span>QuestCord</span>
-                    </div>
                     <p class="footer-tagline">
+                        <span>QuestCord</span><br>
                         <span>Discord's Ultimate</span><br>
                         <span>Adventure Bot</span>
                     </p>
@@ -192,6 +201,11 @@ const footerHTML = `
 
 // Function to inject footer into the page
 function loadFooter() {
+    // Check if footer already exists to prevent duplicates
+    if (document.querySelector('.footer')) {
+        return;
+    }
+
     // Add CSS to head
     document.head.insertAdjacentHTML('beforeend', footerCSS);
 
