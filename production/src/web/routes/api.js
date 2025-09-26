@@ -3520,13 +3520,15 @@ router.get('/api/weather-events', rateLimit(60, 60000), async (req, res) => {
   }
 });
 
-// Travel routes endpoint for popular travel destinations
+// Travel routes endpoint for popular travel destinations (resets weekly)
 router.get('/api/travel-routes', rateLimit(60, 60000), async (req, res) => {
   try {
     const { db } = require('../../utils/store_sqlite');
+    const { getCurrentWeekBounds } = require('../../utils/weekly_reset');
 
-    // Get most popular travel routes from the last 24 hours
-    const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+    // Get current week boundaries (Monday to Sunday)
+    const weekBounds = getCurrentWeekBounds();
+    const weekStart = weekBounds.startTimestamp;
 
     const popularRoutes = db.prepare(`
       SELECT
@@ -3546,12 +3548,13 @@ router.get('/api/travel-routes', rateLimit(60, 60000), async (req, res) => {
       GROUP BY th.from_guild_id, th.to_guild_id
       ORDER BY travelCount DESC
       LIMIT 5
-    `).all(oneDayAgo);
+    `).all(weekStart);
 
     res.json({
       routes: popularRoutes,
       totalRoutes: popularRoutes.length,
-      timeFrame: '24h',
+      timeFrame: `Week ${weekBounds.weekNumber}`,
+      weekStart: weekBounds.weekStart,
       lastUpdate: Date.now()
     });
 
@@ -3658,19 +3661,21 @@ router.get('/api/server-population', rateLimit(60, 60000), async (req, res) => {
   }
 });
 
-// Live leaderboard endpoint for top daily players
+// Live leaderboard endpoint for top weekly players (resets every Monday)
 router.get('/api/live-leaderboard', rateLimit(60, 60000), async (req, res) => {
   try {
     const { db } = require('../../utils/store_sqlite');
+    const { getCurrentWeekBounds } = require('../../utils/weekly_reset');
 
-    // Get top players based on activity in last 24 hours (commands + travels + boss fights)
-    const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+    // Get current week boundaries (Monday to Sunday)
+    const weekBounds = getCurrentWeekBounds();
+    const weekStart = weekBounds.startTimestamp;
 
     const topPlayers = db.prepare(`
       SELECT
         p.name as playerName,
         p.userId,
-        COUNT(DISTINCT activity.activity_type) * 10 + COUNT(*) as dailyScore,
+        COUNT(DISTINCT activity.activity_type) * 10 + COUNT(*) as weeklyScore,
         COUNT(*) as totalActivity
       FROM (
         SELECT user_id as userId, 'command' as activity_type, timestamp as activityTime FROM command_usage WHERE timestamp >= ?
@@ -3685,9 +3690,9 @@ router.get('/api/live-leaderboard', rateLimit(60, 60000), async (req, res) => {
       WHERE p.name IS NOT NULL
         AND p.name != ''
       GROUP BY p.userId, p.name
-      ORDER BY dailyScore DESC, totalActivity DESC
+      ORDER BY weeklyScore DESC, totalActivity DESC
       LIMIT 5
-    `).all(oneDayAgo, oneDayAgo, oneDayAgo);
+    `).all(weekStart, weekStart, weekStart);
 
     // Add rank and medal emojis
     const leaderboardData = topPlayers.map((player, index) => {
@@ -3695,7 +3700,7 @@ router.get('/api/live-leaderboard', rateLimit(60, 60000), async (req, res) => {
       return {
         rank: index + 1,
         name: player.playerName,
-        score: player.dailyScore,
+        score: player.weeklyScore,
         activities: player.totalActivity,
         medal: medals[index] || '⭐'
       };
@@ -3704,7 +3709,8 @@ router.get('/api/live-leaderboard', rateLimit(60, 60000), async (req, res) => {
     res.json({
       leaderboard: leaderboardData,
       totalPlayers: leaderboardData.length,
-      timeFrame: 'Today',
+      timeFrame: `Week ${weekBounds.weekNumber}`,
+      weekStart: weekBounds.weekStart,
       lastUpdate: Date.now()
     });
 
