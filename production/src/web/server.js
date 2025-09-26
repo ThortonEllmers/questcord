@@ -161,7 +161,28 @@ function createWebServer() {
 
   // Health check endpoint for monitoring services and load balancers
   // Returns a simple JSON response indicating the server is operational
-  app.get('/healthz', (_req, res) => res.json({ ok: true }));
+  app.get('/healthz', (_req, res) => {
+    const uptime = process.uptime();
+    const days = Math.floor(uptime / 86400);
+    const hours = Math.floor((uptime % 86400) / 3600);
+    const minutes = Math.floor((uptime % 3600) / 60);
+    const seconds = Math.floor(uptime % 60);
+
+    const parts = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hours > 0) parts.push(`${hours}h`);
+    if (minutes > 0) parts.push(`${minutes}m`);
+    if (seconds > 0 || parts.length === 0) parts.push(`${seconds}s`);
+
+    const formattedUptime = parts.join(' ');
+
+    res.json({
+      ok: true,
+      status: 'healthy',
+      uptime: formattedUptime,
+      timestamp: new Date().toISOString()
+    });
+  });
 
   // Determine the port to bind the web server to using a priority system:
   // 1. Configuration file setting (highest priority)
