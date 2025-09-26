@@ -183,6 +183,12 @@ client.once(Events.ClientReady, async () => {
   generateWeatherEvents(client); // Generate initial weather events
   setInterval(() => generateWeatherEvents(client), 5 * 60 * 1000); // Generate new weather every 5 minutes
   logger.info('[weather] Dynamic weather system initialized - storms, cyclones, and weather effects active');
+
+  // Initialize weekly reset system
+  // Resets leaderboards and statistics every Monday at 12:00 AM
+  const { initializeWeeklyReset } = require('./utils/weekly_reset'); // Import weekly reset functions
+  initializeWeeklyReset(); // Setup weekly reset scheduler
+  logger.info('[weekly-reset] Weekly reset system initialized - data resets every Monday at midnight');
   
   // Initialize POI (Points of Interest) system with famous landmarks
   // Loads famous world landmarks that players can travel to and visit
